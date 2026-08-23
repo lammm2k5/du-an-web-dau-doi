@@ -383,37 +383,55 @@ function ghHeaders(cfg){
 // Lấy sha hiện tại (bắt buộc để ghi đè) — dùng media type "object" vì
 // Contents API chỉ trả sha cho file lớn khi dùng type này.
 async function fetchGithubSha(cfg){
-  const res = await ghFetchWithTimeout(ghApiUrl(cfg) + '?ref=' + encodeURIComponent(cfg.branch), {
-    headers: Object.assign({}, ghHeaders(cfg), { 'Accept': 'application/vnd.github.object+json' })
-  }, GITHUB_FETCH_TIMEOUT_MS);
+  // Lấy sha qua Git Data API (Trees) thay vì Contents API: Contents API (kể cả dùng
+  // media type object/raw) có thể không trả "sha" đáng tin cậy với file rất lớn.
+  // Trees API chỉ trả về đường dẫn + sha của từng file, không đụng tới nội dung file,
+  // nên không bị giới hạn theo kích thước file như Contents API.
+  const path = (cfg.path || 'index.html').replace(/^\/+/, '');
 
-  if(res.status === 404){
-    const bodyText = await res.text().catch(()=> '');
-    let apiMsg = '';
-    try{ const j = JSON.parse(bodyText); if(j && j.message) apiMsg = j.message; }
-    catch(e){ apiMsg = (bodyText||'').slice(0,200); }
+  // B1: lấy sha của commit mới nhất trên nhánh.
+  const branchRes = await ghFetchWithTimeout(
+    'https://api.github.com/repos/' + cfg.repo.trim() + '/branches/' + encodeURIComponent(cfg.branch),
+    { headers: ghHeaders(cfg) }, GITHUB_FETCH_TIMEOUT_MS
+  );
+  if(branchRes.status === 404){
+    throw new Error('Không tìm thấy nhánh "' + cfg.branch + '" trên GitHub. Kiểm tra lại tên nhánh trong ⚙️ Cấu hình — chú ý phân biệt hoa/thường.');
+  }
+  if(!branchRes.ok){
+    const bodyText = await branchRes.text().catch(()=> '');
+    throw new Error('Không đọc được thông tin nhánh trên GitHub. ' + describeGithubError(branchRes.status, bodyText));
+  }
+  const branchInfo = await branchRes.json().catch(()=> null);
+  const commitSha = branchInfo && branchInfo.commit && branchInfo.commit.sha;
+  if(!commitSha){
+    throw new Error('Không lấy được commit mới nhất của nhánh "' + cfg.branch + '" từ GitHub.');
+  }
 
-    // "Not Found" đơn thuần cho đường dẫn => file thật sự chưa tồn tại (sẽ tạo mới, không cần sha).
-    // Nhưng nếu lỗi 404 là do nhánh/ref không tồn tại (vd: gõ sai tên nhánh), KHÔNG được coi
-    // là "file mới" — nếu không PUT sẽ ghi đè nhầm hoặc bị GitHub từ chối vì thiếu "sha" (422).
-    if(/ref|branch/i.test(apiMsg)){
-      throw new Error('Không tìm thấy nhánh "' + cfg.branch + '" trên GitHub (' + (apiMsg || 'ref không tồn tại') + '). Kiểm tra lại tên nhánh trong ⚙️ Cấu hình — chú ý phân biệt hoa/thường (vd: "main" khác "Main").');
+  // B2: lấy toàn bộ cây thư mục (đệ quy) của commit đó, tìm sha ứng với đường dẫn file.
+  const treeRes = await ghFetchWithTimeout(
+    'https://api.github.com/repos/' + cfg.repo.trim() + '/git/trees/' + commitSha + '?recursive=1',
+    { headers: ghHeaders(cfg) }, GITHUB_FETCH_TIMEOUT_MS
+  );
+  if(!treeRes.ok){
+    const bodyText = await treeRes.text().catch(()=> '');
+    throw new Error('Không đọc được cây thư mục của repo trên GitHub. ' + describeGithubError(treeRes.status, bodyText));
+  }
+  const treeInfo = await treeRes.json().catch(()=> null);
+  if(!treeInfo || !Array.isArray(treeInfo.tree)){
+    throw new Error('Phản hồi cây thư mục từ GitHub không hợp lệ.');
+  }
+
+  const entry = treeInfo.tree.find(item => item.path === path && item.type === 'blob');
+  if(!entry){
+    if(treeInfo.truncated){
+      // Repo quá lớn, GitHub đã cắt bớt danh sách cây thư mục -> không chắc file có tồn tại
+      // hay không, nên KHÔNG được âm thầm coi là "file mới" (dễ gây lỗi ghi đè/thiếu sha).
+      throw new Error('Repo có quá nhiều file khiến GitHub cắt bớt danh sách cây thư mục khi tìm "' + path + '". Không thể xác định sha một cách an toàn — hãy kiểm tra lại đường dẫn file trong ⚙️ Cấu hình.');
     }
+    // File thật sự chưa tồn tại trên nhánh này -> sẽ tạo mới, không cần sha.
     return { sha: null };
   }
-
-  if(!res.ok){
-    const bodyText = await res.text().catch(()=> '');
-    throw new Error('Không đọc được thông tin file trên GitHub. ' + describeGithubError(res.status, bodyText));
-  }
-
-  const info = await res.json().catch(()=> null);
-  if(!info || !info.sha){
-    // Trường hợp hiếm: GitHub trả 200 nhưng không kèm "sha" (vd: phản hồi bất thường với
-    // file rất lớn). Báo lỗi rõ ràng thay vì âm thầm bỏ qua sha rồi để PUT thất bại mơ hồ.
-    throw new Error('GitHub không trả về "sha" của file hiện tại dù đường dẫn file đã tồn tại. Thử gửi lại lệnh; nếu vẫn lỗi, kiểm tra lại file trực tiếp trên GitHub (có thể do file quá lớn hoặc sự cố tạm thời từ GitHub).');
-  }
-  return { sha: info.sha };
+  return { sha: entry.sha };
 }
 
 // Lấy nội dung THÔ (raw) — dùng Accept raw để không bị giới hạn 1MB của

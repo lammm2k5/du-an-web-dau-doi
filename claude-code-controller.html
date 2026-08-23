@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧑‍💻 Claude Code — Bộ điều khiển</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#f0883e; --green:#3fb950; --red:#f85149;
+    --blue:#58a6ff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    display:flex; flex-direction:column; min-height:100vh;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; border-bottom:1px solid var(--border); background:var(--panel);
+    flex-wrap:wrap; gap:8px;
+  }
+  header h1{ font-size:16px; margin:0; font-weight:600; }
+  header .repo-tag{ color:var(--muted); font-size:12px; }
+  header button{
+    background:transparent; border:1px solid var(--border); color:var(--text);
+    padding:6px 10px; border-radius:6px; cursor:pointer; font:inherit; font-size:12px;
+  }
+  header button:hover{ border-color:var(--accent); color:var(--accent); }
+
+  .banner{
+    background:#3b2a12; border-bottom:1px solid #6b4a1a; color:#f0c987;
+    font-size:12.5px; padding:8px 18px; line-height:1.5;
+  }
+  .banner button{
+    float:right; background:none; border:none; color:#f0c987; cursor:pointer;
+    font-size:12px; text-decoration:underline; padding:0;
+  }
+
+  main{ flex:1; display:flex; flex-direction:column; max-width:920px; width:100%; margin:0 auto; padding:16px 18px 100px; }
+
+  #log{
+    flex:1; font-size:13px; line-height:1.55; white-space:pre-wrap; word-break:break-word;
+    padding-bottom:16px;
+  }
+  #log .line{ margin:0 0 8px; padding-left:0; }
+  #log .l-user{ color:var(--blue); }
+  #log .l-user::before{ content:"› "; color:var(--muted); }
+  #log .l-info{ color:var(--muted); }
+  #log .l-ai{ color:var(--text); }
+  #log .l-success{ color:var(--green); }
+  #log .l-error{ color:var(--red); }
+  #log .l-error::before{ content:"✗ "; }
+  #log .l-success::before{ content:"✓ "; }
+
+  .diff-box{
+    border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin:6px 0;
+    background:var(--panel); font-size:12.5px;
+  }
+  .diff-box .old{ color:var(--red); background:#3d1414; padding:4px 6px; border-radius:4px; display:block; white-space:pre-wrap; margin-bottom:4px; }
+  .diff-box .new{ color:var(--green); background:#12321a; padding:4px 6px; border-radius:4px; display:block; white-space:pre-wrap; }
+
+  .pending-actions{
+    display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 18px;
+  }
+  .pending-actions button{
+    font:inherit; font-size:13px; padding:8px 14px; border-radius:6px; cursor:pointer; border:1px solid var(--border);
+  }
+  #pushBtn{ background:var(--accent); color:#1a1a1a; border-color:var(--accent); font-weight:600; }
+  #downloadBtn{ background:transparent; color:var(--text); }
+  #cancelBtn{ background:transparent; color:var(--red); border-color:#5a2323; }
+  #showFullBtn{ background:transparent; color:var(--blue); }
+
+  form#cmdForm{
+    position:fixed; bottom:0; left:0; right:0; background:var(--panel); border-top:1px solid var(--border);
+    padding:12px 18px; display:flex; flex-direction:column; gap:8px; align-items:center;
+  }
+  form#cmdForm .inner{ max-width:920px; width:100%; display:flex; flex-direction:column; gap:8px; }
+  .hint-row{ display:flex; gap:8px; align-items:center; }
+  .hint-row label{ font-size:11.5px; color:var(--muted); white-space:nowrap; }
+  .hint-row input{
+    flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    padding:6px 8px; border-radius:6px; font:inherit; font-size:12px;
+  }
+  .cmd-row{ display:flex; gap:8px; }
+  .cmd-row textarea{
+    flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    padding:10px; border-radius:8px; font:inherit; font-size:13.5px; resize:none; height:44px;
+  }
+  .cmd-row textarea:focus{ outline:none; border-color:var(--accent); }
+  .cmd-row button{
+    background:var(--accent); color:#1a1a1a; border:none; border-radius:8px; padding:0 18px;
+    font-weight:600; cursor:pointer; font-size:13.5px;
+  }
+  .cmd-row button:disabled{ opacity:.5; cursor:not-allowed; }
+
+  /* ---- modal cài đặt ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.6); display:none;
+    align-items:center; justify-content:center; z-index:50; padding:16px;
+  }
+  .overlay.show{ display:flex; }
+  .modal{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:20px; max-width:460px; width:100%; max-height:90vh; overflow:auto;
+  }
+  .modal h2{ margin:0 0 4px; font-size:15px; }
+  .modal p.desc{ color:var(--muted); font-size:12px; margin:0 0 14px; line-height:1.5; }
+  .modal label{ display:block; font-size:12px; color:var(--muted); margin:12px 0 4px; }
+  .modal input{
+    width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    padding:8px 10px; border-radius:6px; font:inherit; font-size:13px;
+  }
+  .modal .row2{ display:flex; gap:8px; }
+  .modal .row2 > div{ flex:1; }
+  .modal .actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+  .modal .actions button{
+    padding:8px 16px; border-radius:6px; font:inherit; font-size:13px; cursor:pointer; border:1px solid var(--border);
+  }
+  #settingsSave{ background:var(--accent); border-color:var(--accent); color:#1a1a1a; font-weight:600; }
+  #settingsCancel{ background:transparent; color:var(--text); }
+  .err-box{ color:var(--red); font-size:12px; margin-top:8px; display:none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🧑‍💻 Claude Code</h1>
+    <div class="repo-tag" id="repoTag">Chưa cấu hình repo</div>
+  </div>
+  <button id="settingsBtn" type="button">⚙️ Cấu hình</button>
+</header>
+
+<div class="banner" id="banner">
+  ⚠️ Token GitHub và (Anthropic API key hoặc FCC token) bạn nhập chỉ được lưu trong bộ nhớ trình duyệt (localStorage) của <b>thiết bị này</b>, dùng để gọi thẳng tới api.github.com và (api.anthropic.com hoặc FCC server trên máy bạn) — không gửi đi đâu khác. Vì vậy: đừng chia sẻ trang này/thiết bị này cho người khác, nên dùng Personal Access Token GitHub loại "fine-grained" chỉ cấp quyền Contents (Read/Write) cho đúng 1 repo.
+  <button id="bannerClose" type="button">Đã hiểu, ẩn đi</button>
+</div>
+
+<main>
+  <div id="log"></div>
+  <div id="pendingActions" class="pending-actions" style="display:none;">
+    <button id="showFullBtn" type="button">👀 Xem toàn bộ mã nguồn mới</button>
+    <button id="downloadBtn" type="button">⬇️ Tải file mới về máy</button>
+    <button id="pushBtn" type="button">🚀 Đẩy lên GitHub</button>
+    <button id="cancelBtn" type="button">✖️ Huỷ thay đổi này</button>
+  </div>
+</main>
+
+<form id="cmdForm">
+  <div class="inner">
+    <div class="hint-row">
+      <label for="hintInput" title="Nếu file quá lớn để AI đọc hết 1 lần, nhập 1 đoạn text/ID/class xuất hiện gần chỗ cần sửa để giúp AI định vị đúng chỗ">🔎 Từ khoá định vị (tuỳ chọn):</label>
+      <input id="hintInput" type="text" placeholder="vd: id=&quot;diagBtn&quot;, hoặc 1 câu tiếng Việt gần chỗ cần sửa...">
+    </div>
+    <div class="cmd-row">
+      <textarea id="cmdInput" placeholder="Gõ lệnh cho Claude Code, vd: Đổi màu nút Lưu vào mã nguồn sang xanh lá..." rows="1"></textarea>
+      <button id="sendBtn" type="submit">Gửi lệnh</button>
+    </div>
+  </div>
+</form>
+
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <h2>⚙️ Cấu hình Claude Code</h2>
+    <p class="desc">Cần Personal Access Token GitHub (quyền Contents: Read & write cho repo chứa index.html) và 1 Anthropic API key (console.anthropic.com). Lưu cục bộ trên trình duyệt này.</p>
+
+    <label for="s_repo">Repo GitHub (tài-khoản/tên-repo)</label>
+    <input id="s_repo" placeholder="vd: nguyenvana/de-thi-y-hoc">
+
+    <div class="row2">
+      <div>
+        <label for="s_branch">Nhánh (branch)</label>
+        <input id="s_branch" placeholder="main">
+      </div>
+      <div>
+        <label for="s_path">Đường dẫn file</label>
+        <input id="s_path" placeholder="index.html">
+      </div>
+    </div>
+
+    <label for="s_token">GitHub Personal Access Token</label>
+    <input id="s_token" type="password" placeholder="github_pat_xxxxxxxx...">
+
+    <label for="s_mode">Nguồn AI</label>
+    <select id="s_mode">
+      <option value="api">🔑 Anthropic API key (trả phí)</option>
+      <option value="fcc">🖥️ Free Claude Code — proxy chạy trên máy tôi (miễn phí)</option>
+    </select>
+
+    <div id="apiFields">
+      <label for="s_key">Anthropic API key</label>
+      <input id="s_key" type="password" placeholder="sk-ant-xxxxxxxx...">
+      <label for="s_model">Model</label>
+      <input id="s_model" placeholder="claude-sonnet-5">
+    </div>
+
+    <div id="fccFields" style="display:none;">
+      <label for="s_fcc_url">Địa chỉ FCC server (fcc-server đang chạy)</label>
+      <input id="s_fcc_url" placeholder="http://localhost:8082">
+      <label for="s_fcc_token">Proxy Auth Token (bỏ trống nếu chưa bật "Proxy Authentication" trong Admin UI của FCC)</label>
+      <input id="s_fcc_token" type="password" placeholder="vd: freecc">
+      <label for="s_fcc_model">Model (đúng chuỗi provider/model đã cấu hình trong FCC)</label>
+      <input id="s_fcc_model" placeholder="vd: nvidia_nim/nvidia/nemotron-3-super-120b-a12b">
+      <p class="desc" style="margin-top:8px;">Cần chạy <code>fcc-server</code> trên MÁY BẠN đang mở trang này, và cần bật CORS trong FCC (patch 3 dòng vào <code>app.py</code> — xem hướng dẫn kèm theo file này).</p>
+    </div>
+
+    <div class="err-box" id="settingsErr"></div>
+    <div class="actions">
+      <button id="settingsCancel" type="button">Đóng</button>
+      <button id="settingsSave" type="button">Lưu cấu hình</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ---------------- cấu hình lưu trong localStorage ----------------
+  const SETTINGS_KEY = 'claudeCodeControllerSettings_v1';
+  function loadSettings(){
+    try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; }
+    catch(e){ return {}; }
+  }
+  function saveSettings(cfg){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(cfg)); }
+  let settings = loadSettings();
+
+  function refreshRepoTag(){
+    document.getElementById('repoTag').textContent = settings.repo
+      ? `${settings.repo} @ ${settings.branch || 'main'} — ${settings.path || 'index.html'}`
+      : 'Chưa cấu hình repo — bấm ⚙️ Cấu hình';
+  }
+  refreshRepoTag();
+
+  // ---------------- banner ----------------
+  document.getElementById('bannerClose').addEventListener('click', ()=>{
+    document.getElementById('banner').style.display = 'none';
+  });
+
+  // ---------------- modal cấu hình ----------------
+  const settingsOverlay = document.getElementById('settingsOverlay');
+  const s_repo = document.getElementById('s_repo');
+  const s_branch = document.getElementById('s_branch');
+  const s_path = document.getElementById('s_path');
+  const s_token = document.getElementById('s_token');
+  const s_key = document.getElementById('s_key');
+  const s_model = document.getElementById('s_model');
+  const s_mode = document.getElementById('s_mode');
+  const s_fcc_url = document.getElementById('s_fcc_url');
+  const s_fcc_token = document.getElementById('s_fcc_token');
+  const s_fcc_model = document.getElementById('s_fcc_model');
+  const apiFields = document.getElementById('apiFields');
+  const fccFields = document.getElementById('fccFields');
+  const settingsErr = document.getElementById('settingsErr');
+
+  function refreshModeFields(){
+    const isFcc = s_mode.value === 'fcc';
+    apiFields.style.display = isFcc ? 'none' : 'block';
+    fccFields.style.display = isFcc ? 'block' : 'none';
+  }
+  s_mode.addEventListener('change', refreshModeFields);
+
+  function openSettings(){
+    s_repo.value = settings.repo || '';
+    s_branch.value = settings.branch || 'main';
+    s_path.value = settings.path || 'index.html';
+    s_token.value = settings.token || '';
+    s_mode.value = settings.mode || 'api';
+    s_key.value = settings.anthropicKey || '';
+    s_model.value = settings.model || 'claude-sonnet-5';
+    s_fcc_url.value = settings.fccUrl || 'http://localhost:8082';
+    s_fcc_token.value = settings.fccToken || '';
+    s_fcc_model.value = settings.fccModel || '';
+    refreshModeFields();
+    settingsErr.style.display = 'none';
+    settingsOverlay.classList.add('show');
+  }
+  document.getElementById('settingsBtn').addEventListener('click', openSettings);
+  document.getElementById('settingsCancel').addEventListener('click', ()=> settingsOverlay.classList.remove('show'));
+  settingsOverlay.addEventListener('click', e=>{ if(e.target===settingsOverlay) settingsOverlay.classList.remove('show'); });
+
+  document.getElementById('settingsSave').addEventListener('click', ()=>{
+    const repo = s_repo.value.trim();
+    const token = s_token.value.trim();
+    const mode = s_mode.value;
+    if(!repo || !token){
+      settingsErr.textContent = '⚠️ Cần nhập đủ Repo và GitHub Token.';
+      settingsErr.style.display = 'block';
+      return;
+    }
+    if(mode === 'api' && !s_key.value.trim()){
+      settingsErr.textContent = '⚠️ Cần nhập Anthropic API key (hoặc đổi Nguồn AI sang Free Claude Code).';
+      settingsErr.style.display = 'block';
+      return;
+    }
+    if(mode === 'fcc' && !s_fcc_url.value.trim()){
+      settingsErr.textContent = '⚠️ Cần nhập địa chỉ FCC server.';
+      settingsErr.style.display = 'block';
+      return;
+    }
+    settings = {
+      repo, token, mode,
+      anthropicKey: s_key.value.trim(),
+      model: s_model.value.trim() || 'claude-sonnet-5',
+      fccUrl: s_fcc_url.value.trim() || 'http://localhost:8082',
+      fccToken: s_fcc_token.value.trim(),
+      fccModel: s_fcc_model.value.trim(),
+      branch: s_branch.value.trim() || 'main',
+      path: s_path.value.trim() || 'index.html'
+    };
+    saveSettings(settings);
+    refreshRepoTag();
+    settingsOverlay.classList.remove('show');
+    log('Đã lưu cấu hình.', 'success');
+  });
+
+  if(!settings.repo){ setTimeout(openSettings, 300); }
+
+  // ---------------- log / console ----------------
+  const logEl = document.getElementById('log');
+  function log(text, cls){
+    const div = document.createElement('div');
+    div.className = 'line l-' + (cls || 'info');
+    div.textContent = text;
+    logEl.appendChild(div);
+    window.scrollTo(0, document.body.scrollHeight);
+    return div;
+  }
+  function logDiff(edits){
+    edits.forEach((e, i)=>{
+      const box = document.createElement('div');
+      box.className = 'diff-box';
+      const oldEl = document.createElement('span');
+      oldEl.className = 'old';
+      oldEl.textContent = '− ' + e.old;
+      const newEl = document.createElement('span');
+      newEl.className = 'new';
+      newEl.textContent = '+ ' + e.new;
+      box.appendChild(oldEl);
+      box.appendChild(newEl);
+      logEl.appendChild(box);
+    });
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+  log('Sẵn sàng. Gõ 1 lệnh mô tả thay đổi bạn muốn thực hiện trên index.html rồi bấm "Gửi lệnh".', 'info');
+  log('Nếu web báo file quá lớn để AI đọc hết, hãy điền thêm ô "Từ khoá định vị" (1 đoạn text/id/class xuất hiện gần chỗ cần sửa) rồi gửi lại lệnh.', 'info');
+
+  // ---------------- tiện ích GitHub (mirror logic đã dùng trong index.html) ----------------
+  const GITHUB_FETCH_TIMEOUT_MS = 25000;
+  const GITHUB_MAX_ATTEMPTS = 3;
+
+  function ghSleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+  function ghFetchWithTimeout(url, options, timeoutMs){
+    const controller = new AbortController();
+    const timer = setTimeout(()=> controller.abort(), timeoutMs);
+    return fetch(url, Object.assign({}, options, { signal: controller.signal })).finally(()=> clearTimeout(timer));
+  }
+  function isGithubTransientStatus(status){
+    return status===408 || status===429 || status===500 || status===502 || status===503 || status===504;
+  }
+  function describeGithubError(status, bodyText){
+    let apiMsg = '';
+    try{ const j = JSON.parse(bodyText); if(j && j.message) apiMsg = j.message; }
+    catch(e){ apiMsg = (bodyText||'').slice(0,200); }
+    const table = {
+      401: 'Token không hợp lệ hoặc đã hết hạn (401).',
+      403: 'Bị GitHub từ chối (403) — token thiếu quyền Contents Read/write, hoặc bị giới hạn tần suất.',
+      404: 'Không tìm thấy repo/nhánh/đường dẫn (404) — kiểm tra lại cấu hình.',
+      409: 'Xung đột phiên bản (409) — có thay đổi khác vừa ghi đè file.',
+      413: 'File quá lớn, GitHub từ chối nhận (413).',
+      422: 'Dữ liệu gửi lên không hợp lệ (422).'
+    };
+    let msg = table[status] || ('GitHub trả lỗi (mã ' + status + ').');
+    if(apiMsg) msg += ' Chi tiết: ' + apiMsg;
+    return msg;
+  }
+  function utf8ToBase64(str){
+    const bytes = new TextEncoder().encode(str);
+    let binary = '';
+    const chunkSize = 0x8000;
+    for(let i=0;i<bytes.length;i+=chunkSize){ binary += String.fromCharCode.apply(null, bytes.subarray(i,i+chunkSize)); }
+    return btoa(binary);
+  }
+  function ghApiUrl(cfg){
+    const path = (cfg.path || 'index.html').replace(/^\/+/, '');
+    return 'https://api.github.com/repos/' + cfg.repo.trim() + '/contents/' + path;
+  }
+  function ghHeaders(cfg){
+    return {
+      'Authorization': 'Bearer ' + cfg.token.trim(),
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+  }
+
+  // Lấy sha hiện tại (bắt buộc để ghi đè) — dùng media type "object" vì
+  // Contents API chỉ trả sha cho file lớn khi dùng type này.
+  async function fetchGithubSha(cfg){
+    const res = await ghFetchWithTimeout(ghApiUrl(cfg) + '?ref=' + encodeURIComponent(cfg.branch), {
+      headers: Object.assign({}, ghHeaders(cfg), { 'Accept': 'application/vnd.github.object+json' })
+    }, GITHUB_FETCH_TIMEOUT_MS);
+    if(res.status === 404) return { sha: null };
+    if(!res.ok){
+      const bodyText = await res.text().catch(()=> '');
+      throw new Error('Không đọc được thông tin file trên GitHub. ' + describeGithubError(res.status, bodyText));
+    }
+    const info = await res.json().catch(()=> null);
+    return { sha: (info && info.sha) ? info.sha : null };
+  }
+
+  // Lấy nội dung THÔ (raw) — dùng Accept raw để không bị giới hạn 1MB của
+  // Contents API mặc định (raw hỗ trợ tới 100MB).
+  async function fetchGithubRawContent(cfg){
+    const res = await ghFetchWithTimeout(ghApiUrl(cfg) + '?ref=' + encodeURIComponent(cfg.branch), {
+      headers: Object.assign({}, ghHeaders(cfg), { 'Accept': 'application/vnd.github.raw+json' })
+    }, GITHUB_FETCH_TIMEOUT_MS);
+    if(!res.ok){
+      const bodyText = await res.text().catch(()=> '');
+      throw new Error('Không tải được nội dung file hiện tại. ' + describeGithubError(res.status, bodyText));
+    }
+    return await res.text();
+  }
+
+  async function pushHtmlToGithub(htmlStr, cfg){
+    const apiUrl = ghApiUrl(cfg);
+    const headers = ghHeaders(cfg);
+    const contentB64 = utf8ToBase64(htmlStr);
+    let lastError = 'Không đẩy được lên GitHub sau nhiều lần thử.';
+
+    for(let attempt=1; attempt<=GITHUB_MAX_ATTEMPTS; attempt++){
+      let shaRes;
+      try{ shaRes = await fetchGithubSha(cfg); }
+      catch(e){
+        lastError = e.message;
+        if(attempt < GITHUB_MAX_ATTEMPTS){ await ghSleep(attempt*1200); continue; }
+        return { ok:false, error: lastError };
+      }
+
+      const body = {
+        message: 'Claude Code: cập nhật theo lệnh — ' + new Date().toLocaleString('vi-VN'),
+        content: contentB64,
+        branch: cfg.branch
+      };
+      if(shaRes.sha) body.sha = shaRes.sha;
+
+      let putRes;
+      try{
+        putRes = await ghFetchWithTimeout(apiUrl, {
+          method:'PUT',
+          headers: Object.assign({'Content-Type':'application/json'}, headers),
+          body: JSON.stringify(body)
+        }, GITHUB_FETCH_TIMEOUT_MS);
+      }catch(e){
+        lastError = 'Không kết nối được tới GitHub: ' + ((e && e.name==='AbortError') ? 'quá thời gian chờ.' : ((e&&e.message)||String(e)));
+        if(attempt < GITHUB_MAX_ATTEMPTS){ await ghSleep(attempt*1500); continue; }
+        return { ok:false, error: lastError };
+      }
+
+      if(putRes.ok) return { ok:true };
+
+      const errBody = await putRes.text().catch(()=> '');
+      lastError = describeGithubError(putRes.status, errBody);
+      if(putRes.status===409 && attempt<GITHUB_MAX_ATTEMPTS){ await ghSleep(400); continue; }
+      if(isGithubTransientStatus(putRes.status) && attempt<GITHUB_MAX_ATTEMPTS){ await ghSleep(attempt*1500); continue; }
+      return { ok:false, error: lastError };
+    }
+    return { ok:false, error: lastError };
+  }
+
+  // ---------------- tách ảnh base64 để giảm kích thước gửi cho AI ----------------
+  function stripImages(text){
+    const map = [];
+    const stripped = text.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]{80,}/g, (m)=>{
+      const token = '__CCC_IMG_' + map.length + '__';
+      map.push(m);
+      return token;
+    });
+    return { stripped, map };
+  }
+  function restoreImages(text, map){
+    let out = text;
+    map.forEach((orig, i)=>{
+      out = out.split('__CCC_IMG_' + i + '__').join(orig);
+    });
+    return out;
+  }
+
+  // ---------------- chọn đoạn mã nguồn để gửi cho AI ----------------
+  const SAFE_CHARS = 350000; // giới hạn an toàn theo ký tự (khoảng dưới ~100k token)
+  function buildContextSlice(strippedCode, hint){
+    if(strippedCode.length <= SAFE_CHARS){
+      return { slice: strippedCode, truncated:false };
+    }
+    if(!hint || !hint.trim()){
+      return { slice:null, truncated:true, needHint:true };
+    }
+    const needle = hint.trim();
+    const lower = strippedCode.toLowerCase();
+    const needleLower = needle.toLowerCase();
+    const idxs = [];
+    let from = 0;
+    while(idxs.length < 6){
+      const i = lower.indexOf(needleLower, from);
+      if(i === -1) break;
+      idxs.push(i);
+      from = i + needleLower.length;
+    }
+    if(idxs.length === 0){
+      return { slice:null, truncated:true, notFound:true };
+    }
+    const WINDOW = 4000;
+    const parts = idxs.map((i, ix)=>{
+      const start = Math.max(0, i - WINDOW);
+      const end = Math.min(strippedCode.length, i + needle.length + WINDOW);
+      return '----- ĐOẠN ' + (ix+1) + ' (vị trí ký tự ~' + i + ') -----\n' + strippedCode.slice(start, end);
+    });
+    return { slice: parts.join('\n\n'), truncated:true, matches: idxs.length };
+  }
+
+  // ---------------- gọi Anthropic API ----------------
+  async function callClaude(cfg, sliceInfo, instruction){
+    const system = [
+      'Bạn là một bộ máy chỉnh sửa mã nguồn HTML/CSS/JS chính xác, hoạt động như 1 công cụ str-replace.',
+      'Bạn sẽ nhận 1 đoạn trích (có thể không đầy đủ) từ 1 file HTML và 1 yêu cầu chỉnh sửa bằng tiếng Việt.',
+      'CHỈ trả lời bằng 1 JSON array hợp lệ, KHÔNG kèm markdown fences, KHÔNG kèm giải thích, đúng định dạng:',
+      '[{"old": "...", "new": "..."}]',
+      'Quy tắc bắt buộc cho mỗi phần tử:',
+      '- "old" PHẢI là một chuỗi con chép NGUYÊN VĂN, chính xác từng ký tự (kể cả khoảng trắng/thụt lề) từ đoạn trích được cung cấp, và PHẢI xuất hiện đúng 1 lần duy nhất trong đoạn trích đó.',
+      '- "old" nên NGẮN nhất có thể trong khi vẫn đảm bảo là duy nhất (chỉ lấy đủ ngữ cảnh xung quanh để định vị).',
+      '- "new" là nội dung thay thế mong muốn.',
+      '- TUYỆT ĐỐI không thêm/xoá các token dạng __CCC_IMG_n__ trừ khi yêu cầu của người dùng liên quan trực tiếp tới chính token đó.',
+      '- Nếu không thể thực hiện yêu cầu với đoạn trích được cung cấp (không tìm thấy chỗ liên quan), trả về mảng rỗng: []',
+      '- Có thể trả nhiều phần tử nếu cần sửa nhiều chỗ. Không sửa những gì không liên quan tới yêu cầu.'
+    ].join('\n');
+
+    const user = 'YÊU CẦU CỦA NGƯỜI DÙNG:\n' + instruction + '\n\n' +
+      (sliceInfo.truncated ? '(Lưu ý: đây chỉ là các đoạn trích liên quan, không phải toàn bộ file.)\n\n' : '') +
+      'ĐOẠN TRÍCH MÃ NGUỒN:\n' + sliceInfo.slice;
+
+    let url, headers, model;
+    if(cfg.mode === 'fcc'){
+      url = (cfg.fccUrl || 'http://localhost:8082').replace(/\/+$/, '') + '/v1/messages';
+      headers = { 'Content-Type': 'application/json' };
+      if(cfg.fccToken) headers['Authorization'] = 'Bearer ' + cfg.fccToken;
+      model = cfg.fccModel || cfg.model || 'claude-sonnet-5';
+    } else {
+      url = 'https://api.anthropic.com/v1/messages';
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': cfg.anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      };
+      model = cfg.model || 'claude-sonnet-5';
+    }
+
+    let res;
+    try{
+      res = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 8000,
+          system: system,
+          messages: [{ role:'user', content: user }]
+        })
+      });
+    }catch(e){
+      if(cfg.mode === 'fcc'){
+        throw new Error('Không kết nối được tới FCC server tại ' + url + '. Kiểm tra: (1) đã chạy "fcc-server" trên máy này chưa, (2) đã bật CORS trong app.py của FCC chưa (xem hướng dẫn đi kèm), (3) đúng cổng/URL chưa.');
+      }
+      throw new Error('Không kết nối được tới Anthropic API: ' + (e.message || String(e)));
+    }
+    if(!res.ok){
+      const bodyText = await res.text().catch(()=> '');
+      const label = cfg.mode === 'fcc' ? 'FCC server' : 'Anthropic API';
+      throw new Error(label + ' lỗi (' + res.status + '): ' + bodyText.slice(0, 300));
+    }
+    const data = await res.json();
+    const text = (data.content || []).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    let clean = text.trim();
+    clean = clean.replace(/^```(?:json)?\s*/, '').replace(/```\s*$/, '').trim();
+    let edits;
+    try{ edits = JSON.parse(clean); }
+    catch(e){ throw new Error('Không đọc được phản hồi JSON từ AI. Nội dung nhận được: ' + clean.slice(0,300)); }
+    if(!Array.isArray(edits)) throw new Error('Phản hồi từ AI không phải là 1 mảng JSON hợp lệ.');
+    return edits;
+  }
+
+  // ---------------- áp dụng các chỉnh sửa (kiểu str-replace, an toàn) ----------------
+  function applyEdits(text, edits){
+    let working = text;
+    const results = [];
+    for(const e of edits){
+      if(typeof e.old !== 'string' || typeof e.new !== 'string' || e.old.length === 0){
+        results.push({ old: e.old, new: e.new, status:'invalid' });
+        continue;
+      }
+      const count = working.split(e.old).length - 1;
+      if(count === 0){ results.push({ old:e.old, new:e.new, status:'not_found' }); continue; }
+      if(count > 1){ results.push({ old:e.old, new:e.new, status:'ambiguous', count }); continue; }
+      working = working.replace(e.old, e.new);
+      results.push({ old:e.old, new:e.new, status:'applied' });
+    }
+    return { working, results };
+  }
+
+  // ---------------- trạng thái thay đổi đang chờ đẩy ----------------
+  let pending = null; // { newContent, filename }
+
+  const pendingActions = document.getElementById('pendingActions');
+  function showPendingActions(newContent, filename){
+    pending = { newContent, filename };
+    pendingActions.style.display = 'flex';
+  }
+  function clearPendingActions(){
+    pending = null;
+    pendingActions.style.display = 'none';
+  }
+
+  document.getElementById('showFullBtn').addEventListener('click', ()=>{
+    if(!pending) return;
+    const w = window.open('', '_blank');
+    w.document.write('<pre style="white-space:pre-wrap;word-break:break-word;font-family:monospace;font-size:12px;">' +
+      pending.newContent.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</pre>');
+  });
+  document.getElementById('downloadBtn').addEventListener('click', ()=>{
+    if(!pending) return;
+    const blob = new Blob([pending.newContent], { type:'text/html;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = pending.filename || 'index.html';
+    a.click();
+    log('Đã tải file mới về máy: ' + a.download, 'success');
+  });
+  document.getElementById('cancelBtn').addEventListener('click', ()=>{
+    log('Đã huỷ bỏ thay đổi đang chờ.', 'info');
+    clearPendingActions();
+  });
+  document.getElementById('pushBtn').addEventListener('click', async ()=>{
+    if(!pending) return;
+    const pushBtn = document.getElementById('pushBtn');
+    pushBtn.disabled = true;
+    log('Đang đẩy bản sửa lên GitHub...', 'info');
+    try{
+      const r = await pushHtmlToGithub(pending.newContent, settings);
+      if(r.ok){
+        log('Đã đẩy thành công lên GitHub (' + settings.repo + ' @ ' + settings.branch + ').', 'success');
+        clearPendingActions();
+      }else{
+        log('Đẩy lên GitHub thất bại: ' + r.error, 'error');
+      }
+    }catch(e){
+      log('Lỗi khi đẩy lên GitHub: ' + (e.message || String(e)), 'error');
+    }finally{
+      pushBtn.disabled = false;
+    }
+  });
+
+  // ---------------- xử lý gửi lệnh ----------------
+  const form = document.getElementById('cmdForm');
+  const cmdInput = document.getElementById('cmdInput');
+  const hintInput = document.getElementById('hintInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  cmdInput.addEventListener('input', ()=>{
+    cmdInput.style.height = 'auto';
+    cmdInput.style.height = Math.min(160, cmdInput.scrollHeight) + 'px';
+  });
+
+  form.addEventListener('submit', async (ev)=>{
+    ev.preventDefault();
+    const instruction = cmdInput.value.trim();
+    if(!instruction) return;
+    const missingCore = !settings.repo || !settings.token;
+    const missingAi = settings.mode === 'fcc' ? !settings.fccUrl : !settings.anthropicKey;
+    if(missingCore || missingAi){
+      log('Chưa cấu hình đủ Repo/Token GitHub và nguồn AI — bấm ⚙️ Cấu hình trước.', 'error');
+      openSettings();
+      return;
+    }
+
+    log(instruction, 'user');
+    cmdInput.value = '';
+    cmdInput.style.height = '44px';
+    sendBtn.disabled = true;
+    clearPendingActions();
+
+    try{
+      log('Đang tải mã nguồn hiện tại từ GitHub (' + settings.repo + ')...', 'info');
+      const rawContent = await fetchGithubRawContent(settings);
+      log('Đã tải xong (' + rawContent.length.toLocaleString('vi-VN') + ' ký tự).', 'info');
+
+      const { stripped, map } = stripImages(rawContent);
+      if(map.length){
+        log('Đã tạm ẩn ' + map.length + ' ảnh nhúng base64 để giảm dung lượng gửi cho AI.', 'info');
+      }
+
+      const sliceInfo = buildContextSlice(stripped, hintInput.value);
+      if(sliceInfo.needHint){
+        log('File quá lớn để gửi toàn bộ cho AI đọc 1 lần (' + stripped.length.toLocaleString('vi-VN') + ' ký tự). Hãy điền ô "Từ khoá định vị" (1 đoạn text/id/class gần chỗ cần sửa) rồi gửi lại lệnh này.', 'error');
+        return;
+      }
+      if(sliceInfo.notFound){
+        log('Không tìm thấy từ khoá "' + hintInput.value.trim() + '" trong mã nguồn — thử 1 từ khoá khác.', 'error');
+        return;
+      }
+      if(sliceInfo.truncated){
+        log('File lớn — chỉ gửi ' + sliceInfo.matches + ' đoạn trích quanh từ khoá cho AI (không phải toàn bộ file).', 'info');
+      }
+
+      const modelLabel = settings.mode === 'fcc' ? (settings.fccModel || settings.model || 'claude-sonnet-5') + ' qua FCC' : (settings.model || 'claude-sonnet-5');
+      log('Đang gửi yêu cầu tới AI (' + modelLabel + ')...', 'info');
+      const edits = await callClaude(settings, sliceInfo, instruction);
+
+      if(!edits.length){
+        log('AI không xác định được thay đổi cụ thể nào cho yêu cầu này (có thể do đoạn trích chưa đủ ngữ cảnh). Thử mô tả rõ hơn hoặc đổi từ khoá định vị.', 'error');
+        return;
+      }
+
+      log('AI đề xuất ' + edits.length + ' chỉnh sửa:', 'info');
+      logDiff(edits);
+
+      const { working, results } = applyEdits(stripped, edits);
+      const failed = results.filter(r => r.status !== 'applied');
+      if(failed.length){
+        failed.forEach(f=>{
+          const reason = f.status === 'not_found' ? 'không tìm thấy đoạn cần sửa trong mã nguồn'
+            : f.status === 'ambiguous' ? ('đoạn cần sửa xuất hiện ' + f.count + ' lần, không xác định được vị trí duy nhất')
+            : 'dữ liệu chỉnh sửa không hợp lệ';
+          log('Bỏ qua 1 chỉnh sửa (' + reason + '): "' + String(f.old).slice(0,80) + '..."', 'error');
+        });
+        log('Có chỉnh sửa không áp dụng được — KHÔNG đẩy lên GitHub để tránh sửa nhầm. Hãy thử lại với mô tả/từ khoá rõ hơn.', 'error');
+        return;
+      }
+
+      const finalContent = restoreImages(working, map);
+      log('Đã áp dụng thành công ' + results.length + '/' + results.length + ' chỉnh sửa. Xem lại bên trên, sau đó chọn hành động bên dưới.', 'success');
+      showPendingActions(finalContent, (settings.path || 'index.html').split('/').pop());
+
+    }catch(e){
+      log(e.message || String(e), 'error');
+    }finally{
+      sendBtn.disabled = false;
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

@@ -129,6 +129,7 @@
     --shadow-card:0 14px 34px -14px rgba(35,40,73,.22);
     --shadow-soft:0 6px 16px -8px rgba(35,40,73,.18);
   }
+  html{scroll-behavior:smooth;}
   .storage-badge{
     font-size:.72rem; font-weight:600; padding:5px 10px; border-radius:999px;
     border:1.5px solid var(--paper-edge); background:var(--paper); color:var(--ink-soft);
@@ -10469,6 +10470,17 @@ ${chunk}
     setTimeout(()=>{ if(layer.parentNode) layer.remove(); }, 8200);
   }
 
+// Increase smoothness for the page
+(function(){
+  const style = document.createElement('style');
+  style.textContent = `
+    html { scroll-behavior: smooth; }
+    * { transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease; }
+    .rank-shine-wrap, .rank-progress-track, .rank-progress-fill, .dotnav-toggle, .qcard, .options button, .navbtn, .flag-btn, .lib-td-title, .lib-td-note, .lib-td-actions button { will-change: transform, opacity; }
+  `;
+  document.head.appendChild(style);
+})()
+
   // ---------------- Phân tích lỗi sai: độ khó & chủ đề liên quan (mục 1) ----------------
   // Đề không có sẵn dữ liệu "câu này thuộc bài nào", nên ta ước tính bằng 2 cách:
   // (a) Độ khó: dựa trên độ dài câu hỏi, số lượng phương án, dấu hiệu ca lâm sàng
@@ -11048,6 +11060,7 @@ a.dl:hover{background:#dfe2ff}
 .copybtn:active{opacity:.85}
 details.fallback{margin-top:22px;border:1px dashed #c8c8dd;border-radius:10px;padding:8px 14px;}
 details.fallback summary{cursor:pointer;font-weight:600;padding:6px 0;}
+html{scroll-behavior:smooth;}
 </style></head><body>`;
     if(hasOriginalFiles){
       html += `<h1>📎 Prompt cho AI — kèm sẵn toàn bộ tài liệu gốc bạn đã tải lên</h1>`;

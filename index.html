@@ -2708,7 +2708,7 @@
             <button class="feature-bell" id="featureBellBtn" type="button" title="Bấm để tự tạo yêu cầu gồm 3 lệnh cho Claude: (1) thêm 1 tính năng mới, (2) thêm 1 hiệu ứng cho web, (3) tăng độ mượt cho web — đồng thời tự mở Claude AI để bạn dán yêu cầu vào.">🔔 Đề xuất tính năng</button>
             <button class="tool-btn" id="diagBtn" type="button" title="Tạo báo cáo lỗi để nhờ Claude giúp sửa">🩺 Sửa lỗi</button>
             <button class="tool-btn" id="claudeCodeBtn" type="button" title="Mở Claude Code — gõ 1 câu lệnh để AI tự đọc và sửa trực tiếp mã nguồn file index.html trên GitHub (mở ở tab mới, cần cấu hình GitHub + Anthropic API key riêng)">🧑‍💻 Claude Code</button>
-            <button class="storage-badge local" id="storageStatusBadge" type="button" title="Bấm để khắc TOÀN BỘ đề đã lưu vào mã nguồn và tải về 1 file HTML mới. Web KHÔNG tự động lưu — bạn cần chủ động bấm nút này mỗi khi muốn lưu các thay đổi (thêm/xoá/sửa đề) vào mã nguồn." style="background:red;color:#fff;">🗄️ Lưu vào mã nguồn</button>
+            <button class="storage-badge local" id="storageStatusBadge" type="button" title="Bấm để khắc TOÀN BỘ đề đã lưu vào mã nguồn và tải về 1 file HTML mới. Web KHÔNG tự động lưu — bạn cần chủ động bấm nút này mỗi khi muốn lưu các thay đổi (thêm/xoá/sửa đề) vào mã nguồn." style="background:var(--yellow-soft);color:#8a6100;">🗄️ Lưu vào mã nguồn</button>
             <button class="storage-badge local" id="ghSettingsBtn" type="button" title="Cấu hình để web tự động đẩy đề mới lên GitHub (website công khai) mỗi khi lưu vào mã nguồn">🐙 GitHub</button>
           </div>
         </div>
@@ -4901,6 +4901,24 @@ window.__RANK_BADGES_RAW__={1:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlg
           }
         }catch(e){ /* bỏ qua nếu không đọc được */ }
       }, 0);
+      // Thay đổi màu nền theo nút GitHub
+      const ghBtn = document.getElementById('ghSettingsBtn');
+      if (ghBtn) {
+        const bg = window.getComputedStyle(ghBtn).backgroundColor;
+        badge.style.background = bg;
+        // Kiểm tra độ tương đối; nếu không đủ, điều chỉnh màu chữ
+        const contrastRatio = (() => {
+          const rgb = bg.match(/\d+/g).map(Number);
+          const r = rgb[0] / 255, g = rgb[1] / 255, b = rgb[2] / 255;
+          const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          return lum > 0.5 ? (1.05 / (lum + 0.05)) : ((lum * 1.05 + 0.05) / 0.05);
+        })();
+        if (contrastRatio < 4.5) {
+          badge.style.color = 'var(--ink)';
+        } else {
+          badge.style.color = '#fff';
+        }
+      };
     }
   })();
 

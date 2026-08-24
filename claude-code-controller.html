@@ -1,0 +1,3022 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧑‍💻 Claude Code — Bộ điều khiển</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0714;
+  --bg-2:#0e0a1c;
+  --panel:#17102e;
+  --panel-2:#1f1740;
+  --panel-hover:#281d51;
+  --border:#3d2a6b;
+  --border-soft:#2b1e53;
+  --text:#f4eefe;
+  --muted:#ab9cd4;
+  --accent:#a855f7;
+  --accent-2:#e879f9;
+  --accent-3:#7c3aed;
+  --accent-soft:rgba(168,85,247,.18);
+  --green:#34e0a1;
+  --green-soft:rgba(52,224,161,.14);
+  --red:#fb7185;
+  --red-soft:rgba(251,113,133,.14);
+  --blue:#38bdf8;
+  --blue-soft:rgba(56,189,248,.14);
+  --gold:#fbbf24;
+  --gold-soft:rgba(251,191,36,.14);
+  --radius-lg:18px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow-soft:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lift:0 12px 36px rgba(88,20,160,.35);
+}
+*{box-sizing:border-box;}
+::selection{ background:var(--accent-soft); color:var(--text); }
+body{
+  margin:0; color:var(--text);
+  background:
+    radial-gradient(1200px 620px at 10% -12%, rgba(168,85,247,.38), transparent 62%),
+    radial-gradient(1000px 560px at 105% -5%, rgba(232,121,249,.28), transparent 58%),
+    radial-gradient(900px 620px at 50% 115%, rgba(56,189,248,.16), transparent 60%),
+    radial-gradient(700px 400px at 85% 40%, rgba(251,191,36,.06), transparent 55%),
+    var(--bg);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  display:flex; flex-direction:column; min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+code, .mono{ font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 22px; border-bottom:1px solid var(--border-soft);
+  background:linear-gradient(180deg, rgba(23,16,46,.92), rgba(14,10,28,.85));
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20;
+}
+header::after{
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  background:linear-gradient(90deg, var(--accent-3), var(--accent), var(--accent-2), var(--blue));
+  opacity:.75;
+}
+header .brand{ display:flex; align-items:center; gap:12px; }
+header .header-actions{ display:flex; gap:8px; }
+header .brand-icon{
+  width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+  font-size:19px; background:linear-gradient(145deg, var(--accent-2), var(--accent) 55%, var(--accent-3));
+  box-shadow:0 4px 18px rgba(168,85,247,.5), 0 0 0 1px rgba(232,121,249,.25) inset;
+  flex-shrink:0; overflow:hidden;
+}
+header .brand-icon img{ width:100%; height:100%; object-fit:cover; display:block; }
+header h1{ font-size:19px; margin:0; font-weight:800; letter-spacing:-.01em; }
+header .brand-title{
+  background:linear-gradient(90deg, var(--blue), var(--accent-2), var(--accent-3), var(--blue));
+  background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:brandTitleShift 5s linear infinite;
+}
+@keyframes brandTitleShift{
+  0%{ background-position:0% 50%; }
+  100%{ background-position:300% 50%; }
+}
+header button{
+  background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  padding:8px 14px; border-radius:10px; cursor:pointer; font:inherit; font-weight:600; font-size:12.5px;
+  transition:all .15s ease;
+}
+header button:hover{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); transform:translateY(-1px); }
+header button#revertBtn:hover{ border-color:var(--gold); color:var(--gold); background:var(--gold-soft); }
+main{ flex:1; display:flex; flex-direction:column; max-width:900px; width:100%; margin:0 auto; padding:22px 20px 120px; }
+#log{
+  flex:1; font-size:13.5px; line-height:1.6; word-break:break-word;
+  padding-bottom:16px; display:flex; flex-direction:column; gap:10px;
+}
+#log .line{
+  margin:0; padding:10px 14px; border-radius:var(--radius-md); white-space:pre-wrap;
+  animation:fadeIn .25s ease;
+}
+@keyframes fadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+#log .l-user{
+  color:#fff; background:linear-gradient(135deg, var(--accent-2), var(--accent) 60%, var(--accent-3));
+  align-self:flex-end; max-width:88%; box-shadow:0 4px 18px rgba(168,85,247,.4); font-weight:500;
+}
+#log .l-info{ color:var(--muted); background:var(--panel); border:1px solid var(--border-soft); font-size:12.5px; }
+#log .l-ai{ color:var(--text); background:var(--panel); border:1px solid var(--border-soft); }
+#log .l-success{ color:var(--green); background:var(--green-soft); border:1px solid rgba(74,222,128,.25); font-weight:600; }
+#log .l-error{ color:var(--red); background:var(--red-soft); border:1px solid rgba(248,113,113,.28); font-weight:600; }
+#log .l-error::before{ content:"✗ "; }
+#log .l-success::before{ content:"✓ "; }
+.diff-box{
+  border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin:0;
+  background:var(--panel-2); font-size:12.5px; box-shadow:var(--shadow-soft);
+}
+.diff-box .old{
+  color:#ffb4ac; background:rgba(248,113,113,.12); padding:6px 9px; border-radius:6px; display:block;
+  white-space:pre-wrap; margin-bottom:6px; font-family:'JetBrains Mono',monospace; border-left:3px solid var(--red);
+}
+.diff-box .new{
+  color:#9beeb8; background:rgba(74,222,128,.1); padding:6px 9px; border-radius:6px; display:block;
+  white-space:pre-wrap; font-family:'JetBrains Mono',monospace; border-left:3px solid var(--green);
+}
+.quote-reply-btn{
+  position:absolute; z-index:60; transform:translate(-50%,-100%);
+  display:none; align-items:center; gap:6px;
+  background:linear-gradient(135deg, var(--accent-2), var(--accent) 65%, var(--accent-3));
+  color:#fff; border:none; border-radius:999px; padding:9px 16px 9px 14px;
+  font:inherit; font-size:12.5px; font-weight:700; cursor:pointer;
+  box-shadow:0 6px 20px rgba(168,85,247,.5); white-space:nowrap;
+  animation:quoteBtnPop .15s cubic-bezier(.2,.8,.2,1);
+}
+.quote-reply-btn.show{ display:inline-flex; }
+.quote-reply-btn svg{ width:14px; height:14px; flex-shrink:0; }
+.quote-reply-btn:hover{ box-shadow:0 8px 26px rgba(168,85,247,.62); transform:translate(-50%,-100%) translateY(-1px); }
+.quote-reply-btn:active{ transform:translate(-50%,-100%) scale(.96); }
+@keyframes quoteBtnPop{
+  from{ opacity:0; transform:translate(-50%,-92%) scale(.9); }
+  to{ opacity:1; transform:translate(-50%,-100%) scale(1); }
+}
+.pending-actions{
+  display:flex; gap:10px; flex-wrap:wrap; margin:4px 0 18px;
+}
+.pending-actions button{
+  font:inherit; font-size:13px; font-weight:600; padding:0 18px; height:44px; border-radius:var(--radius-sm);
+  cursor:pointer; border:1px solid var(--border); transition:all .18s cubic-bezier(.2,.8,.2,1);
+  background:var(--panel-2); color:var(--text);
+  display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+}
+.pending-actions button svg{ width:16px; height:16px; flex-shrink:0; }
+.pending-actions button:hover{ transform:translateY(-2px); box-shadow:var(--shadow-soft); }
+.pending-actions button:active{ transform:translateY(0) scale(.97); }
+#pushBtn{ background:linear-gradient(135deg, var(--accent-2), var(--accent) 65%, var(--accent-3)); color:#fff; border-color:transparent; font-weight:700; box-shadow:0 4px 18px rgba(168,85,247,.45); }
+#pushBtn:hover{ box-shadow:0 10px 28px rgba(168,85,247,.55); }
+#downloadBtn{
+  background:linear-gradient(135deg, rgba(56,189,248,.22), rgba(56,189,248,.08));
+  color:var(--blue); border-color:rgba(56,189,248,.38); font-weight:700;
+}
+#downloadBtn svg{ transition:transform .28s cubic-bezier(.34,1.56,.64,1); }
+#downloadBtn:hover{
+  background:linear-gradient(135deg, rgba(56,189,248,.34), rgba(56,189,248,.12));
+  border-color:var(--blue); box-shadow:0 6px 20px rgba(56,189,248,.28);
+}
+#downloadBtn:hover svg{ transform:translateY(2px); animation:downloadBounce .7s ease-in-out infinite; }
+#downloadBtn:active{ transform:translateY(0) scale(.97); }
+@keyframes downloadBounce{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(3px); }
+}
+#cancelBtn{ background:transparent; color:var(--red); border-color:rgba(248,113,113,.35); }
+#cancelBtn:hover{ background:var(--red-soft); }
+#showFullBtn{ background:transparent; color:var(--blue); border-color:rgba(123,184,240,.35); }
+#showFullBtn:hover{ background:var(--blue-soft); }
+#previewBtn{
+  background:linear-gradient(135deg, rgba(52,224,161,.22), rgba(52,224,161,.08));
+  color:var(--green); border-color:rgba(52,224,161,.4); font-weight:700;
+}
+#previewBtn:hover{ background:linear-gradient(135deg, rgba(52,224,161,.34), rgba(52,224,161,.12)); border-color:var(--green); box-shadow:0 6px 20px rgba(52,224,161,.28); }
+.modal.full{ max-width:1140px; width:96vw; height:90vh; display:flex; flex-direction:column; }
+.modal.full .actions{ margin-top:12px; flex-shrink:0; }
+#previewFrame{
+  flex:1; width:100%; min-height:0; border:1px solid var(--border); border-radius:var(--radius-md);
+  background:#fff; box-shadow:var(--shadow-soft);
+}
+form#cmdForm{
+  position:fixed; bottom:0; left:0; right:0;
+  background:linear-gradient(180deg, rgba(10,7,20,0), rgba(10,7,20,.96) 30%);
+  padding:18px 18px 20px; display:flex; flex-direction:column; gap:8px; align-items:center;
+}
+form#cmdForm .inner{
+  max-width:900px; width:100%; display:flex; flex-direction:column; gap:8px;
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:10px; box-shadow:var(--shadow-lift);
+}
+.attach-list{ display:none; flex-wrap:wrap; gap:8px; padding:2px 4px 0; }
+.attach-chip{
+  display:flex; align-items:center; gap:6px; background:var(--panel-2); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:5px 9px; font-size:11.5px; color:var(--text); max-width:220px;
+}
+.attach-chip img{ width:26px; height:26px; object-fit:cover; border-radius:5px; flex-shrink:0; }
+.attach-chip .ficon{ font-size:14px; flex-shrink:0; }
+.attach-chip .fname{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px; }
+.attach-chip .rmBtn{
+  background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:0 2px; line-height:1;
+}
+.attach-chip .rmBtn:hover{ color:var(--red); }
+.cmd-row{ display:flex; gap:8px; align-items:flex-end; }
+#attachBtn{
+  flex-shrink:0; width:42px; height:42px; background:var(--panel-2); border:1px solid var(--border);
+  color:var(--muted); border-radius:var(--radius-sm); cursor:pointer; transition:all .15s ease;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+#attachBtn svg{ width:19px; height:19px; transition:transform .2s cubic-bezier(.34,1.56,.64,1); }
+#attachBtn:hover{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); }
+#attachBtn:hover svg{ transform:rotate(90deg); }
+#attachBtn:active svg{ transform:rotate(90deg) scale(.88); }
+.cmd-row textarea{
+  flex:1; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  padding:11px 12px; border-radius:var(--radius-sm); font:inherit; font-size:14px;
+  resize:vertical; height:44px; min-height:44px; max-height:60vh;
+  line-height:1.4; transition:border-color .15s ease, height .12s ease;
+  scrollbar-width:thin; scrollbar-color:var(--border) var(--panel-2);
+}
+.cmd-row textarea::placeholder{ color:#5a6275; }
+.cmd-row textarea:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.cmd-row textarea::-webkit-scrollbar{ width:10px; }
+.cmd-row textarea::-webkit-scrollbar-track{ background:var(--panel-2); border-radius:var(--radius-sm); }
+.cmd-row textarea::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; border:2px solid var(--panel-2); }
+.cmd-row textarea::-webkit-scrollbar-thumb:hover{ background:var(--muted); }
+.cmd-row textarea::-webkit-scrollbar-button{ display:none; height:0; width:0; }
+.cmd-row textarea::-webkit-resizer{
+  background-color:var(--panel-2);
+  background-image:linear-gradient(135deg, transparent 0 45%, var(--border) 45% 55%, transparent 55% 100%),
+                    linear-gradient(135deg, transparent 0 65%, var(--border) 65% 75%, transparent 75% 100%);
+  background-repeat:no-repeat; background-position:bottom right; background-size:9px 9px;
+}
+.cmd-row button{
+  background:linear-gradient(135deg, var(--accent-2), var(--accent) 65%, var(--accent-3)); color:#fff; border:none; border-radius:var(--radius-sm); padding:0 20px;
+  font-weight:700; cursor:pointer; font-size:13.5px; height:44px; box-shadow:0 4px 18px rgba(168,85,247,.45);
+  transition:transform .15s ease, opacity .15s ease;
+}
+.cmd-row button:hover:not(:disabled){ transform:translateY(-1px); }
+.cmd-row button:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; }
+.cmd-row button svg{ width:15px; height:15px; flex-shrink:0; }
+#sendBtn{ display:inline-flex; align-items:center; gap:8px; }
+#stopBtn{
+  flex-shrink:0; position:relative; display:inline-flex; align-items:center; gap:8px;
+  background:linear-gradient(135deg, rgba(251,113,133,.24), rgba(251,113,133,.1));
+  color:var(--red); border:1px solid rgba(248,113,113,.5);
+  border-radius:var(--radius-sm); padding:0 18px; font-weight:700; cursor:pointer; font-size:13.5px; height:44px;
+  transition:background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+  box-shadow:0 0 0 0 rgba(251,113,133,.35);
+  animation:stopGlow 2.2s ease-in-out infinite;
+}
+#stopBtn svg{ width:15px; height:15px; }
+#stopBtn:hover{
+  background:linear-gradient(135deg, rgba(251,113,133,.36), rgba(251,113,133,.14));
+  border-color:var(--red); transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(251,113,133,.32);
+}
+#stopBtn:active{ transform:translateY(0) scale(.97); }
+#stopBtn .stop-ring{ display:none; }
+@keyframes stopGlow{
+  0%, 100%{ box-shadow:0 0 0 0 rgba(251,113,133,.32); }
+  50%{ box-shadow:0 0 0 6px rgba(251,113,133,0); }
+}
+.progress-wrap{ height:3px; border-radius:3px; background:var(--border-soft); overflow:hidden; margin:2px 4px 0; }
+.progress-bar{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transition:width .25s ease; }
+.helper-text{ font-size:11px; color:var(--muted); padding:0 6px 2px; }
+/* ---- modal cài đặt ---- */
+.overlay{
+  position:fixed; inset:0; background:rgba(9,5,20,.78); backdrop-filter:blur(4px); display:none;
+  align-items:center; justify-content:center; z-index:50; padding:16px;
+}
+.overlay.show{ display:flex; }
+.modal{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:24px; max-width:460px; width:100%; max-height:90vh; overflow:auto; box-shadow:var(--shadow-lift);
+}
+.modal h2{ margin:0 0 6px; font-size:16px; font-weight:700; }
+.modal p.desc{ color:var(--muted); font-size:12.5px; margin:0 0 16px; line-height:1.6; }
+.modal label{ display:block; font-size:12px; color:var(--muted); margin:14px 0 5px; font-weight:600; }
+.modal input, .modal select{
+  width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  padding:9px 11px; border-radius:var(--radius-sm); font:inherit; font-size:13px; transition:border-color .15s ease;
+}
+.modal input:focus, .modal select:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.modal textarea{
+  width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  padding:10px 12px; border-radius:var(--radius-sm); font:inherit; font-size:13.5px; line-height:1.55;
+  resize:vertical; min-height:110px; transition:border-color .15s ease;
+  scrollbar-width:thin; scrollbar-color:var(--border) var(--panel-2);
+}
+.modal textarea:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.modal textarea::-webkit-scrollbar{ width:10px; }
+.modal textarea::-webkit-scrollbar-track{ background:var(--panel-2); border-radius:var(--radius-sm); }
+.modal textarea::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; border:2px solid var(--panel-2); }
+.modal textarea::-webkit-scrollbar-thumb:hover{ background:var(--muted); }
+.modal textarea::-webkit-scrollbar-button{ display:none; height:0; width:0; }
+.modal textarea::-webkit-resizer{
+  background-color:var(--panel-2);
+  background-image:linear-gradient(135deg, transparent 0 45%, var(--border) 45% 55%, transparent 55% 100%),
+                    linear-gradient(135deg, transparent 0 65%, var(--border) 65% 75%, transparent 75% 100%);
+  background-repeat:no-repeat; background-position:bottom right; background-size:9px 9px;
+}
+.modal.wide{ max-width:620px; }
+.modal .hint-box{ color:var(--muted); font-size:12px; margin-top:10px; padding:9px 11px; border-radius:var(--radius-sm); background:var(--panel-2); border:1px solid var(--border-soft); line-height:1.6; }
+.modal .link-btn{ background:none; border:none; color:var(--accent-2); font-size:12px; font-weight:600; cursor:pointer; padding:0; margin-top:8px; text-decoration:underline; }
+.modal .row2{ display:flex; gap:8px; }
+.modal .row2 > div{ flex:1; }
+.checkbox-label{
+  display:flex !important; align-items:flex-start; gap:9px; margin:16px 0 4px !important;
+  font-size:12.5px !important; color:var(--text) !important; font-weight:500 !important;
+  background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:10px 12px; cursor:pointer; line-height:1.5;
+}
+.checkbox-label input[type="checkbox"]{
+  width:16px; height:16px; margin-top:1px; flex-shrink:0; accent-color:var(--accent);
+}
+.modal .actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+.modal .actions button{
+  padding:9px 18px; border-radius:var(--radius-sm); font:inherit; font-weight:600; font-size:13px; cursor:pointer; border:1px solid var(--border);
+  transition:all .15s ease;
+}
+#settingsSave{ background:linear-gradient(135deg, var(--accent-2), var(--accent) 65%, var(--accent-3)); border-color:transparent; color:#fff; font-weight:700; }
+#settingsSave:hover{ transform:translateY(-1px); box-shadow:0 4px 18px rgba(168,85,247,.45); }
+#settingsCancel{ background:transparent; color:var(--text); }
+#settingsCancel:hover{ background:var(--panel-2); }
+.err-box{ color:var(--red); font-size:12px; margin-top:10px; padding:8px 10px; border-radius:var(--radius-sm); background:var(--red-soft); display:none; }
+/* ---- bộ nhớ dự án (persistent memory) ---- */
+.mem-toolbar{ display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+.mem-toolbar input[type="search"]{
+  flex:1; min-width:160px; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  padding:9px 11px; border-radius:var(--radius-sm); font:inherit; font-size:13px;
+}
+.mem-toolbar input[type="search"]:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.mem-toolbar button{
+  background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:var(--radius-sm);
+  padding:8px 12px; font:inherit; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;
+}
+.mem-toolbar button:hover{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); }
+.mem-toolbar button.danger{ color:var(--red); }
+.mem-toolbar button.danger:hover{ background:var(--red-soft); border-color:var(--red); }
+#memoryList{ display:flex; flex-direction:column; gap:8px; max-height:52vh; overflow:auto; }
+.mem-empty{ color:var(--muted); font-size:12.5px; padding:14px 4px; text-align:center; }
+.mem-entry{ background:var(--panel-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:10px 12px; cursor:pointer; }
+.mem-entry:hover{ border-color:var(--border); }
+.mem-entry .mem-head{ display:flex; align-items:center; gap:8px; justify-content:space-between; }
+.mem-entry .mem-time{ color:var(--muted); font-size:11px; font-family:'JetBrains Mono',monospace; flex-shrink:0; }
+.mem-entry .mem-instruction{ font-size:13px; margin:5px 0 0; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+.mem-badge{ font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px; flex-shrink:0; }
+.mem-badge.ok{ color:var(--green); background:var(--green-soft); }
+.mem-badge.pushed{ color:var(--blue); background:var(--blue-soft); }
+.mem-badge.err{ color:var(--red); background:var(--red-soft); }
+.mem-entry .mem-diffs{ display:none; margin-top:8px; border-top:1px solid var(--border-soft); padding-top:8px; }
+.mem-entry.open .mem-diffs{ display:block; }
+.mem-entry .mem-diff-row{ font-size:11.5px; font-family:'JetBrains Mono',monospace; margin-bottom:5px; word-break:break-word; }
+.mem-entry .mem-diff-row .old{ color:var(--red); display:block; }
+.mem-entry .mem-diff-row .new{ color:var(--green); display:block; }
+.mem-count{ color:var(--muted); font-size:11.5px; margin-bottom:10px; }
+#outlineList{ display:flex; flex-direction:column; gap:6px; max-height:56vh; overflow:auto; }
+.outline-item{ background:var(--panel-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:9px 12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.outline-item:hover{ border-color:var(--accent); background:var(--accent-soft); }
+.outline-item .outline-name{ font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--text); }
+.outline-item .outline-meta{ font-size:11px; color:var(--muted); white-space:nowrap; flex-shrink:0; }
+</style>
+</head>
+<body>
+<header>
+<div class="brand">
+<div class="brand-icon"><img src="data:image/jpeg;base64,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" alt="logo"></div>
+<div>
+<h1 class="brand-title">Claude Code</h1>
+</div>
+</div>
+<div class="header-actions">
+<button id="refreshBtn" type="button" title="Bỏ bộ nhớ đệm, tải lại mã nguồn mới nhất từ GitHub cho lệnh kế tiếp">🔄 Tải lại</button>
+<button id="revertBtn" type="button" title="Tự động đưa file trên GitHub trở về ĐÚNG BẢN TRƯỚC lệnh gần nhất đã đẩy lên — dùng khi Claude Code sửa sai mã nguồn. Có thể bấm nhiều lần để lùi thêm vài bước trước đó.">↩️ Hoàn tác</button>
+<button id="outlineBtn" type="button" title="Xem bản đồ cấu trúc file (danh sách hàm và quan hệ gọi nhau) — dựng lại sau mỗi lệnh vừa gửi">🧭 Cấu trúc</button>
+<button id="memoryBtn" type="button" title="Xem lịch sử các lệnh đã sửa cho dự án này — dùng làm ngữ cảnh cho AI ở các lần sau">🧠 Bộ nhớ</button>
+<button id="settingsBtn" type="button">⚙️ Cấu hình</button>
+</div>
+</header>
+<main>
+<div id="log"></div>
+<div id="pendingActions" class="pending-actions" style="display:none;">
+<button id="pushBtn" type="button">
+<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.75c-5.66 0-10.25 4.59-10.25 10.25 0 4.53 2.94 8.37 7.01 9.72.51.1.7-.22.7-.49 0-.24-.01-1.03-.01-1.87-2.85.62-3.46-1.22-3.46-1.22-.47-1.19-1.14-1.5-1.14-1.5-.93-.64.07-.63.07-.63 1.03.07 1.57 1.06 1.57 1.06.92 1.57 2.4 1.12 2.99.86.09-.67.36-1.12.65-1.38-2.27-.26-4.66-1.14-4.66-5.07 0-1.12.4-2.03 1.05-2.75-.1-.26-.46-1.3.1-2.71 0 0 .86-.28 2.82 1.05a9.7 9.7 0 0 1 5.14 0c1.96-1.33 2.82-1.05 2.82-1.05.56 1.41.2 2.45.1 2.71.65.72 1.05 1.63 1.05 2.75 0 3.94-2.4 4.8-4.68 5.06.37.32.7.94.7 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.19.6.71.49a10.26 10.26 0 0 0 7-9.72c0-5.66-4.59-10.25-10.25-10.25Z"/></svg>
+Đẩy lên GitHub</button>
+<button id="previewBtn" type="button">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
+Xem trước giao diện</button>
+<button id="downloadBtn" type="button">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 17.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5"/></svg>
+Tải file mới về máy</button>
+<button id="showFullBtn" type="button">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7.5 11-7.5S23 12 23 12s-4 7.5-11 7.5S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+Xem mã nguồn</button>
+<button id="cancelBtn" type="button">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+Huỷ thay đổi này</button>
+</div>
+</main>
+<form id="cmdForm">
+<div class="inner">
+<div id="attachList" class="attach-list"></div>
+<div class="cmd-row">
+<button id="attachBtn" type="button" title="Đính kèm ảnh / file văn bản">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+<textarea id="cmdInput" placeholder="Mô tả điều bạn muốn thay đổi bằng lời văn bình thường, vd: Đổi màu nút Lưu sang xanh lá cây... (có thể dán/kéo-thả ảnh vào đây)" rows="1"></textarea>
+<input id="fileInput" type="file" multiple style="display:none;">
+<button id="stopBtn" type="button" style="display:none;" title="Dừng lệnh đang xử lý">
+<span class="stop-ring"></span>
+<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
+Dừng</button>
+<button id="sendBtn" type="submit">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg>
+Gửi lệnh</button>
+</div>
+<div id="progressWrap" class="progress-wrap" style="display:none;"><div id="progressBar" class="progress-bar"></div></div>
+</div>
+</form>
+<div class="overlay" id="settingsOverlay">
+<div class="modal">
+<h2>⚙️ Cấu hình Claude Code</h2>
+<p class="desc">Cần Personal Access Token GitHub (quyền Contents: Read & write cho repo chứa index.html) và 1 Anthropic API key (console.anthropic.com). Lưu cục bộ trên trình duyệt này.</p>
+<label for="s_repo">Repo GitHub (tài-khoản/tên-repo)</label>
+<input id="s_repo" placeholder="vd: nguyenvana/de-thi-y-hoc">
+<div class="row2">
+<div>
+<label for="s_branch">Nhánh (branch)</label>
+<input id="s_branch" placeholder="main">
+</div>
+<div>
+<label for="s_path">Đường dẫn file</label>
+<input id="s_path" placeholder="index.html">
+</div>
+</div>
+<label for="s_token">GitHub Personal Access Token</label>
+<input id="s_token" type="password" placeholder="github_pat_xxxxxxxx...">
+<label for="s_mode">Nguồn AI</label>
+<select id="s_mode">
+<option value="api">🔑 Anthropic API key (trả phí)</option>
+<option value="fcc">🖥️ Free Claude Code — proxy chạy trên máy tôi (miễn phí)</option>
+</select>
+<div id="apiFields">
+<label for="s_key">Anthropic API key</label>
+<input id="s_key" type="password" placeholder="sk-ant-xxxxxxxx...">
+<label for="s_model">Model thực thi (đọc mã nguồn &amp; sửa code)</label>
+<input id="s_model" placeholder="claude-sonnet-5">
+<label for="s_smart_model">Model thông minh (dùng riêng cho bước "làm rõ yêu cầu" &amp; "tự kiểm tra") — nên để model mạnh nhất bạn có quyền dùng</label>
+<input id="s_smart_model" placeholder="claude-opus-4-8">
+</div>
+<div id="fccFields" style="display:none;">
+<label for="s_fcc_url">Địa chỉ FCC server (fcc-server đang chạy)</label>
+<input id="s_fcc_url" placeholder="http://localhost:8082">
+<label for="s_fcc_token">Proxy Auth Token (bỏ trống nếu chưa bật "Proxy Authentication" trong Admin UI của FCC)</label>
+<input id="s_fcc_token" type="password" placeholder="vd: freecc">
+<label for="s_fcc_model">Model thực thi (đúng chuỗi provider/model đã cấu hình trong FCC)</label>
+<input id="s_fcc_model" placeholder="vd: nvidia_nim/nvidia/nemotron-3-super-120b-a12b">
+<label for="s_fcc_smart_model">Model thông minh cho "làm rõ yêu cầu" &amp; "tự kiểm tra" (để trống = dùng chung Model thực thi ở trên)</label>
+<input id="s_fcc_smart_model" placeholder="vd: anthropic/claude-opus-4-8 (nếu FCC có cấu hình sẵn)">
+<p class="desc" style="margin-top:8px;">Cần chạy <code>fcc-server</code> trên MÁY BẠN đang mở trang này, và cần bật CORS trong FCC (patch 3 dòng vào <code>app.py</code> — xem hướng dẫn kèm theo file này). "Suy luận sâu" bên dưới cũng được thử áp dụng qua FCC — nếu model/proxy không hỗ trợ, hệ thống tự phát hiện và tắt đi, không cần chỉnh gì thêm.</p>
+</div>
+<label class="checkbox-label" for="s_auto_refine">
+<input id="s_auto_refine" type="checkbox">
+<span>🧠 Tự động "dịch" yêu cầu của bạn thành mô tả kỹ thuật rõ ràng, chi tiết trước khi sửa (giúp AI hiểu đúng ý hơn, giảm hiểu nhầm — khuyên dùng, tốn thêm 1 lượt gọi AI mỗi lệnh)</span>
+</label>
+<label class="checkbox-label" for="s_confirm_refine">
+<input id="s_confirm_refine" type="checkbox">
+<span>✋ Cho tôi xem lại (và có thể sửa tay) bản mô tả kỹ thuật đã "làm rõ" TRƯỚC KHI AI bắt đầu sửa code (mặc định TẮT — để mọi thứ chạy hoàn toàn tự động, chỉ bật lại nếu bạn muốn tự soát trước mỗi lệnh)</span>
+</label>
+<label class="checkbox-label" for="s_deep_thinking">
+<input id="s_deep_thinking" type="checkbox">
+<span>🧩 Bật "suy luận sâu" (Extended Thinking) cho AI ở các bước làm rõ yêu cầu / sửa code / tự kiểm tra — tăng đáng kể độ chính xác khi đọc hiểu yêu cầu và định vị đúng chỗ cần sửa, đổi lại phản hồi chậm hơn 1 chút. Áp dụng cho cả Anthropic API lẫn FCC/proxy cục bộ — nếu model/proxy đang dùng không hỗ trợ, hệ thống tự động phát hiện và tắt riêng cho lượt gọi đó, không cần bạn tự tắt tuỳ chọn này.</span>
+</label>
+<label class="checkbox-label" for="s_auto_verify">
+<input id="s_auto_verify" type="checkbox">
+<span>🔍 Tự động kiểm tra lại sau khi sửa, và tự sửa tiếp nếu chưa đúng yêu cầu (khuyên dùng — tốn thêm 1-3 lượt gọi AI mỗi lệnh)</span>
+</label>
+<label class="checkbox-label" for="s_auto_push">
+<input id="s_auto_push" type="checkbox">
+<span>🚀 Tự động đẩy thẳng lên GitHub ngay khi sửa xong và tự-kiểm-tra đạt yêu cầu — KHÔNG cần bấm nút gì thêm. Đây là tuỳ chọn giúp mọi thứ chạy tự động hoàn toàn: bạn chỉ cần gõ 1 câu lệnh, còn lại (đọc file → hiểu cấu trúc → sửa → tự kiểm tra → đẩy lên GitHub) đều tự làm hết, giống hệt trải nghiệm của Claude Code thật. Tắt tuỳ chọn này nếu bạn muốn tự xem lại và bấm "🚀 Đẩy lên GitHub" bằng tay trước khi thay đổi có hiệu lực.</span>
+</label>
+<label class="checkbox-label" for="s_memory_enabled">
+<input id="s_memory_enabled" type="checkbox">
+<span>🧠 Lưu "bộ nhớ dự án" — ghi lại lịch sử các lệnh đã gửi cho repo này ngay trên trình duyệt (xem/xoá/xuất trong nút 🧠 Bộ nhớ ở góc trên). Mẹo: bọc phần nào không muốn lưu vào &lt;private&gt;...&lt;/private&gt; trong ô nhập lệnh — phần đó vẫn được gửi cho AI để xử lý như bình thường, chỉ KHÔNG được ghi vào bộ nhớ.</span>
+</label>
+<label class="checkbox-label" for="s_memory_context">
+<input id="s_memory_context" type="checkbox">
+<span>📎 Tự động đưa vài lệnh gần nhất trong "bộ nhớ dự án" vào làm ngữ cảnh cho AI ở lệnh kế tiếp, giúp AI hiểu mạch việc đang làm qua nhiều lần sửa (chỉ có tác dụng khi mục 🧠 ở trên đang bật).</span>
+</label>
+<div class="err-box" id="settingsErr"></div>
+<div class="actions">
+<button id="settingsCancel" type="button">Đóng</button>
+<button id="settingsSave" type="button">Lưu cấu hình</button>
+</div>
+</div>
+</div>
+<div class="overlay" id="refineConfirmOverlay">
+<div class="modal wide">
+<h2>🧠 Xác nhận mô tả kỹ thuật trước khi sửa code</h2>
+<p class="desc">AI đã "dịch" lệnh của bạn thành bản mô tả kỹ thuật chi tiết hơn bên dưới — đây chính là nội dung sẽ được dùng để sửa code. Đọc lại và <b>sửa trực tiếp trong ô này</b> nếu AI hiểu chưa đúng ý bạn, rồi bấm "Tiếp tục sửa code".</p>
+<textarea id="refineConfirmText" rows="6"></textarea>
+<div class="hint-box" id="refineOriginalHint"></div>
+<button type="button" class="link-btn" id="refineUseOriginalBtn">↺ Bỏ qua bản làm rõ, dùng nguyên câu lệnh gốc của tôi</button>
+<div class="err-box" id="refineConfirmErr">⚠️ Nội dung không được để trống.</div>
+<div class="actions">
+<button id="refineCancelBtn" type="button">Huỷ lệnh này</button>
+<button id="refineContinueBtn" type="button">Tiếp tục sửa code →</button>
+</div>
+</div>
+</div>
+<div class="overlay" id="memoryOverlay">
+<div class="modal wide">
+<h2>🧠 Bộ nhớ dự án</h2>
+<p class="desc" id="memoryRepoLabel">Lịch sử các lệnh đã gửi cho repo này, lưu ngay trên trình duyệt (localStorage) — KHÔNG gửi lên đâu khác. Vài lệnh gần nhất có thể được tự động đưa vào làm ngữ cảnh cho AI ở lần sửa kế tiếp (bật/tắt trong ⚙️ Cấu hình). Bọc đoạn nào không muốn lưu vào &lt;private&gt;...&lt;/private&gt; khi gõ lệnh.</p>
+<div class="mem-toolbar">
+<input id="memorySearch" type="search" placeholder="🔍 Tìm trong lịch sử (theo nội dung lệnh)...">
+<button id="memoryExportBtn" type="button">⬇️ Xuất .json</button>
+<button id="memoryImportBtn" type="button">⬆️ Nhập .json</button>
+<button id="memoryClearBtn" type="button" class="danger">🗑️ Xoá hết</button>
+</div>
+<input id="memoryImportInput" type="file" accept="application/json" style="display:none;">
+<div class="mem-count" id="memoryCount"></div>
+<div id="memoryList"></div>
+<div class="actions">
+<button id="memoryCloseBtn" type="button">Đóng</button>
+</div>
+</div>
+</div>
+<div class="overlay" id="previewOverlay">
+<div class="modal full">
+<h2>👁️ Xem trước giao diện sau khi sửa</h2>
+<p class="desc">Bản xem trước được dựng trực tiếp từ mã nguồn MỚI (chưa đẩy lên GitHub) — thử bấm/gõ trong khung bên dưới sẽ không ảnh hưởng tới file thật, chỉ để bạn kiểm tra trước khi đẩy lên.</p>
+<iframe id="previewFrame" title="Xem trước giao diện" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
+<div class="actions">
+<button id="previewCloseBtn" type="button">Đóng</button>
+</div>
+</div>
+</div>
+<div class="overlay" id="outlineOverlay">
+<div class="modal wide">
+<h2>🧭 Bản đồ cấu trúc file</h2>
+<p class="desc" id="outlineDesc">Danh sách các hàm JS phát hiện được trong file (dựng lại tự động sau mỗi lệnh gửi), cùng số hàm khác gọi tới nó / được nó gọi — giúp bạn thấy trước ảnh hưởng trước khi ra lệnh sửa. Bấm 1 hàm để chèn tên hàm đó vào ô lệnh.</p>
+<div id="outlineList"></div>
+<div class="actions">
+<button id="outlineCloseBtn" type="button">Đóng</button>
+</div>
+</div>
+</div>
+<script>
+(function(){
+'use strict';
+
+// ---------------- cấu hình lưu trong localStorage ----------------
+const SETTINGS_KEY = 'claudeCodeControllerSettings_v1';
+function loadSettings(){
+  try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveSettings(cfg){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(cfg)); }
+let settings = loadSettings();
+
+
+// ---------------- bộ nhớ dự án (persistent memory, lấy cảm hứng từ claude-mem) ----------------
+// Lưu lịch sử các lệnh + kết quả sửa cho TỪNG repo (theo repo@branch:path) ngay trên trình duyệt,
+// để lần mở trang sau (hoặc lệnh tiếp theo) AI vẫn "nhớ" mạch việc đang làm cho đúng dự án đó.
+const MEMORY_KEY = 'claudeCodeControllerMemory_v1';
+const MEMORY_MAX_PER_REPO = 200;   // tránh phình localStorage vô hạn — chỉ giữ N lệnh gần nhất/repo
+const MEMORY_CONTEXT_LIMIT = 6;    // số lệnh gần nhất đưa vào làm ngữ cảnh cho AI
+const MEMORY_CONTEXT_MAX_CHARS = 1400;
+const PRIVATE_TAG_RE = /<private>[\s\S]*?<\/private>/gi;
+
+function loadMemoryStore(){
+  try{ return JSON.parse(localStorage.getItem(MEMORY_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveMemoryStore(store){
+  try{ localStorage.setItem(MEMORY_KEY, JSON.stringify(store)); }
+  catch(e){ /* localStorage đầy hoặc bị chặn — bỏ qua, không chặn luồng chính */ }
+}
+// Bọc <private>...</private> quanh phần người dùng KHÔNG muốn lưu vào bộ nhớ — phần này vẫn được
+// gửi bình thường cho AI để xử lý yêu cầu, chỉ bị ẩn đi khi ghi vào lịch sử/bộ nhớ dự án.
+function redactPrivate(text){
+  if(!text) return text;
+  return String(text).replace(PRIVATE_TAG_RE, '[đã ẩn — nội dung riêng tư]');
+}
+function memoryEnabled(){ return settings.memoryEnabled !== false; }
+function memoryContextEnabled(){ return settings.memoryContextInject !== false; }
+
+let memorySeq = Date.now();
+function nextMemoryId(){ return 'm' + (++memorySeq).toString(36); }
+
+function addMemoryEntry(repoKey, data){
+  if(!memoryEnabled() || !repoKey) return null;
+  const store = loadMemoryStore();
+  const list = store[repoKey] || (store[repoKey] = []);
+  const entry = Object.assign({
+    id: nextMemoryId(), ts: Date.now(), status: 'applied',
+    instruction: '', refined: '', editCount: 0, editsPreview: [], pushed: false
+  }, data);
+  list.push(entry);
+  if(list.length > MEMORY_MAX_PER_REPO) list.splice(0, list.length - MEMORY_MAX_PER_REPO);
+  saveMemoryStore(store);
+  return entry.id;
+}
+function updateMemoryEntry(repoKey, id, patch){
+  if(!repoKey || !id) return;
+  const store = loadMemoryStore();
+  const list = store[repoKey] || [];
+  const entry = list.find(e => e.id === id);
+  if(!entry) return;
+  Object.assign(entry, patch);
+  saveMemoryStore(store);
+}
+function getMemoryList(repoKey){
+  const store = loadMemoryStore();
+  return (store[repoKey] || []).slice().sort((a,b) => b.ts - a.ts); // mới nhất trước
+}
+function clearMemoryForRepo(repoKey){
+  const store = loadMemoryStore();
+  delete store[repoKey];
+  saveMemoryStore(store);
+}
+function truncateSnippet(s, n){
+  s = String(s || '');
+  return s.length > n ? s.slice(0, n) + '…' : s;
+}
+// Ghép vài lệnh gần nhất trong bộ nhớ dự án thành 1 đoạn ngữ cảnh ngắn gọn, đưa cho AI đọc TRƯỚC
+// khi thực hiện lệnh mới — giúp AI hiểu mạch các thay đổi trước đó (không phải toàn bộ chi tiết,
+// chỉ đủ để có tính liên tục qua nhiều phiên, giống cơ chế "context priming" của claude-mem).
+function buildMemoryContext(repoKey){
+  if(!memoryEnabled() || !memoryContextEnabled()) return '';
+  const recent = getMemoryList(repoKey).slice(0, MEMORY_CONTEXT_LIMIT).reverse(); // đưa về thứ tự thời gian
+  if(!recent.length) return '';
+  const lines = recent.map(e=>{
+    const d = new Date(e.ts);
+    const when = d.toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' });
+    const label = e.status === 'error' ? 'bị lỗi'
+      : e.status === 'no_edits' ? 'không tìm thấy chỗ để sửa'
+      : e.status === 'cancelled' ? 'người dùng huỷ trước khi sửa'
+      : (e.pushed ? 'đã sửa và đẩy lên GitHub' : 'đã sửa (chưa đẩy lên GitHub)');
+    return '- [' + when + '] "' + truncateSnippet(e.instruction, 140) + '" → ' + label + (e.editCount ? (', ' + e.editCount + ' chỗ') : '');
+  });
+  let text = lines.join('\n');
+  if(text.length > MEMORY_CONTEXT_MAX_CHARS) text = text.slice(0, MEMORY_CONTEXT_MAX_CHARS) + '…';
+  return 'BỐI CẢNH THAM KHẢO TỪ CÁC LẦN SỬA GẦN ĐÂY CHO DỰ ÁN NÀY (chỉ để hiểu mạch việc đang làm — KHÔNG phải yêu cầu mới, đừng tự ý lặp lại hay tiếp tục các thay đổi cũ, chỉ tập trung đúng vào yêu cầu hiện tại bên dưới):\n' + text;
+}
+// Biến chứa ngữ cảnh bộ nhớ của lệnh đang xử lý — được set trong luồng gửi lệnh, và được
+// refineInstruction()/callClaude() đọc qua closure (không cần đổi chữ ký hàm).
+let currentMemoryContext = '';
+
+// ---------------- modal cấu hình ----------------
+const settingsOverlay = document.getElementById('settingsOverlay');
+const s_repo = document.getElementById('s_repo');
+const s_branch = document.getElementById('s_branch');
+const s_path = document.getElementById('s_path');
+const s_token = document.getElementById('s_token');
+const s_key = document.getElementById('s_key');
+const s_model = document.getElementById('s_model');
+const s_mode = document.getElementById('s_mode');
+const s_fcc_url = document.getElementById('s_fcc_url');
+const s_fcc_token = document.getElementById('s_fcc_token');
+const s_fcc_model = document.getElementById('s_fcc_model');
+const s_fcc_smart_model = document.getElementById('s_fcc_smart_model');
+const s_smart_model = document.getElementById('s_smart_model');
+const s_auto_refine = document.getElementById('s_auto_refine');
+const s_confirm_refine = document.getElementById('s_confirm_refine');
+const s_deep_thinking = document.getElementById('s_deep_thinking');
+const s_auto_verify = document.getElementById('s_auto_verify');
+const s_auto_push = document.getElementById('s_auto_push');
+const s_memory_enabled = document.getElementById('s_memory_enabled');
+const s_memory_context = document.getElementById('s_memory_context');
+const apiFields = document.getElementById('apiFields');
+const fccFields = document.getElementById('fccFields');
+const settingsErr = document.getElementById('settingsErr');
+
+function refreshModeFields(){
+  const isFcc = s_mode.value === 'fcc';
+  apiFields.style.display = isFcc ? 'none' : 'block';
+  fccFields.style.display = isFcc ? 'block' : 'none';
+}
+s_mode.addEventListener('change', refreshModeFields);
+
+function openSettings(){
+  s_repo.value = settings.repo || '';
+  s_branch.value = settings.branch || 'main';
+  s_path.value = settings.path || 'index.html';
+  s_token.value = settings.token || '';
+  s_mode.value = settings.mode || 'api';
+  s_key.value = settings.anthropicKey || '';
+  s_model.value = settings.model || 'claude-sonnet-5';
+  s_smart_model.value = settings.smartModel || 'claude-opus-4-8';
+  s_fcc_url.value = settings.fccUrl || 'http://localhost:8082';
+  s_fcc_token.value = settings.fccToken || '';
+  s_fcc_model.value = settings.fccModel || '';
+  s_fcc_smart_model.value = settings.fccSmartModel || '';
+  s_auto_refine.checked = settings.autoRefine !== false;
+  s_confirm_refine.checked = settings.confirmRefine === true;
+  s_deep_thinking.checked = settings.deepThinking !== false;
+  s_auto_verify.checked = settings.autoVerify !== false;
+  s_auto_push.checked = settings.autoPush !== false;
+  s_memory_enabled.checked = settings.memoryEnabled !== false;
+  s_memory_context.checked = settings.memoryContextInject !== false;
+  refreshModeFields();
+  settingsErr.style.display = 'none';
+  settingsOverlay.classList.add('show');
+}
+document.getElementById('settingsBtn').addEventListener('click', openSettings);
+document.getElementById('refreshBtn').addEventListener('click', ()=>{
+  sourceCache = null;
+  lastOutline = null;
+  log('Đã xoá bộ nhớ đệm — lệnh kế tiếp sẽ tải lại mã nguồn mới nhất từ GitHub.', 'info');
+});
+document.getElementById('settingsCancel').addEventListener('click', ()=> settingsOverlay.classList.remove('show'));
+settingsOverlay.addEventListener('click', e=>{ if(e.target===settingsOverlay) settingsOverlay.classList.remove('show'); });
+
+document.getElementById('settingsSave').addEventListener('click', ()=>{
+  const repo = s_repo.value.trim();
+  const token = s_token.value.trim();
+  const mode = s_mode.value;
+  if(!repo || !token){
+    settingsErr.textContent = '⚠️ Cần nhập đủ Repo và GitHub Token.';
+    settingsErr.style.display = 'block';
+    return;
+  }
+  if(mode === 'api' && !s_key.value.trim()){
+    settingsErr.textContent = '⚠️ Cần nhập Anthropic API key (hoặc đổi Nguồn AI sang Free Claude Code).';
+    settingsErr.style.display = 'block';
+    return;
+  }
+  if(mode === 'fcc' && !s_fcc_url.value.trim()){
+    settingsErr.textContent = '⚠️ Cần nhập địa chỉ FCC server.';
+    settingsErr.style.display = 'block';
+    return;
+  }
+  settings = {
+    repo, token, mode,
+    anthropicKey: s_key.value.trim(),
+    model: s_model.value.trim() || 'claude-sonnet-5',
+    smartModel: s_smart_model.value.trim() || 'claude-opus-4-8',
+    fccUrl: s_fcc_url.value.trim() || 'http://localhost:8082',
+    fccToken: s_fcc_token.value.trim(),
+    fccModel: s_fcc_model.value.trim(),
+    fccSmartModel: s_fcc_smart_model.value.trim(),
+    branch: s_branch.value.trim() || 'main',
+    path: s_path.value.trim() || 'index.html',
+    autoRefine: !!s_auto_refine.checked,
+    confirmRefine: !!s_confirm_refine.checked,
+    deepThinking: !!s_deep_thinking.checked,
+    autoVerify: !!s_auto_verify.checked,
+    autoPush: !!s_auto_push.checked,
+    memoryEnabled: !!s_memory_enabled.checked,
+    memoryContextInject: !!s_memory_context.checked
+  };
+  saveSettings(settings);
+  settingsOverlay.classList.remove('show');
+  log('Đã lưu cấu hình.', 'success');
+});
+
+if(!settings.repo){ setTimeout(openSettings, 300); }
+
+// ---------------- modal xác nhận "làm rõ yêu cầu" ----------------
+// Cho người dùng xem (và sửa tay nếu cần) bản mô tả kỹ thuật mà AI vừa "dịch" từ câu lệnh
+// gốc, TRƯỚC KHI bất kỳ chỉnh sửa nào được thực hiện trên code — đây là cách chắc chắn
+// nhất để tránh tình trạng AI hiểu sai ý người dùng dù đã có bước tự làm rõ yêu cầu.
+const refineOverlay = document.getElementById('refineConfirmOverlay');
+const refineTextarea = document.getElementById('refineConfirmText');
+const refineOriginalHint = document.getElementById('refineOriginalHint');
+const refineConfirmErr = document.getElementById('refineConfirmErr');
+let refineCtx = null; // { original, resolve, onAbort, externalSignal }
+
+function closeRefineOverlay(){
+  refineOverlay.classList.remove('show');
+  refineConfirmErr.style.display = 'none';
+}
+
+function askConfirmInstruction(original, refined, externalSignal){
+  return new Promise(resolve=>{
+    refineTextarea.value = refined;
+    refineOriginalHint.textContent = 'Câu lệnh gốc bạn đã gõ: “' + original + '”';
+    refineConfirmErr.style.display = 'none';
+    refineOverlay.classList.add('show');
+    const onAbort = ()=>{ closeRefineOverlay(); finish(null); };
+    function finish(val){
+      if(externalSignal && onAbort) externalSignal.removeEventListener('abort', onAbort);
+      refineCtx = null;
+      resolve(val);
+    }
+    refineCtx = { original, resolve: finish };
+    if(externalSignal){
+      if(externalSignal.aborted){ onAbort(); return; }
+      externalSignal.addEventListener('abort', onAbort);
+    }
+    setTimeout(()=> refineTextarea.focus(), 30);
+  });
+}
+
+document.getElementById('refineUseOriginalBtn').addEventListener('click', ()=>{
+  if(!refineCtx) return;
+  refineTextarea.value = refineCtx.original;
+  refineTextarea.focus();
+});
+document.getElementById('refineCancelBtn').addEventListener('click', ()=>{
+  if(!refineCtx) return;
+  closeRefineOverlay();
+  refineCtx.resolve(null);
+});
+document.getElementById('refineContinueBtn').addEventListener('click', ()=>{
+  if(!refineCtx) return;
+  const val = refineTextarea.value.trim();
+  if(!val){ refineConfirmErr.style.display = 'block'; return; }
+  closeRefineOverlay();
+  refineCtx.resolve(val);
+});
+refineOverlay.addEventListener('click', e=>{ if(e.target===refineOverlay && refineCtx){ closeRefineOverlay(); refineCtx.resolve(null); } });
+
+// ---------------- log / console ----------------
+const logEl = document.getElementById('log');
+function log(text, cls){
+  const div = document.createElement('div');
+  div.className = 'line l-' + (cls || 'info');
+  div.textContent = text;
+  logEl.appendChild(div);
+  window.scrollTo(0, document.body.scrollHeight);
+  return div;
+}
+function logDiff(edits){
+  edits.forEach((e, i)=>{
+    const box = document.createElement('div');
+    box.className = 'diff-box';
+    const oldEl = document.createElement('span');
+    oldEl.className = 'old';
+    oldEl.textContent = '− ' + e.old;
+    const newEl = document.createElement('span');
+    newEl.className = 'new';
+    newEl.textContent = '+ ' + e.new;
+    box.appendChild(oldEl);
+    box.appendChild(newEl);
+    logEl.appendChild(box);
+  });
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+
+// ---------------- tiện ích GitHub (mirror logic đã dùng trong index.html) ----------------
+const GITHUB_FETCH_TIMEOUT_MS = 40000;
+const GITHUB_MAX_ATTEMPTS = 3;
+
+function ghSleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+function ghFetchWithTimeout(url, options, timeoutMs, externalSignal){
+  const controller = new AbortController();
+  const timer = setTimeout(()=> controller.abort(), timeoutMs);
+  let onExternalAbort;
+  if(externalSignal){
+    if(externalSignal.aborted) controller.abort();
+    onExternalAbort = ()=> controller.abort();
+    externalSignal.addEventListener('abort', onExternalAbort);
+  }
+  return fetch(url, Object.assign({}, options, { signal: controller.signal })).finally(()=>{
+    clearTimeout(timer);
+    if(externalSignal && onExternalAbort) externalSignal.removeEventListener('abort', onExternalAbort);
+  });
+}
+
+function isGithubTransientStatus(status){
+  return status===408 || status===429 || status===500 || status===502 || status===503 || status===504;
+}
+
+// Dùng lại cơ chế fetch+timeout+abort ở trên cho các lượt gọi AI (không chỉ GitHub) —
+// tên hàm gốc mang tính lịch sử nhưng bản chất không phụ thuộc GitHub.
+const fetchWithTimeout = ghFetchWithTimeout;
+const sleep = ghSleep;
+// Các mã lỗi HTTP đáng để thử lại (quá tải/tạm thời) — dùng chung cho GitHub và AI
+// (Anthropic dùng thêm 529 "overloaded").
+function isTransientHttpStatus(status){
+  return isGithubTransientStatus(status) || status===529;
+}
+
+function describeGithubError(status, bodyText){
+  let apiMsg = '';
+  try{ const j = JSON.parse(bodyText); if(j && j.message) apiMsg = j.message; }
+  catch(e){ apiMsg = (bodyText||'').slice(0,200); }
+  const table = {
+    401: 'Token không hợp lệ hoặc đã hết hạn (401).',
+    403: 'Bị GitHub từ chối (403) — token thiếu quyền Contents Read/write, hoặc bị giới hạn tần suất.',
+    404: 'Không tìm thấy repo/nhánh/đường dẫn (404) — kiểm tra lại cấu hình.',
+    409: 'Xung đột phiên bản (409) — có thay đổi khác vừa ghi đè file.',
+    413: 'File quá lớn, GitHub từ chối nhận (413).',
+    422: 'Dữ liệu gửi lên không hợp lệ (422).'
+  };
+  let msg = table[status] || ('GitHub trả lỗi (mã ' + status + ').');
+  if(apiMsg) msg += ' Chi tiết: ' + apiMsg;
+  return msg;
+}
+
+function utf8ToBase64(str){
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  const chunkSize = 0x8000;
+  for(let i=0;i<bytes.length;i+=chunkSize){ binary += String.fromCharCode.apply(null, bytes.subarray(i,i+chunkSize)); }
+  return btoa(binary);
+}
+
+function ghApiUrl(cfg){
+  const path = (cfg.path || 'index.html').replace(/^\/+/, '');
+  return 'https://api.github.com/repos/' + cfg.repo.trim() + '/contents/' + path;
+}
+function ghHeaders(cfg){
+  return {
+    'Authorization': 'Bearer ' + cfg.token.trim(),
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+}
+
+// Lấy sha hiện tại (bắt buộc để ghi đè) — dùng media type "object" vì
+// Contents API chỉ trả sha cho file lớn khi dùng type này.
+async function fetchGithubShaViaTree(cfg, externalSignal){
+  // Lấy sha qua Git Data API (Trees) thay vì Contents API: Contents API (kể cả dùng
+  // media type object/raw) có thể không trả "sha" đáng tin cậy với file rất lớn.
+  // Trees API chỉ trả về đường dẫn + sha của từng file, không đụng tới nội dung file,
+  // nên không bị giới hạn theo kích thước file như Contents API.
+  // (Dùng làm phương án DỰ PHÒNG — chậm hơn vì phải tải cả cây thư mục repo,
+  // xem fetchGithubShaFast bên dưới là đường nhanh dùng trước.)
+  const path = (cfg.path || 'index.html').replace(/^\/+/, '');
+
+  // B1: lấy sha của commit mới nhất trên nhánh.
+  const branchRes = await ghFetchWithTimeout(
+    'https://api.github.com/repos/' + cfg.repo.trim() + '/branches/' + encodeURIComponent(cfg.branch),
+    { headers: ghHeaders(cfg) }, GITHUB_FETCH_TIMEOUT_MS, externalSignal
+  );
+  if(branchRes.status === 404){
+    throw new Error('Không tìm thấy nhánh "' + cfg.branch + '" trên GitHub. Kiểm tra lại tên nhánh trong ⚙️ Cấu hình — chú ý phân biệt hoa/thường.');
+  }
+  if(!branchRes.ok){
+    const bodyText = await branchRes.text().catch(()=> '');
+    throw new Error('Không đọc được thông tin nhánh trên GitHub. ' + describeGithubError(branchRes.status, bodyText));
+  }
+  const branchInfo = await branchRes.json().catch(()=> null);
+  const commitSha = branchInfo && branchInfo.commit && branchInfo.commit.sha;
+  if(!commitSha){
+    throw new Error('Không lấy được commit mới nhất của nhánh "' + cfg.branch + '" từ GitHub.');
+  }
+
+  // B2: lấy toàn bộ cây thư mục (đệ quy) của commit đó, tìm sha ứng với đường dẫn file.
+  const treeRes = await ghFetchWithTimeout(
+    'https://api.github.com/repos/' + cfg.repo.trim() + '/git/trees/' + commitSha + '?recursive=1',
+    { headers: ghHeaders(cfg) }, GITHUB_FETCH_TIMEOUT_MS, externalSignal
+  );
+  if(!treeRes.ok){
+    const bodyText = await treeRes.text().catch(()=> '');
+    throw new Error('Không đọc được cây thư mục của repo trên GitHub. ' + describeGithubError(treeRes.status, bodyText));
+  }
+  const treeInfo = await treeRes.json().catch(()=> null);
+  if(!treeInfo || !Array.isArray(treeInfo.tree)){
+    throw new Error('Phản hồi cây thư mục từ GitHub không hợp lệ.');
+  }
+
+  const entry = treeInfo.tree.find(item => item.path === path && item.type === 'blob');
+  if(!entry){
+    if(treeInfo.truncated){
+      // Repo quá lớn, GitHub đã cắt bớt danh sách cây thư mục -> không chắc file có tồn tại
+      // hay không, nên KHÔNG được âm thầm coi là "file mới" (dễ gây lỗi ghi đè/thiếu sha).
+      throw new Error('Repo có quá nhiều file khiến GitHub cắt bớt danh sách cây thư mục khi tìm "' + path + '". Không thể xác định sha một cách an toàn — hãy kiểm tra lại đường dẫn file trong ⚙️ Cấu hình.');
+    }
+    // File thật sự chưa tồn tại trên nhánh này -> sẽ tạo mới, không cần sha.
+    return { sha: null };
+  }
+  return { sha: entry.sha };
+}
+
+// Đường NHANH: gọi thẳng Contents API cho đúng 1 file (không kéo cả cây thư mục repo).
+// GitHub luôn trả field "sha" trong metadata JSON này dù file có lớn tới đâu, nên
+// nhanh hơn nhiều so với duyệt cây thư mục — đặc biệt với repo có nhiều file.
+async function fetchGithubShaFast(cfg, externalSignal){
+  const res = await ghFetchWithTimeout(ghApiUrl(cfg) + '?ref=' + encodeURIComponent(cfg.branch), {
+    headers: Object.assign({}, ghHeaders(cfg), { 'Accept': 'application/vnd.github+json' })
+  }, GITHUB_FETCH_TIMEOUT_MS, externalSignal);
+  if(res.status === 404){
+    return { sha: null }; // file chưa tồn tại trên nhánh này -> sẽ tạo mới
+  }
+  if(!res.ok){
+    const bodyText = await res.text().catch(()=> '');
+    throw new Error('Không đọc được metadata file. ' + describeGithubError(res.status, bodyText));
+  }
+  const data = await res.json().catch(()=> null);
+  if(data && typeof data.sha === 'string' && data.sha){
+    return { sha: data.sha };
+  }
+  throw new Error('Phản hồi Contents API không có "sha" hợp lệ.');
+}
+
+// Thử đường nhanh trước, nếu có vấn đề (mạng, phản hồi lạ...) thì tự động
+// chuyển sang phương án dự phòng (duyệt cây thư mục) để vẫn đảm bảo an toàn.
+async function fetchGithubSha(cfg, externalSignal){
+  try{
+    return await fetchGithubShaFast(cfg, externalSignal);
+  }catch(e){
+    if(e && e.name === 'AbortError') throw e;
+    return await fetchGithubShaViaTree(cfg, externalSignal);
+  }
+}
+
+// Lấy nội dung THÔ (raw) — dùng Accept raw để không bị giới hạn 1MB của
+// Contents API mặc định (raw hỗ trợ tới 100MB). Có thử lại tự động (giống pushHtmlToGithub)
+// khi gặp lỗi mạng/timeout hoặc GitHub báo lỗi tạm thời, để tăng độ tin cậy.
+async function fetchGithubRawContent(cfg, externalSignal){
+  let lastErr;
+  for(let attempt=1; attempt<=GITHUB_MAX_ATTEMPTS; attempt++){
+    let res;
+    try{
+      res = await ghFetchWithTimeout(ghApiUrl(cfg) + '?ref=' + encodeURIComponent(cfg.branch), {
+        headers: Object.assign({}, ghHeaders(cfg), { 'Accept': 'application/vnd.github.raw+json' })
+      }, GITHUB_FETCH_TIMEOUT_MS, externalSignal);
+    }catch(e){
+      if(e && e.name === 'AbortError' && externalSignal && externalSignal.aborted) throw e; // người dùng chủ động dừng
+      lastErr = (e && e.name === 'AbortError')
+        ? new Error('Quá thời gian chờ khi tải mã nguồn từ GitHub (' + (GITHUB_FETCH_TIMEOUT_MS/1000) + 's).')
+        : new Error('Không kết nối được tới GitHub: ' + (e.message || String(e)));
+      if(attempt < GITHUB_MAX_ATTEMPTS){ await ghSleep(attempt*1200); continue; }
+      throw lastErr;
+    }
+    if(res.ok) return await res.text();
+
+    const bodyText = await res.text().catch(()=> '');
+    lastErr = new Error('Không tải được nội dung file hiện tại. ' + describeGithubError(res.status, bodyText));
+    if(isGithubTransientStatus(res.status) && attempt < GITHUB_MAX_ATTEMPTS){ await ghSleep(attempt*1200); continue; }
+    throw lastErr;
+  }
+  throw lastErr;
+}
+
+async function pushHtmlToGithub(htmlStr, cfg){
+  const apiUrl = ghApiUrl(cfg);
+  const headers = ghHeaders(cfg);
+  const contentB64 = utf8ToBase64(htmlStr);
+
+  let lastError = 'Không đẩy được lên GitHub sau nhiều lần thử.';
+  for(let attempt=1; attempt<=GITHUB_MAX_ATTEMPTS; attempt++){
+    let shaRes;
+    try{ shaRes = await fetchGithubSha(cfg); }
+    catch(e){
+      lastError = e.message;
+      if(attempt < GITHUB_MAX_ATTEMPTS){ await ghSleep(attempt*1200); continue; }
+      return { ok:false, error: lastError };
+    }
+
+    const body = {
+      message: 'Claude Code: cập nhật theo lệnh — ' + new Date().toLocaleString('vi-VN'),
+      content: contentB64,
+      branch: cfg.branch
+    };
+    if(shaRes.sha) body.sha = shaRes.sha;
+
+    let putRes;
+    try{
+      putRes = await ghFetchWithTimeout(apiUrl, {
+        method:'PUT',
+        headers: Object.assign({'Content-Type':'application/json'}, headers),
+        body: JSON.stringify(body)
+      }, GITHUB_FETCH_TIMEOUT_MS);
+    }catch(e){
+      lastError = 'Không kết nối được tới GitHub: ' + ((e && e.name==='AbortError') ? 'quá thời gian chờ.' : ((e&&e.message)||String(e)));
+      if(attempt < GITHUB_MAX_ATTEMPTS){ await ghSleep(attempt*1500); continue; }
+      return { ok:false, error: lastError };
+    }
+
+    if(putRes.ok) return { ok:true };
+
+    const errBody = await putRes.text().catch(()=> '');
+    lastError = describeGithubError(putRes.status, errBody);
+
+    if(putRes.status===409 && attempt<GITHUB_MAX_ATTEMPTS){ await ghSleep(400); continue; }
+    if(isGithubTransientStatus(putRes.status) && attempt<GITHUB_MAX_ATTEMPTS){ await ghSleep(attempt*1500); continue; }
+    return { ok:false, error: lastError };
+  }
+  return { ok:false, error: lastError };
+}
+
+// ---------------- tách ảnh base64 để giảm kích thước gửi cho AI ----------------
+function stripImages(text){
+  const map = [];
+  const stripped = text.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+\/=]{80,}/g, (m)=>{
+    const token = '__CCC_IMG_' + map.length + '__';
+    map.push(m);
+    return token;
+  });
+  return { stripped, map };
+}
+function restoreImages(text, map){
+  let out = text;
+  map.forEach((orig, i)=>{
+    out = out.split('__CCC_IMG_' + i + '__').join(orig);
+  });
+  return out;
+}
+
+// ---------------- tự động chia nhỏ mã nguồn để AI đọc hết TOÀN BỘ file ----------------
+// Không cần người dùng nhập từ khoá: nếu file nhỏ, gửi nguyên văn 1 lần.
+// Nếu file quá lớn để gửi 1 lần, tự động chia thành nhiều phần có gối đầu lên nhau
+// (để không bị cắt ngang chỗ cần sửa) và lần lượt gửi cho AI đọc như 1 lập trình viên
+// đọc file dài — người dùng không cần làm gì thêm.
+const SAFE_CHARS = 350000;   // ngưỡng gửi an toàn 1 lượt (khoảng dưới ~100k token)
+const CHUNK_OVERLAP = 4000;  // độ gối đầu giữa 2 phần liền kề
+
+function buildChunks(strippedCode){
+  if(strippedCode.length <= SAFE_CHARS){
+    return [{ text: strippedCode, index:1, total:1 }];
+  }
+  const chunks = [];
+  let start = 0;
+  while(start < strippedCode.length){
+    const end = Math.min(strippedCode.length, start + SAFE_CHARS);
+    chunks.push({ text: strippedCode.slice(start, end) });
+    if(end >= strippedCode.length) break;
+    start = end - CHUNK_OVERLAP;
+  }
+  chunks.forEach((c, i)=>{ c.index = i+1; c.total = chunks.length; });
+  return chunks;
+}
+
+function dedupeEdits(edits){
+  const seen = new Set();
+  return edits.filter(e=>{
+    const key = (typeof e.old==='string'?e.old:'') + '§§§' + (typeof e.new==='string'?e.new:'');
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+// ==================================================================================
+// BẢN ĐỒ CẤU TRÚC FILE + PHÂN TÍCH ẢNH HƯỞNG THAY ĐỔI
+// (ý tưởng mượn từ dự án mã nguồn mở "Understand Anything" — dựng "knowledge graph"
+// gồm node là hàm/class + cạnh là quan hệ gọi nhau, rồi dùng cạnh đó để: (1) mở rộng
+// ngữ cảnh đọc theo ĐÚNG PHỤ THUỘC thay vì chỉ theo khoảng cách ký tự gần đúng, và
+// (2) sau khi sửa, tính "diff impact" — những phần nào khác có thể bị ảnh hưởng dây
+// chuyền. Ở đây dựng lại 1 bản rút gọn, chạy hoàn toàn bằng regex trong trình duyệt,
+// không cần cài thêm gì — vì mục tiêu chỉ là 1 file HTML/JS duy nhất, không phải cả
+// dự án nhiều file như bản gốc.)
+// ==================================================================================
+
+// Quét toàn bộ mã nguồn (đã bỏ ảnh base64) để tìm mọi hàm JS (function name(){...},
+// const name = ()=>{...}, const name = async ()=>{...}) và mọi id HTML (id="..." hoặc
+// getElementById('...')) — tạo thành "bản đồ cấu trúc" của file, dùng để hiểu file
+// giống 1 lập trình viên đọc code thật, thay vì chỉ tìm-kiếm-chuỗi mù quáng.
+function buildSymbolIndex(text){
+  const raw = [];
+  function findBodyEnd(fromIdx){
+    const braceIdx = text.indexOf('{', fromIdx);
+    if(braceIdx === -1) return Math.min(text.length, fromIdx + 400);
+    let depth = 0;
+    for(let i = braceIdx; i < text.length; i++){
+      const ch = text[i];
+      if(ch === '{') depth++;
+      else if(ch === '}'){ depth--; if(depth === 0) return i + 1; }
+    }
+    return text.length;
+  }
+  const declRe = /function\s+([A-Za-z_$][\w$]*)\s*\(/g;
+  const arrowRe = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s+)?(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/g;
+  [declRe, arrowRe].forEach(re=>{
+    let m;
+    while((m = re.exec(text))){
+      raw.push({ name: m[1], start: m.index, end: findBodyEnd(m.index) });
+    }
+  });
+  raw.sort((a,b)=> a.start - b.start);
+  const functions = [];
+  const nameSet = new Set();
+  raw.forEach(f=>{
+    if(nameSet.has(f.name)) return; // giữ lần khai báo đầu tiên (đủ dùng cho mục đích lập bản đồ)
+    nameSet.add(f.name);
+    functions.push(f);
+  });
+  const byName = new Map(functions.map(f=> [f.name, f]));
+
+  const ids = new Set();
+  const idRe = /(?:\bid\s*=\s*["']([^"']{1,60})["']|getElementById\(\s*['"]([^'"]{1,60})['"]\s*\))/g;
+  let m2;
+  while((m2 = idRe.exec(text))){
+    const v = m2[1] || m2[2];
+    if(v) ids.add(v);
+  }
+  return { functions, byName, ids: Array.from(ids), text };
+}
+
+// Tìm hàm "nhỏ nhất" (nằm sâu nhất) bao trọn 1 vị trí ký tự cho trước trong file —
+// dùng để xác định 1 đoạn mã vừa sửa nằm bên trong hàm nào.
+function findFunctionAt(index, pos){
+  let best = null;
+  index.functions.forEach(f=>{
+    if(pos >= f.start && pos < f.end){
+      if(!best || (f.end - f.start) < (best.end - best.start)) best = f;
+    }
+  });
+  return best;
+}
+
+// Từ bản đồ cấu trúc, dựng quan hệ 2 chiều: hàm nào gọi hàm nào (calls/calledBy),
+// và hàm nào tham chiếu tới id HTML nào (usesId/idUsedBy). Đây chính là các "cạnh"
+// của bản đồ, tương đương "edges" trong knowledge graph của Understand Anything.
+function buildSymbolGraph(index){
+  const calls = new Map(), calledBy = new Map(), usesId = new Map(), idUsedBy = new Map();
+  const nameSet = new Set(index.functions.map(f=> f.name));
+  const callRe = /\b([A-Za-z_$][\w$]*)\s*\(/g;
+  index.functions.forEach(f=>{
+    const body = index.text.slice(f.start, f.end);
+    const callSet = new Set();
+    let m;
+    callRe.lastIndex = 0;
+    while((m = callRe.exec(body))){
+      if(m[1] !== f.name && nameSet.has(m[1])) callSet.add(m[1]);
+    }
+    calls.set(f.name, callSet);
+    callSet.forEach(n=>{ if(!calledBy.has(n)) calledBy.set(n, new Set()); calledBy.get(n).add(f.name); });
+
+    const idSet = new Set();
+    index.ids.forEach(id=>{ if(id.length >= 2 && body.includes(id)) idSet.add(id); });
+    usesId.set(f.name, idSet);
+    idSet.forEach(id=>{ if(!idUsedBy.has(id)) idUsedBy.set(id, new Set()); idUsedBy.get(id).add(f.name); });
+  });
+  return { calls, calledBy, usesId, idUsedBy };
+}
+
+// Mở rộng danh sách từ khoá (đã trích từ câu lệnh người dùng) bằng bản đồ phụ thuộc:
+// nếu 1 từ khoá trùng đúng tên 1 hàm hoặc 1 id đã biết, tự động thêm cả tên những hàm
+// LIÊN QUAN TRỰC TIẾP (gọi tới nó / được nó gọi / cùng dùng chung 1 id) — nhờ vậy khi
+// đọc file lớn theo từng phần hoặc khi ghim ngữ cảnh, AI thấy được cả những chỗ liên
+// quan theo logic, không chỉ những chỗ tình cờ gần nhau về mặt ký tự.
+function expandKeywordsWithGraph(keywords, index, graph){
+  if(!index || !graph || !keywords || !keywords.length) return keywords || [];
+  const expanded = new Set(keywords);
+  keywords.forEach(k=>{
+    if(!k) return;
+    if(index.byName.has(k)){
+      (graph.calls.get(k) || []).forEach(n=> expanded.add(n));
+      (graph.calledBy.get(k) || []).forEach(n=> expanded.add(n));
+    }
+    if(index.ids.includes(k)){
+      (graph.idUsedBy.get(k) || []).forEach(n=> expanded.add(n));
+    }
+  });
+  return Array.from(expanded);
+}
+
+// PHÂN TÍCH ẢNH HƯỞNG THAY ĐỔI ("diff impact analysis"): sau khi AI đề xuất danh sách
+// chỉnh sửa (edits) nhưng TRƯỚC khi áp dụng, xác định những hàm nào chứa đoạn bị sửa
+// trực tiếp, rồi tra bản đồ phụ thuộc để tìm những hàm KHÁC đang gọi tới hoặc dùng
+// chung id với hàm vừa sửa — đây là những chỗ "có thể vỡ dây chuyền" mà 1 lập trình
+// viên cẩn thận sẽ tự rà lại. Kết quả được ghi ra log cho người dùng thấy, đồng thời
+// đưa vào bước tự-kiểm-tra để AI chủ động soát lại thay vì chỉ nhìn đúng chỗ vừa sửa.
+function buildDiffImpactReport(originalText, edits, index, graph){
+  if(!index || !graph || !edits || !edits.length) return null;
+  const changedNames = new Set();
+  edits.forEach(e=>{
+    const oldStr = typeof e.old === 'string' ? e.old : '';
+    if(!oldStr) return;
+    const pos = originalText.indexOf(oldStr);
+    if(pos !== -1){
+      const fn = findFunctionAt(index, pos);
+      if(fn) changedNames.add(fn.name);
+    }
+    index.functions.forEach(f=>{ if(oldStr.includes(f.name)) changedNames.add(f.name); });
+  });
+  if(!changedNames.size) return null;
+
+  const affected = new Map();
+  changedNames.forEach(name=>{
+    (graph.calledBy.get(name) || []).forEach(n=>{
+      if(!changedNames.has(n)) affected.set(n, 'gọi tới hàm ' + name + '() vừa bị sửa');
+    });
+    (graph.usesId.get(name) || []).forEach(id=>{
+      (graph.idUsedBy.get(id) || []).forEach(n=>{
+        if(n !== name && !changedNames.has(n) && !affected.has(n)){
+          affected.set(n, 'cùng dùng phần tử id="' + id + '" với hàm ' + name + '() vừa bị sửa');
+        }
+      });
+    });
+  });
+  if(!affected.size) return null; // thay đổi cục bộ, không có ảnh hưởng dây chuyền phát hiện được -> khỏi báo cho gọn
+
+  const lines = [];
+  lines.push('📊 Phân tích ảnh hưởng thay đổi (diff impact):');
+  lines.push('- Hàm đã sửa trực tiếp: ' + Array.from(changedNames).map(n=> n + '()').join(', '));
+  lines.push('- Hàm có thể bị ảnh hưởng dây chuyền, nên rà lại:');
+  affected.forEach((reason, name)=> lines.push('  • ' + name + '() — ' + reason));
+  return lines.join('\n');
+}
+
+// ==================================================================================
+// TỰ RÀ SOÁT BẢO MẬT & CHẤT LƯỢNG TRÊN CHÍNH CÁC CHỈNH SỬA AI VỪA ĐỀ XUẤT
+// (lấy cảm hứng từ nhóm skill bảo mật kiểu Trail of Bits — "insecure-defaults",
+// "differential-review", "sharp-edges": rà đúng phần diff vừa đổi để phát hiện sớm
+// các lỗi bảo mật/cấu hình phổ biến — chạy hoàn toàn bằng regex trong trình duyệt,
+// không gọi thêm AI, không cần cài thêm gì, chỉ để CẢNH BÁO cho người dùng biết trước
+// khi đẩy lên GitHub chứ KHÔNG tự chặn, vì đây là kiểm tra theo mẫu, có thể báo nhầm.)
+// ==================================================================================
+const SECRET_PATTERNS = [
+  { re: /sk-ant-[A-Za-z0-9\-_]{20,}/, msg: 'có vẻ chứa 1 API key dạng Anthropic (sk-ant-...) được ghi cứng trực tiếp trong mã' },
+  { re: /sk-[A-Za-z0-9]{20,}/, msg: 'có vẻ chứa 1 API key dạng OpenAI (sk-...) được ghi cứng trực tiếp trong mã' },
+  { re: /ghp_[A-Za-z0-9]{30,}/, msg: 'có vẻ chứa 1 Personal Access Token GitHub (ghp_...) được ghi cứng trực tiếp trong mã' },
+  { re: /AKIA[0-9A-Z]{16}/, msg: 'có vẻ chứa 1 AWS Access Key ID được ghi cứng trực tiếp trong mã' },
+  { re: /(api[_-]?key|secret|token|password|mat[_\s-]?khau)\s*[:=]\s*["'][^"'\s]{12,}["']/i, msg: 'có vẻ đang ghi cứng 1 khoá bí mật/mật khẩu ngay trong mã nguồn (nên để người dùng tự nhập trong ⚙️ Cấu hình thay vì ghi cứng)' }
+];
+function buildSecurityQualityReport(edits){
+  if(!edits || !edits.length) return null;
+  const findings = [];
+  edits.forEach((e, i)=>{
+    const news = typeof e.new === 'string' ? e.new : '';
+    if(!news) return;
+    const label = 'chỉnh sửa #' + (i + 1);
+
+    SECRET_PATTERNS.forEach(p=>{
+      if(p.re.test(news)) findings.push('- ' + label + ': ' + p.msg + '.');
+    });
+    if(/\beval\s*\(/.test(news) || /new\s+Function\s*\(/.test(news)){
+      findings.push('- ' + label + ': dùng eval()/new Function() để chạy chuỗi thành mã — dễ bị lợi dụng để chạy mã độc nếu chuỗi đó đến từ dữ liệu bên ngoài, nên tránh nếu không thật sự cần thiết.');
+    }
+    if(/\.innerHTML\s*=\s*(`[^`]*\$\{|[^;]*\+)/.test(news)){
+      findings.push('- ' + label + ': gán .innerHTML từ chuỗi được ghép/nội suy biến — nếu biến đó chứa dữ liệu người dùng nhập vào (không phải do bạn tự viết cố định), có nguy cơ XSS; cân nhắc dùng .textContent hoặc gán từng thuộc tính thay vì innerHTML.');
+    }
+    if(/document\.write\s*\(/.test(news)){
+      findings.push('- ' + label + ': dùng document.write() — cách làm cũ, dễ gây lỗi hiển thị/hiệu năng, nên tránh trong mã mới.');
+    }
+    if(/http:\/\/(?!localhost|127\.0\.0\.1)/i.test(news)){
+      findings.push('- ' + label + ': có đường dẫn http:// (không mã hoá) trỏ ra ngoài — nên đổi sang https:// nếu nguồn đó hỗ trợ, để tránh bị chặn "mixed content" hoặc lộ dữ liệu.');
+    }
+    if(/<a\b[^>]*target\s*=\s*["']_blank["'][^>]*>/i.test(news) && !/\brel\s*=\s*["'][^"']*noopener/i.test(news)){
+      findings.push('- ' + label + ': thẻ <a target="_blank"> mới thiếu rel="noopener noreferrer" — trang được mở ra có thể can thiệp ngược lại trang gốc qua window.opener (lỗi bảo mật phổ biến), nên thêm rel="noopener noreferrer".');
+    }
+    if(/<img\b(?![^>]*\balt\s*=)[^>]*>/i.test(news)){
+      findings.push('- ' + label + ': có thẻ <img> mới không có thuộc tính alt — người dùng khiếm thị dùng trình đọc màn hình sẽ không hiểu ảnh này là gì; nên thêm alt="mô tả ảnh" (hoặc alt="" nếu ảnh chỉ mang tính trang trí).');
+    }
+    if(/<input\b(?![^>]*\b(aria-label|aria-labelledby|placeholder)\s*=)[^>]*>/i.test(news) && !/<label\b/i.test(news)){
+      findings.push('- ' + label + ': có thẻ <input> mới không kèm <label>, aria-label hay placeholder — người dùng trình đọc màn hình sẽ không biết ô này để nhập gì; nên thêm 1 trong các cách trên.');
+    }
+  });
+  if(!findings.length) return null;
+  return '🛡️ Tự rà soát bảo mật/khả năng tiếp cận trên các chỉnh sửa vừa đề xuất (chỉ mang tính CẢNH BÁO theo mẫu, không tự chặn — bạn tự quyết định):\n' + findings.join('\n');
+}
+
+// ==================================================================================
+// KIỂM TRA "CHẤT LƯỢNG TRANG" KIỂU LIGHTHOUSE (lấy cảm hứng từ nhóm skill
+// addyosmani/web-quality-audit + addyosmani/accessibility + addyosmani/seo — vốn rà
+// theo đúng 3 trụ cột Lighthouse hay dùng: SEO, khả năng tiếp cận, thực hành tốt).
+// Khác với buildSecurityQualityReport (chỉ soi đúng phần VỪA SỬA), hàm này soi tổng
+// thể TOÀN BỘ trang sau khi áp dụng xong mọi chỉnh sửa — vì các thẻ <title>/<meta>
+// nằm ở <head>, thường không liên quan trực tiếp tới chỗ người dùng vừa yêu cầu sửa,
+// nhưng vẫn ảnh hưởng chất lượng chung của trang nên đáng được nhắc 1 lần cuối.
+// ==================================================================================
+function buildPageQualityChecklist(html){
+  if(!html) return null;
+  const findings = [];
+  const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  const head = headMatch ? headMatch[1] : html;
+
+  if(!/<title>[^<]*\S[^<]*<\/title>/i.test(head)){
+    findings.push('- Thiếu thẻ <title> (hoặc để trống) — ảnh hưởng cả SEO lẫn tên tab trình duyệt, nên đặt 1 tiêu đề ngắn gọn mô tả đúng nội dung trang.');
+  }
+  if(!/<meta\s+name\s*=\s*["']description["']/i.test(head)){
+    findings.push('- Thiếu thẻ <meta name="description"> — Google thường dùng thẻ này làm đoạn mô tả hiện trong kết quả tìm kiếm, nên thêm để tăng khả năng được click.');
+  }
+  if(!/<meta\s+name\s*=\s*["']viewport["']/i.test(head)){
+    findings.push('- Thiếu thẻ <meta name="viewport"> — trang có thể hiển thị sai kích thước/khó thao tác trên điện thoại.');
+  }
+  if(!/<html\b[^>]*\blang\s*=/i.test(html)){
+    findings.push('- Thẻ <html> thiếu thuộc tính lang (vd lang="vi") — trình đọc màn hình và Google cần thuộc tính này để nhận biết đúng ngôn ngữ trang.');
+  }
+
+  if(!findings.length) return null;
+  return '🔎 Kiểm tra chất lượng trang kiểu Lighthouse (SEO/khả năng tiếp cận cơ bản trên toàn trang, chỉ mang tính gợi ý):\n' + findings.join('\n');
+}
+
+// ==================================================================================
+// KIỂM TRA HIỆU NĂNG + TÍNH TOÀN VẸN LIÊN KẾT TRÊN TOÀN TRANG (lấy cảm hứng từ nhóm
+// skill squirrelscan/squirrelscan — "audits websites for SEO, performance, security,
+// accessibility and returns fixes" — và các skill rà soát code kiểu coderabbitai/skills,
+// mattpocock/skills: bắt lỗi trước khi commit thay vì để người dùng tự phát hiện sau).
+// Cũng chạy trên TOÀN BỘ trang sau khi áp dụng xong mọi chỉnh sửa, giống
+// buildPageQualityChecklist, nhưng tập trung vào 2 nhóm khác: (1) hiệu năng tải trang —
+// ảnh quá nặng dạng base64, thiếu width/height gây "layout shift", <script> chặn tải ở
+// <head> mà không có defer/async; (2) toàn vẹn liên kết/cấu trúc — id trùng lặp (phá
+// getElementById/label/CSS), liên kết neo href="#..." trỏ tới id không tồn tại trong
+// trang. Đây đều là lỗi thật, không phải gợi ý phong cách, nên có thể ảnh hưởng chức
+// năng nếu bỏ qua.
+// ==================================================================================
+function buildPerformanceAndLinksChecklist(html){
+  if(!html) return null;
+  const findings = [];
+
+  // ---- (1) Hiệu năng ----
+  const base64Imgs = html.match(/<img\b[^>]*\ssrc\s*=\s*["']data:image\/[^"']+["'][^>]*>/gi) || [];
+  let heavyBase64Count = 0;
+  base64Imgs.forEach(tag=>{
+    const m = tag.match(/src\s*=\s*["']data:image\/[^"']*;base64,([^"']+)["']/i);
+    if(m && m[1] && m[1].length > 66000) heavyBase64Count++; // ~66k ký tự base64 ≈ trên dưới 50KB ảnh gốc
+  });
+  if(heavyBase64Count > 0){
+    findings.push('- Có ' + heavyBase64Count + ' ảnh nhúng trực tiếp dạng base64 khá nặng (ước lượng > ~50KB/ảnh) — nhúng thẳng vào HTML làm tăng dung lượng file và trang tải chậm hơn, nên cân nhắc lưu thành file ảnh riêng (hoặc dùng dịch vụ ảnh ngoài) rồi trỏ src tới đó.');
+  }
+
+  const imgTags = html.match(/<img\b[^>]*>/gi) || [];
+  const imgsMissingSize = imgTags.filter(t=> !(/\bwidth\s*=/i.test(t) && /\bheight\s*=/i.test(t)));
+  if(imgTags.length > 0 && imgsMissingSize.length > 0){
+    findings.push('- Có ' + imgsMissingSize.length + '/' + imgTags.length + ' thẻ <img> thiếu width/height — trình duyệt không biết trước kích thước nên nội dung có thể "nhảy" (layout shift) trong lúc ảnh đang tải, nên thêm width/height (hoặc CSS aspect-ratio) cho mượt hơn.');
+  }
+
+  const headMatch2 = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  const headHtml = headMatch2 ? headMatch2[1] : '';
+  const headScripts = headHtml.match(/<script\b[^>]*\bsrc\s*=\s*["'][^"']+["'][^>]*>/gi) || [];
+  const blockingHeadScripts = headScripts.filter(t=> !/\b(defer|async)\b/i.test(t) && !/type\s*=\s*["']module["']/i.test(t));
+  if(blockingHeadScripts.length > 0){
+    findings.push('- Có ' + blockingHeadScripts.length + ' thẻ <script src="..."> trong <head> không có defer/async — trình duyệt sẽ dừng dựng trang để tải/chạy script này trước, làm chậm hiển thị nội dung; nên thêm defer (hoặc async nếu script độc lập), hoặc chuyển xuống cuối <body>.');
+  }
+
+  // ---- (2) Toàn vẹn id / liên kết neo ----
+  const idMatches = Array.from(html.matchAll(/\bid\s*=\s*["']([^"']+)["']/gi)).map(m=> m[1]);
+  const idCount = new Map();
+  idMatches.forEach(id=> idCount.set(id, (idCount.get(id) || 0) + 1));
+  const dupIds = Array.from(idCount.entries()).filter(([,c])=> c > 1);
+  if(dupIds.length > 0){
+    findings.push('- Có id bị trùng lặp trong trang: ' + dupIds.map(([id,c])=> '"' + id + '" (x' + c + ')').join(', ') + ' — id phải là duy nhất, trùng id dễ làm getElementById()/label/CSS chọn nhầm phần tử; nên đổi tên cho từng cái khác nhau.');
+  }
+
+  const anchorHrefs = Array.from(html.matchAll(/href\s*=\s*["']#([^"'#][^"']*)["']/gi)).map(m=> m[1]).filter(v=> v && v.trim());
+  if(anchorHrefs.length > 0){
+    const idSet = new Set(idMatches);
+    const nameMatches = Array.from(html.matchAll(/\bname\s*=\s*["']([^"']+)["']/gi)).map(m=> m[1]);
+    nameMatches.forEach(n=> idSet.add(n));
+    const uniqueTargets = Array.from(new Set(anchorHrefs));
+    const brokenAnchors = uniqueTargets.filter(t=> !idSet.has(t));
+    if(brokenAnchors.length > 0){
+      findings.push('- Có liên kết neo trỏ tới id không tồn tại trong trang: ' + brokenAnchors.map(t=> 'href="#' + t + '"').join(', ') + ' — bấm vào các liên kết này sẽ không cuộn tới đâu cả; kiểm tra lại đúng id của phần tử đích, hoặc thêm id còn thiếu.');
+    }
+  }
+
+  if(!findings.length) return null;
+  return '⚡ Kiểm tra hiệu năng & toàn vẹn liên kết trên toàn trang (chỉ mang tính gợi ý, không tự chặn):\n' + findings.join('\n');
+}
+
+// ==================================================================================
+// KIỂM TRA SEO/CHIA SẺ MẠNG XÃ HỘI (lấy cảm hứng từ nhóm skill AgriciDaniel/claude-seo
+// — "Universal SEO skill for comprehensive website analysis and optimization"). Khác
+// buildPageQualityChecklist (chỉ soi title/meta description/viewport/lang cơ bản),
+// hàm này soi sâu hơn về phần "trang sẽ trông ra sao khi được chia sẻ/tìm thấy": thẻ
+// Open Graph (Facebook/Zalo/LinkedIn...), Twitter Card, canonical, favicon, và số
+// lượng thẻ <h1> (SEO khuyến nghị mỗi trang chỉ nên có đúng 1 <h1> làm tiêu đề chính).
+// ==================================================================================
+function buildSeoSocialChecklist(html){
+  if(!html) return null;
+  const findings = [];
+  const headMatch3 = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  const head = headMatch3 ? headMatch3[1] : html;
+
+  const hasOgTitle = /<meta\s+property\s*=\s*["']og:title["']/i.test(head);
+  const hasOgDesc = /<meta\s+property\s*=\s*["']og:description["']/i.test(head);
+  const hasOgImage = /<meta\s+property\s*=\s*["']og:image["']/i.test(head);
+  if(!hasOgTitle || !hasOgDesc || !hasOgImage){
+    const missing = [!hasOgTitle && 'og:title', !hasOgDesc && 'og:description', !hasOgImage && 'og:image'].filter(Boolean).join(', ');
+    findings.push('- Thiếu thẻ Open Graph (' + missing + ') — khi trang được chia sẻ lên Facebook/Zalo/LinkedIn... sẽ không hiện được tiêu đề/mô tả/ảnh xem trước đẹp, nên thêm các thẻ <meta property="og:...">.');
+  }
+  if(!/<meta\s+name\s*=\s*["']twitter:card["']/i.test(head)){
+    findings.push('- Thiếu thẻ <meta name="twitter:card"> — khi dán link lên X/Twitter sẽ không hiện được ảnh/xem trước đẹp, nên thêm (thường dùng giá trị "summary_large_image").');
+  }
+  if(!/<link\s+rel\s*=\s*["']canonical["']/i.test(head)){
+    findings.push('- Thiếu thẻ <link rel="canonical"> — nên thêm để báo cho Google biết URL "chính thức" của trang, tránh bị tính trùng nội dung nếu trang có thể truy cập qua nhiều URL khác nhau.');
+  }
+  if(!/<link\s+rel\s*=\s*["'](icon|shortcut icon|apple-touch-icon)["']/i.test(head)){
+    findings.push('- Thiếu favicon (<link rel="icon" ...>) — trang sẽ không có biểu tượng riêng trên tab trình duyệt/khi lưu bookmark, nên thêm 1 file icon nhỏ.');
+  }
+  const h1Count = (html.match(/<h1\b[^>]*>/gi) || []).length;
+  if(h1Count === 0){
+    findings.push('- Trang không có thẻ <h1> nào — nên có đúng 1 thẻ <h1> làm tiêu đề chính, vừa tốt cho SEO vừa giúp người dùng trình đọc màn hình hiểu ngay chủ đề trang.');
+  } else if(h1Count > 1){
+    findings.push('- Trang có ' + h1Count + ' thẻ <h1> — nên chỉ dùng đúng 1 thẻ <h1> cho tiêu đề chính, các tiêu đề phụ khác nên dùng <h2>/<h3> để giữ đúng cấu trúc phân cấp.');
+  }
+
+  if(!findings.length) return null;
+  return '🌐 Kiểm tra SEO/chia sẻ mạng xã hội (chỉ mang tính gợi ý, không tự chặn):\n' + findings.join('\n');
+}
+
+// ==================================================================================
+// KIỂM TRA "VỆ SINH MÃ NGUỒN" (lấy cảm hứng từ nhóm skill review code kiểu
+// coderabbitai/skills và mattpocock/skills — dev workflow, refactoring plans, git
+// guardrails). Khác các hàm trên (nhắm vào SEO/hiệu năng/HTML), hàm này soi phần
+// <script> của trang: các dấu vết code chưa dọn trước khi đẩy lên GitHub (console.log
+// còn sót, debugger còn sót) và đếm nhanh TODO/FIXME (chỉ để nhắc, không phải lỗi),
+// cộng thêm 1 phép đếm thô số thẻ mở/đóng của vài thẻ khối hay gặp để cảnh báo sớm
+// khả năng cấu trúc HTML bị lệch (vd 1 lần sửa quên đóng 1 thẻ <div>).
+// ==================================================================================
+function buildCodeHygieneChecklist(html){
+  if(!html) return null;
+  const findings = [];
+  const scriptBlocks = html.match(/<script(?![^>]*\bsrc\s*=)[^>]*>([\s\S]*?)<\/script>/gi) || [];
+  const scriptText = scriptBlocks.join('\n');
+
+  const consoleLogCount = (scriptText.match(/console\.(log|debug)\s*\(/g) || []).length;
+  if(consoleLogCount > 0){
+    findings.push('- Có ' + consoleLogCount + ' lệnh console.log/console.debug còn sót trong mã — thường chỉ dùng để gỡ lỗi, nên dọn bớt trước khi đẩy lên GitHub cho gọn (trừ khi bạn cố ý giữ lại để theo dõi).');
+  }
+  const debuggerCount = (scriptText.match(/\bdebugger\s*;/g) || []).length;
+  if(debuggerCount > 0){
+    findings.push('- Có ' + debuggerCount + ' lệnh debugger; còn sót trong mã — lệnh này sẽ làm trình duyệt tự dừng lại (mở DevTools) khi người dùng bình thường vào trang, gần như chắc chắn cần xoá trước khi đẩy lên GitHub.');
+  }
+  const todoCount = (scriptText.match(/\/\/\s*(TODO|FIXME|XXX)\b/gi) || []).length + (html.match(/<!--\s*(TODO|FIXME|XXX)\b/gi) || []).length;
+  if(todoCount > 0){
+    findings.push('- Có ' + todoCount + ' ghi chú TODO/FIXME/XXX trong file — chỉ để nhắc bạn, không phải lỗi; xem lại nếu có việc còn dang dở cần hoàn thiện.');
+  }
+
+  ['div','section','ul','ol','table'].forEach(tag=>{
+    const openCount = (html.match(new RegExp('<' + tag + '(\\s[^>]*)?>', 'gi')) || []).length;
+    const closeCount = (html.match(new RegExp('</' + tag + '\\s*>', 'gi')) || []).length;
+    if(openCount !== closeCount){
+      findings.push('- Số thẻ mở <' + tag + '> (' + openCount + ') và thẻ đóng </' + tag + '> (' + closeCount + ') không khớp nhau — có khả năng 1 chỉnh sửa nào đó quên đóng/thừa thẻ, nên kiểm tra lại cấu trúc để tránh vỡ giao diện (đây chỉ là phép đếm thô, có thể báo nhầm với thẻ tự đóng viết khác kiểu).');
+    }
+  });
+
+  if(!findings.length) return null;
+  return '🧹 Kiểm tra vệ sinh mã nguồn (chỉ mang tính gợi ý, không tự chặn):\n' + findings.join('\n');
+}
+
+// ==================================================================================
+// KIỂM TRA BẢO MẬT FORM (lấy cảm hứng từ nhóm skill BehiSecc/vibesec — "Helps write
+// secure code by preventing common vulnerabilities... approaching code from a bug
+// hunter's perspective"). Khác buildSecurityQualityReport (chỉ soi đúng phần VỪA SỬA),
+// hàm này soi TOÀN BỘ trang, tập trung riêng vào <form>: form dùng method="get" mà có
+// chứa ô mật khẩu sẽ khiến mật khẩu bị lộ ngay trên URL (hiện trong lịch sử trình
+// duyệt, log server, thanh địa chỉ) — đây là lỗi bảo mật kinh điển, dễ mắc khi ghép
+// form thủ công.
+// ==================================================================================
+function buildFormSecurityChecklist(html){
+  if(!html) return null;
+  const findings = [];
+  const forms = html.match(/<form\b[^>]*>[\s\S]*?<\/form>/gi) || [];
+  forms.forEach((formHtml, i)=>{
+    const openTag = (formHtml.match(/<form\b[^>]*>/i) || [''])[0];
+    const isGet = !/\bmethod\s*=\s*["']post["']/i.test(openTag); // mặc định của <form> là GET nếu không ghi rõ
+    const hasPasswordField = /<input\b[^>]*\btype\s*=\s*["']password["']/i.test(formHtml);
+    if(isGet && hasPasswordField){
+      findings.push('- Form #' + (i + 1) + ' có ô nhập mật khẩu nhưng đang dùng method="get" (hoặc không ghi method, mặc định cũng là get) — mật khẩu sẽ bị lộ ngay trên URL/lịch sử trình duyệt/log server, cần đổi sang method="post".');
+    }
+  });
+  if(!findings.length) return null;
+  return '🔐 Kiểm tra bảo mật form (chỉ mang tính gợi ý, không tự chặn):\n' + findings.join('\n');
+}
+
+// Tóm tắt bản đồ cấu trúc thành dạng người đọc được (dùng cho bảng "🧭 Cấu trúc file").
+function buildOutlineSummary(index, graph){
+  return index.functions.map(f=>{
+    const lineCount = index.text.slice(f.start, f.end).split('\n').length;
+    const callsOut = Array.from(graph.calls.get(f.name) || []);
+    const callsIn = Array.from(graph.calledBy.get(f.name) || []);
+    return { name: f.name, lineCount, callsOut, callsIn };
+  });
+}
+
+// Tự động (không cần người dùng gõ từ khoá) trích ra các "manh mối" trong câu lệnh
+// (id="...", class="...", đoạn trong ngoặc kép/đơn, mã màu, tên thẻ HTML...) để
+// đoán phần nào của file lớn khả năng cao chứa chỗ cần sửa, giúp đọc đúng phần
+// trước tiên thay vì phải quét tuần tự toàn bộ — nhanh hơn nhiều với file nặng.
+function extractLikelyKeywords(instruction){
+  const found = new Set();
+  const patterns = [
+    /id\s*=\s*["']([^"']{2,60})["']/gi,
+    /class\s*=\s*["']([^"']{2,60})["']/gi,
+    /"([^"]{3,40})"/g,
+    /'([^']{3,40})'/g,
+    /“([^”]{3,40})”/g,
+    /#[0-9a-fA-F]{3,8}\b/g,
+    /<\s*([a-zA-Z][a-zA-Z0-9-]*)/g
+  ];
+  patterns.forEach(re=>{
+    let m;
+    while((m = re.exec(instruction))){
+      const v = ((m[1] !== undefined ? m[1] : m[0]) || '').trim();
+      if(v.length >= 2) found.add(v);
+    }
+  });
+  return Array.from(found);
+}
+
+// Xếp lại thứ tự các phần (chunk) theo mức độ khả năng liên quan tới câu lệnh,
+// dựa trên số từ khoá trùng khớp — phần khả năng cao được đọc trước.
+function rankChunks(chunks, keywords){
+  if(!keywords.length) return chunks.slice();
+  const scored = chunks.map(c=>{
+    const lower = c.text.toLowerCase();
+    let score = 0;
+    keywords.forEach(k=>{ if(k && lower.includes(k.toLowerCase())) score++; });
+    return { c, score };
+  });
+  scored.sort((a,b)=> b.score - a.score);
+  return scored.map(s=>s.c);
+}
+
+// Tìm trong MÃ NGUỒN THẬT các đoạn xung quanh những từ khoá rút ra từ câu lệnh
+// người dùng (id/class/màu/chữ trong ngoặc kép...), rồi ghép lại thành 1 đoạn ngữ
+// cảnh ngắn gọn. Dùng để "ghim" bước làm rõ yêu cầu (refineInstruction) vào đúng
+// những gì THỰC SỰ có trong file, thay vì để AI đoán mò tên class/id không tồn tại
+// — đây là nguyên nhân chính khiến bước làm rõ yêu cầu trước đây "hiểu sai ý".
+function buildGroundingContext(text, keywords, radius, maxTotalChars){
+  if(!keywords || !keywords.length) return '';
+  const lower = text.toLowerCase();
+  const windows = [];
+  keywords.forEach(k=>{
+    if(!k) return;
+    const kl = k.toLowerCase();
+    if(kl.length < 2) return;
+    let fromIdx = 0, hits = 0;
+    while(hits < 3){ // tối đa 3 lần xuất hiện / từ khoá, tránh phình to quá mức
+      const found = lower.indexOf(kl, fromIdx);
+      if(found === -1) break;
+      windows.push({ start: Math.max(0, found - radius), end: Math.min(text.length, found + kl.length + radius) });
+      fromIdx = found + kl.length;
+      hits++;
+    }
+  });
+  if(!windows.length) return '';
+  windows.sort((a,b)=> a.start - b.start);
+  const merged = [windows[0]];
+  for(let i=1;i<windows.length;i++){
+    const w = windows[i];
+    const last = merged[merged.length-1];
+    if(w.start <= last.end + 200){ last.end = Math.max(last.end, w.end); }
+    else{ merged.push({ start:w.start, end:w.end }); }
+  }
+  let out = merged.map(w => text.slice(w.start, w.end)).join('\n\n[...]\n\n');
+  if(out.length > maxTotalChars) out = out.slice(0, maxTotalChars) + '\n\n[...]';
+  return out;
+}
+
+// Chạy nhiều tác vụ bất đồng bộ song song, giới hạn số lượng chạy cùng lúc,
+// giúp đọc nhiều phần của file lớn nhanh hơn nhiều so với chạy tuần tự.
+async function runWithConcurrency(items, limit, worker){
+  const results = new Array(items.length);
+  let cursor = 0;
+  async function runner(){
+    while(cursor < items.length){
+      const current = cursor++;
+      results[current] = await worker(items[current], current);
+    }
+  }
+  const workers = Array.from({ length: Math.min(limit, items.length) }, runner);
+  await Promise.all(workers);
+  return results;
+}
+
+// Gọi thẳng tới Anthropic API hoặc FCC (tuỳ cấu hình), trả về CHUỖI đã làm sạch
+// (đã tách khỏi mốc đánh dấu JSON và bỏ markdown fences nếu có) — dùng chung cho
+// cả bước "chỉnh sửa" (callClaude) và bước "tự kiểm tra" (callClaudeVerify).
+// Có timeout riêng (tránh treo vô thời hạn nếu mạng/API bị đứng) và tự động thử lại
+// tối đa AI_MAX_ATTEMPTS lần khi gặp lỗi mạng tạm thời hoặc AI báo quá tải/giới hạn
+// tần suất (429/500/502/503/529) — không thử lại nếu chính người dùng bấm Dừng.
+const AI_FETCH_TIMEOUT_MS = 120000; // 2 phút / lượt — đủ cho đoạn mã lớn, tránh treo mãi
+const AI_MAX_ATTEMPTS = 3;
+
+// Chọn model phù hợp theo chế độ (Anthropic API hay FCC/proxy cục bộ) và theo việc lượt
+// gọi này có cần "model thông minh" hay không (dùng cho bước làm rõ yêu cầu/tự kiểm tra —
+// wantSmart=true) hay chỉ cần model thực thi bình thường (wantSmart=false, dùng cho bước
+// sửa code trực tiếp). Nếu model thông minh không được cấu hình riêng, tự động dùng lại
+// model thực thi mặc định của chế độ đang chọn.
+function pickModel(cfg, wantSmart){
+  if(cfg.mode === 'fcc'){
+    const smart = wantSmart && cfg.fccSmartModel && cfg.fccSmartModel.trim();
+    return smart || cfg.fccModel || cfg.model || 'claude-sonnet-5';
+  }
+  const smartApi = wantSmart && cfg.smartModel && cfg.smartModel.trim();
+  return smartApi || cfg.model || 'claude-sonnet-5';
+}
+
+// opts (tuỳ chọn):
+//  - model: ghi đè model mặc định của cfg cho riêng lượt gọi này (vd dùng "model thông minh"
+//    cho bước làm rõ yêu cầu/tự kiểm tra, còn model thường cho bước sửa code). Bỏ qua khi
+//    cfg.mode === 'fcc' vì proxy cục bộ chỉ có đúng 1 model đã cấu hình sẵn.
+//  - maxTokens: giới hạn token đầu ra mong muốn cho lượt gọi này (mặc định 12000).
+//  - thinkingBudget: nếu > 0 và đang ở chế độ Anthropic API + cfg.deepThinking bật, sẽ bật
+//    "Extended Thinking" (suy luận sâu trước khi trả lời) với ngân sách token tương ứng,
+//    giúp tăng độ chính xác khi đọc hiểu yêu cầu / định vị chỗ cần sửa cho các tác vụ khó.
+async function claudeRequest(cfg, system, userContent, externalSignal, opts){
+  opts = opts || {};
+  let url, headers;
+  if(cfg.mode === 'fcc'){
+    url = (cfg.fccUrl || 'http://localhost:8082').replace(/\/+$/, '') + '/v1/messages';
+    headers = { 'Content-Type': 'application/json' };
+    if(cfg.fccToken) headers['Authorization'] = 'Bearer ' + cfg.fccToken;
+  } else {
+    url = 'https://api.anthropic.com/v1/messages';
+    headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': cfg.anthropicKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    };
+  }
+  // opts.model đã được người gọi (refineInstruction/callClaude/callClaudeVerify) chọn sẵn
+  // đúng theo chế độ hiện tại (API hay FCC) qua hàm pickModel bên dưới.
+  const model = opts.model || (cfg.mode === 'fcc' ? (cfg.fccModel || 'claude-sonnet-5') : (cfg.model || 'claude-sonnet-5'));
+
+  const label = cfg.mode === 'fcc' ? 'FCC server' : 'Anthropic API';
+  const baseMaxTokens = opts.maxTokens || 12000;
+  // Suy luận sâu: thử áp dụng cho cả 2 chế độ (Anthropic API và FCC/proxy cục bộ) — nếu
+  // model/proxy không hỗ trợ tham số "thinking", đoạn xử lý lỗi 400 bên dưới sẽ tự động
+  // tắt và thử lại ngay, không cần người dùng tự tắt tuỳ chọn trong ⚙️ Cấu hình.
+  let thinkingBudget = (cfg.deepThinking !== false && opts.thinkingBudget > 0) ? opts.thinkingBudget : 0;
+  let lastErr;
+
+  for(let attempt=1; attempt<=AI_MAX_ATTEMPTS; attempt++){
+    const useThinking = thinkingBudget > 0;
+    const body = {
+      model: model,
+      max_tokens: useThinking ? Math.max(baseMaxTokens, thinkingBudget + 2000) : baseMaxTokens,
+      system: system,
+      messages: [{ role:'user', content: userContent }]
+    };
+    if(useThinking){
+      // Extended Thinking bắt buộc temperature=1 (API sẽ báo lỗi nếu đặt giá trị khác).
+      body.thinking = { type: 'enabled', budget_tokens: thinkingBudget };
+      body.temperature = 1;
+    } else {
+      body.temperature = 0;
+    }
+
+    let res;
+    try{
+      res = await fetchWithTimeout(url, { method: 'POST', headers, body: JSON.stringify(body) }, AI_FETCH_TIMEOUT_MS, externalSignal);
+    }catch(e){
+      if(e && e.name === 'AbortError' && externalSignal && externalSignal.aborted) throw e; // người dùng chủ động dừng -> không thử lại
+      lastErr = (e && e.name === 'AbortError')
+        ? new Error('Quá thời gian chờ phản hồi từ ' + label + ' (' + (AI_FETCH_TIMEOUT_MS/1000) + 's).')
+        : (cfg.mode === 'fcc'
+            ? new Error('Không kết nối được tới FCC server tại ' + url + '. Kiểm tra: (1) đã chạy "fcc-server" trên máy này chưa, (2) đã bật CORS trong app.py của FCC chưa (xem hướng dẫn đi kèm), (3) đúng cổng/URL chưa.')
+            : new Error('Không kết nối được tới Anthropic API: ' + (e.message || String(e))));
+      if(attempt < AI_MAX_ATTEMPTS){ await sleep(attempt*1500); continue; }
+      throw lastErr;
+    }
+
+    if(res.ok){
+      const data = await res.json();
+      const text = (data.content || []).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+      let clean = text.trim();
+
+      // Một số model "reasoning" (như Nemotron) luôn viết phần suy luận trước khi
+      // trả JSON dù đã yêu cầu không làm vậy. Ưu tiên tách theo mốc đánh dấu.
+      const markerMatch = clean.match(/===JSON_BAT_DAU===([\s\S]*?)===JSON_KET_THUC===/);
+      if(markerMatch){ clean = markerMatch[1].trim(); }
+
+      clean = clean.replace(/^```(?:json)?\s*/, '').replace(/```\s*$/, '').trim();
+      return clean;
+    }
+
+    const bodyText = await res.text().catch(()=> '');
+
+    // Model/proxy không hỗ trợ tham số "thinking" (vd model cũ, hoặc FCC/model tuỳ chỉnh) ->
+    // tự động tắt suy luận sâu rồi thử lại NGAY với đúng lượt hiện tại (không tính vào số
+    // lần thử lại do lỗi mạng/quá tải, và chỉ hạ cấp 1 lần duy nhất để tránh lặp vô ích).
+    if(useThinking && res.status === 400 && /thinking/i.test(bodyText)){
+      thinkingBudget = 0;
+      attempt--;
+      continue;
+    }
+
+    lastErr = new Error(label + ' lỗi (' + res.status + '): ' + bodyText.slice(0, 300));
+    if(isTransientHttpStatus(res.status) && attempt < AI_MAX_ATTEMPTS){
+      const retryAfterHeader = res.headers && res.headers.get && res.headers.get('retry-after');
+      const retryAfterMs = retryAfterHeader ? Math.round(parseFloat(retryAfterHeader) * 1000) : NaN;
+      const waitMs = Number.isFinite(retryAfterMs) ? Math.min(Math.max(retryAfterMs, 800), 15000) : Math.min(attempt*2000, 8000);
+      await sleep(waitMs);
+      continue;
+    }
+    throw lastErr;
+  }
+  throw lastErr;
+}
+
+// ---------------- bước "làm rõ yêu cầu" (prompt engineering tự động) ----------------
+// Trước khi đọc mã nguồn, gửi RIÊNG câu lệnh gốc của người dùng (lời văn đời thường,
+// có thể ngắn/mơ hồ) cho AI để "dịch" thành 1 bản mô tả kỹ thuật rõ ràng, cụ thể,
+// không mơ hồ — bản mô tả này mới là "instruction" thật sự được dùng cho các bước
+// sửa mã (callClaude) và tự kiểm tra (callClaudeVerify) phía sau. Mục tiêu: giảm
+// tình trạng AI đọc/hiểu sai ý người dùng do câu lệnh gốc quá ngắn gọn hoặc mơ hồ.
+async function refineInstruction(cfg, rawInstruction, attachmentsForRequest, externalSignal, codeContext){
+  const system = [
+    'Bạn là chuyên gia "prompt engineering" kiêm kỹ sư phần mềm cấp cao. Nhiệm vụ DUY NHẤT của bạn: viết lại yêu cầu của người dùng (lời văn đời thường, có thể ngắn gọn/mơ hồ) thành 1 bản MÔ TẢ KỸ THUẬT rõ ràng, cụ thể, không mơ hồ — để một AI lập trình viên khác đọc và thực hiện ĐÚNG Ý người dùng mà không cần hỏi lại.',
+    'Quy tắc bắt buộc:',
+    '- TUYỆT ĐỐI giữ nguyên mục tiêu và phạm vi của người dùng — KHÔNG được tự ý thêm yêu cầu mới, KHÔNG suy diễn vượt quá những gì có thể suy ra hợp lý từ câu gốc.',
+    '- Nếu bên dưới có phần "TRÍCH ĐOẠN MÃ NGUỒN THẬT LIÊN QUAN": đây là các đoạn CÓ THẬT lấy trực tiếp từ file — PHẢI ưu tiên dùng đúng tên id/class/thuộc tính/màu/chữ hiển thị xuất hiện trong đó để mô tả vị trí cần sửa (vd thay vì nói chung chung "nút Lưu", hãy nói rõ "phần tử có id=\\"saveBtn\\", đang hiển thị chữ ...") — TUYỆT ĐỐI KHÔNG bịa ra id/class không xuất hiện trong trích đoạn. Nếu không thấy phần tử phù hợp trong trích đoạn, hãy mô tả theo vai trò/chữ hiển thị/vị trí một cách trung thực, không đoán bừa tên kỹ thuật.',
+    '- Nếu KHÔNG có trích đoạn mã nguồn (file có thể quá lớn hoặc không tìm thấy từ khoá phù hợp), hãy mô tả theo nhãn/chữ hiển thị/màu/vị trí/vai trò như bình thường, không bịa chi tiết kỹ thuật.',
+    '- Làm rõ PHẠM VI áp dụng: chỉ 1 vị trí cụ thể, hay TẤT CẢ các vị trí tương tự trong toàn trang — nếu người dùng không nói rõ, chọn cách hiểu tự nhiên nhất và NÊU RÕ lựa chọn đó trong bản mô tả.',
+    '- Nếu người dùng dùng từ mơ hồ về màu sắc/kích thước/khoảng cách (vd "đẹp hơn", "to hơn 1 chút", "màu tươi hơn"), hãy đề xuất 1 giá trị/hướng xử lý CỤ THỂ, hợp thẩm mỹ, hợp lý để AI kia thực hiện được ngay — đừng để mơ hồ.',
+    '- Nêu rõ những gì PHẢI GIỮ NGUYÊN (không được đụng tới) nếu có thể suy luận hợp lý từ ngữ cảnh, để tránh AI kia sửa nhầm sang phần khác.',
+    '- Nếu có ảnh/file đính kèm, hãy nhắc AI kia rằng ảnh minh hoạ mong muốn của người dùng, cần tham khảo khi thực hiện.',
+    '- Súc tích, tối đa 6-9 dòng. TUYỆT ĐỐI không thêm lời chào, không giải thích lý do bạn viết vậy, không markdown, không JSON, không dùng dấu ```— CHỈ trả về đúng đoạn mô tả kỹ thuật, viết bằng tiếng Việt, ở dạng chỉ thị (imperative) như thể chính người dùng đang ra lệnh nhưng rõ ràng và chi tiết hơn nhiều.'
+  ].concat(currentMemoryContext ? [currentMemoryContext] : []).join('\n');
+
+  const attachList = attachmentsForRequest || [];
+  const imageAttachments = attachList.filter(a => a.kind === 'image');
+  const textAttachments = attachList.filter(a => a.kind === 'text');
+  const parts = ['YÊU CẦU GỐC CỦA NGƯỜI DÙNG (lời văn đời thường):\n' + rawInstruction];
+  if(codeContext){ parts.push('\nTRÍCH ĐOẠN MÃ NGUỒN THẬT LIÊN QUAN (lấy trực tiếp từ file, dùng để bám sát thực tế — không phải toàn bộ file):\n' + codeContext); }
+  if(imageAttachments.length) parts.push('\n(Người dùng có đính kèm ' + imageAttachments.length + ' ảnh minh hoạ mong muốn — hãy nhắc tới ảnh này trong mô tả kỹ thuật nếu liên quan.)');
+  if(textAttachments.length) parts.push('\n(Người dùng có đính kèm ' + textAttachments.length + ' file văn bản làm ngữ cảnh tham khảo.)');
+  const userText = parts.join('\n');
+
+  let user;
+  if(imageAttachments.length){
+    user = imageAttachments.map(a=>{
+      const m = /^data:([^;]+);base64,(.*)$/.exec(a.dataUrl || '');
+      return { type:'image', source:{ type:'base64', media_type:(m && m[1]) || a.mimeType || 'image/png', data:(m && m[2]) || '' } };
+    });
+    user.push({ type:'text', text: userText });
+  } else {
+    user = userText;
+  }
+
+  const clean = await claudeRequest(cfg, system, user, externalSignal, {
+    model: pickModel(cfg, true),
+    maxTokens: 4000,
+    thinkingBudget: 2000
+  });
+  const refined = clean.replace(/^```[a-zA-Z]*\s*/,'').replace(/```\s*$/,'').trim();
+  return refined || rawInstruction;
+}
+
+// ---------------- gọi Anthropic API ----------------
+async function callClaude(cfg, sliceInfo, instruction, attachmentsForRequest, externalSignal){
+  const system = [
+    'Bạn là một kỹ sư phần mềm cấp cao, cực kỳ tỉ mỉ, đóng vai "Claude Code" — trợ lý chỉnh sửa mã nguồn HTML/CSS/JS cho một người dùng KHÔNG biết gì về lập trình.',
+    'Yêu cầu của người dùng có thể đã được một bước "làm rõ yêu cầu" trước đó diễn giải thành mô tả kỹ thuật chi tiết hơn lời văn gốc, và RẤT CÓ THỂ đã được chính người dùng tự tay xem lại/chỉnh sửa trước khi gửi tới bạn — hãy coi đây là ý định THẬT SỰ, chính xác và đầy đủ nhất của người dùng, bám sát tuyệt đối, không diễn giải lại hay suy đoán thêm ngoài những gì được nêu.',
+    'Nhiệm vụ của bạn: tự đọc kỹ toàn bộ mã nguồn được cung cấp, tự hiểu cấu trúc/ngữ cảnh (thẻ HTML, class, id, style inline/CSS, hàm JS liên quan), và tự xác định CHÍNH XÁC mọi chỗ cần sửa để thực hiện đúng và ĐỦ ý người dùng theo cách tốt nhất, an toàn, không làm hỏng hay ảnh hưởng tới các phần khác của trang không liên quan tới yêu cầu.',
+    'Trước khi trả JSON cuối cùng, hãy tự phân tích ngắn gọn (không bắt buộc phải kỹ hết mọi trường hợp, nhưng bắt buộc phải làm) trong 1 đoạn <phan_tich> ở NGOÀI 2 mốc đánh dấu JSON bên dưới — liệt kê: (1) bạn hiểu yêu cầu là gì, (2) những vị trí/đoạn mã liên quan mà bạn tìm thấy trong đoạn trích, (3) yêu cầu có ngụ ý ÁP DỤNG CHO TẤT CẢ các vị trí tương tự hay chỉ MỘT vị trí cụ thể — nếu có nhiều vị trí giống nhau và yêu cầu mang tính tổng quát (vd "đổi màu tất cả nút", "mọi tiêu đề"), PHẢI đề xuất sửa TẤT CẢ các vị trí đó, mỗi vị trí 1 phần tử JSON riêng, không chỉ sửa 1 chỗ rồi bỏ sót phần còn lại.',
+    'Bạn hoạt động như 1 công cụ str-replace chính xác tuyệt đối — kết quả cuối cùng CHỈ được đọc từ giữa 2 mốc đánh dấu, nên phần phân tích phía trước không ảnh hưởng tới việc trích JSON, cứ phân tích thoải mái trước khi chốt JSON.',
+    'Nếu file quá lớn, bạn sẽ nhận được TỪNG PHẦN của toàn bộ file trong nhiều lượt gọi liên tiếp (không phải do người dùng chọn, mà hệ thống tự chia) — hãy coi mỗi phần là 1 đoạn trích của cùng 1 file lớn; nếu yêu cầu mang tính "tất cả/mọi" nhưng đoạn trích này chỉ chứa 1 phần các vị trí liên quan, cứ sửa hết các vị trí bạn thấy TRONG đoạn trích này (các phần khác sẽ do các lượt gọi khác xử lý).',
+    'JSON kết quả cuối cùng PHẢI đúng định dạng 1 mảng:',
+    '[{"old": "...", "new": "..."}]',
+    'Quy tắc bắt buộc cho mỗi phần tử:',
+    '- "old" PHẢI là một chuỗi con chép NGUYÊN VĂN, chính xác từng ký tự (kể cả khoảng trắng/thụt lề/xuống dòng) từ đoạn trích được cung cấp, và PHẢI xuất hiện đúng 1 lần duy nhất trong đoạn trích đó — nếu đoạn giống hệt nhau lặp lại nhiều lần, hãy mở rộng "old" thêm ngữ cảnh xung quanh (thẻ cha, thuộc tính lân cận...) tới khi nó trở nên duy nhất.',
+    '- "old" nên NGẮN nhất có thể trong khi vẫn đảm bảo là duy nhất (chỉ lấy đủ ngữ cảnh xung quanh để định vị) — không copy cả khối lớn nếu chỉ cần vài từ là đủ để xác định vị trí duy nhất.',
+    '- "new" là nội dung thay thế mong muốn, viết đúng chuẩn cú pháp HTML/CSS/JS, không để sót dấu ngoặc/thẻ đóng, giữ đúng phong cách code hiện có (thụt lề, dấu nháy, quy ước đặt tên) của đoạn xung quanh.',
+    '- TUYỆT ĐỐI không thêm/xoá các token dạng __CCC_IMG_n__ trừ khi yêu cầu của người dùng liên quan trực tiếp tới chính token đó.',
+    '- Nếu không thể thực hiện yêu cầu với đoạn trích được cung cấp (không tìm thấy chỗ liên quan trong đoạn trích NÀY), trả về mảng rỗng: [] — đừng đoán mò hay sửa nhầm chỗ không chắc chắn liên quan.',
+    '- Có thể trả nhiều phần tử nếu cần sửa nhiều chỗ (kể cả khi các chỗ đó nằm rải rác). Không sửa những gì không liên quan tới yêu cầu, kể cả khi bạn thấy có thể "tiện thể" cải thiện — chỉ làm đúng phạm vi được yêu cầu.',
+    '- Nếu có ảnh đính kèm: đó là ngữ cảnh trực quan (vd ảnh chụp lỗi, ảnh giao diện mong muốn) giúp bạn hiểu rõ yêu cầu hơn, KHÔNG phải mã nguồn. "old" vẫn phải được chép nguyên văn từ đoạn trích mã nguồn văn bản, không phải từ ảnh.',
+    '- Nếu có file văn bản đính kèm: đó chỉ là ngữ cảnh tham khảo thêm, không phải mã nguồn cần sửa, trừ khi yêu cầu của người dùng nói rõ là sửa dựa theo nội dung file đó.',
+    'Khi chỉnh sửa liên quan tới GIAO DIỆN (HTML/CSS, màu sắc, bố cục, khoảng cách, kiểu chữ...): ưu tiên bám theo đúng "ngôn ngữ thiết kế" đã có sẵn trong file (biến CSS/màu/font/bo góc/khoảng cách hiện có trong :root hoặc style tương tự gần đó) thay vì áp giá trị tuỳ tiện không liên quan; giữ độ tương phản đủ để dễ đọc; giữ nhất quán khoảng cách (spacing) và cỡ chữ theo đúng thang bậc đang dùng trong phần còn lại của trang; tránh tạo ra giao diện trông rời rạc, thiếu đồng bộ với phần còn lại chỉ vì sửa 1 chi tiết nhỏ.',
+    'Đặt JSON kết quả ở giữa đúng 2 dòng đánh dấu sau (phần phân tích <phan_tich> ở TRƯỚC mốc đầu tiên, không đặt bên trong 2 mốc):',
+    '===JSON_BAT_DAU===',
+    '[{"old": "...", "new": "..."}]',
+    '===JSON_KET_THUC==='
+  ].concat(currentMemoryContext ? [currentMemoryContext] : []).join('\n');
+
+  const attachList = attachmentsForRequest || [];
+  const textAttachments = attachList.filter(a => a.kind === 'text');
+  const imageAttachments = attachList.filter(a => a.kind === 'image');
+
+  const userTextParts = ['YÊU CẦU CỦA NGƯỜI DÙNG:\n' + instruction];
+  if(textAttachments.length){
+    userTextParts.push('\nNỘI DUNG (các) FILE VĂN BẢN ĐÍNH KÈM (chỉ là ngữ cảnh tham khảo, không phải mã nguồn cần sửa trừ khi yêu cầu nói rõ):');
+    textAttachments.forEach(a=>{
+      userTextParts.push('----- FILE: ' + a.name + ' -----\n' + a.text);
+    });
+  }
+  if(sliceInfo.truncated) userTextParts.push('\n(Lưu ý: đây chỉ là các đoạn trích liên quan, không phải toàn bộ file.)');
+  userTextParts.push('\nĐOẠN TRÍCH MÃ NGUỒN:\n' + sliceInfo.slice);
+  const userText = userTextParts.join('\n');
+
+  // Nếu có ảnh đính kèm, gửi dạng content array (ảnh + văn bản) theo chuẩn Anthropic API.
+  let user;
+  if(imageAttachments.length){
+    user = imageAttachments.map(a=>{
+      const m = /^data:([^;]+);base64,(.*)$/.exec(a.dataUrl || '');
+      return {
+        type: 'image',
+        source: { type: 'base64', media_type: (m && m[1]) || a.mimeType || 'image/png', data: (m && m[2]) || '' }
+      };
+    });
+    user.push({ type: 'text', text: userText });
+  } else {
+    user = userText;
+  }
+
+  const clean = await claudeRequest(cfg, system, user, externalSignal, {
+    model: pickModel(cfg, false),
+    maxTokens: 12000,
+    thinkingBudget: 4000
+  });
+
+  let edits;
+  try{
+    edits = JSON.parse(clean);
+  }catch(e1){
+    // Fallback: model không theo đúng mốc đánh dấu -> thử lấy phần từ dấu [
+    // đầu tiên tới dấu ] cuối cùng trong toàn bộ nội dung trả về.
+    const start = clean.indexOf('[');
+    const end = clean.lastIndexOf(']');
+    if(start !== -1 && end !== -1 && end > start){
+      try{ edits = JSON.parse(clean.slice(start, end + 1)); }
+      catch(e2){ /* rơi xuống lỗi bên dưới */ }
+    }
+    if(edits === undefined){
+      throw new Error('Không đọc được phản hồi JSON từ AI (model có thể đã trả thêm phần suy luận thay vì chỉ JSON — nếu vẫn lỗi, cân nhắc đổi sang model khác ít "reasoning" hơn). Nội dung nhận được: ' + clean.slice(0,300));
+    }
+  }
+  if(!Array.isArray(edits)) throw new Error('Phản hồi từ AI không phải là 1 mảng JSON hợp lệ.');
+  return edits;
+}
+
+// ---------------- bước tự kiểm tra & tự sửa (QA) ----------------
+// Sau khi đã áp dụng chỉnh sửa, gửi lại yêu cầu gốc + mã nguồn hiện tại (hoặc các
+// đoạn trích quanh chỗ vừa sửa nếu file quá lớn) cho AI, nhờ nó đóng vai người kiểm
+// tra chất lượng: xác nhận đã đúng/đủ yêu cầu chưa, nếu chưa thì đề xuất thêm các
+// chỉnh sửa bổ sung theo đúng định dạng old/new để hệ thống tự áp dụng tiếp.
+async function callClaudeVerify(cfg, instruction, editsSoFar, contextInfo, externalSignal){
+  const system = [
+    'Bạn là một kỹ sư phần mềm cấp cao, cực kỳ khắt khe, đóng vai "Claude Code — bước tự kiểm tra chất lượng (QA)".',
+    'Nhiệm vụ: đối chiếu TỪNG Ý trong YÊU CẦU BAN ĐẦU của người dùng (có thể đã qua bước "làm rõ yêu cầu" nên khá chi tiết — coi đó là chuẩn để đối chiếu) với MÃ NGUỒN HIỆN TẠI (đã được áp dụng các chỉnh sửa), rồi đánh giá thật khắt khe xem yêu cầu đã được thực hiện ĐÚNG và ĐẦY ĐỦ hay chưa — kể cả trường hợp yêu cầu áp dụng cho "tất cả/mọi" vị trí tương tự mà chỉ mới sửa được 1 phần.',
+    'Trước khi kết luận, hãy tự rà lại ngắn gọn trong 1 đoạn <phan_tich> ở TRƯỚC mốc đánh dấu JSON: liệt kê từng ý trong yêu cầu và xác nhận đã thấy bằng chứng cụ thể trong mã nguồn hiện tại chưa; đoạn phân tích này không được đặt trong 2 mốc đánh dấu.',
+    'Nếu mã nguồn cung cấp chỉ là các đoạn trích quanh vị trí đã sửa (không phải toàn bộ file), hãy chỉ đánh giá dựa trên những gì nhìn thấy được; nếu không có căn cứ rõ ràng để khẳng định là sai/thiếu, hãy coi là ĐÃ ĐÚNG — tránh sửa lặp không cần thiết hoặc sửa vòng lặp vô ích.',
+    'JSON kết quả cuối cùng CHỈ được đúng 1 object hợp lệ.',
+    'Nếu ĐÃ đúng và đủ, trả về:',
+    '{"ok": true}',
+    'Nếu CHƯA đúng hoặc CHƯA đủ, trả về:',
+    '{"ok": false, "reason": "mô tả thật ngắn gọn điều còn sai/thiếu so với yêu cầu", "fixes": [{"old": "...", "new": "..."}]}',
+    'Quy tắc bắt buộc cho mỗi phần tử trong "fixes" (nếu có):',
+    '- "old" PHẢI là một chuỗi con chép NGUYÊN VĂN, chính xác từng ký tự (kể cả khoảng trắng/thụt lề), từ đúng phần MÃ NGUỒN HIỆN TẠI được cung cấp bên dưới, và PHẢI xuất hiện đúng 1 lần duy nhất trong đó — nếu lặp lại nhiều lần, mở rộng ngữ cảnh cho tới khi duy nhất.',
+    '- "old" nên NGẮN nhất có thể trong khi vẫn đảm bảo là duy nhất.',
+    '- "new" là nội dung thay thế đúng để khắc phục phần còn sai/thiếu, viết đúng cú pháp, giữ phong cách code hiện có.',
+    '- CHỈ đề xuất fix cho đúng phần còn sai/thiếu so với yêu cầu ban đầu — không sửa lại những gì đã đúng, không thêm tính năng ngoài yêu cầu, không "tiện thể" chỉnh thêm chỗ khác.',
+    'Đặt JSON kết quả ở giữa đúng 2 dòng đánh dấu sau (phần <phan_tich> đặt TRƯỚC mốc đầu tiên):',
+    '===JSON_BAT_DAU===',
+    '{"ok": true}',
+    '===JSON_KET_THUC==='
+  ].join('\n');
+
+  const editsSummary = editsSoFar.map((e,i)=>
+    (i+1) + '. Đã thay: "' + String(e.old).slice(0,220) + '"  ==>  "' + String(e.new).slice(0,220) + '"'
+  ).join('\n');
+
+  const userTextParts = [
+    'YÊU CẦU BAN ĐẦU CỦA NGƯỜI DÙNG:\n' + instruction,
+    '\nDANH SÁCH CÁC CHỈNH SỬA ĐÃ ÁP DỤNG CHO TỚI THỜI ĐIỂM NÀY:\n' + (editsSummary || '(không có)')
+  ];
+  if(contextInfo.truncated){
+    userTextParts.push('\n(Lưu ý: đây chỉ là các đoạn trích quanh những vị trí đã sửa, không phải toàn bộ file.)');
+  }
+  userTextParts.push('\nMÃ NGUỒN HIỆN TẠI (sau khi áp dụng các chỉnh sửa ở trên):\n' + contextInfo.text);
+  const userText = userTextParts.join('\n');
+
+  const clean = await claudeRequest(cfg, system, userText, externalSignal, {
+    model: pickModel(cfg, true),
+    maxTokens: 12000,
+    thinkingBudget: 3000
+  });
+
+  let result;
+  try{
+    result = JSON.parse(clean);
+  }catch(e1){
+    const start = clean.indexOf('{');
+    const end = clean.lastIndexOf('}');
+    if(start !== -1 && end !== -1 && end > start){
+      try{ result = JSON.parse(clean.slice(start, end + 1)); }
+      catch(e2){ /* rơi xuống lỗi bên dưới */ }
+    }
+    if(result === undefined){
+      throw new Error('Không đọc được phản hồi JSON từ bước tự kiểm tra (model có thể đã trả thêm phần suy luận). Nội dung nhận được: ' + clean.slice(0,300));
+    }
+  }
+  if(!result || typeof result !== 'object' || Array.isArray(result)){
+    throw new Error('Phản hồi từ bước tự kiểm tra không phải là 1 JSON object hợp lệ.');
+  }
+  return {
+    ok: result.ok === true,
+    reason: typeof result.reason === 'string' ? result.reason : '',
+    fixes: Array.isArray(result.fixes) ? result.fixes.filter(f => f && typeof f.old === 'string' && typeof f.new === 'string' && f.old.length) : []
+  };
+}
+
+// Ghép các đoạn ngữ cảnh (trước/sau) quanh mỗi chỗ vừa sửa trong văn bản HIỆN TẠI,
+// để gửi cho bước tự kiểm tra khi file quá lớn để gửi toàn bộ — các đoạn gần nhau
+// được gộp lại tránh trùng lặp.
+function buildVerifyContext(text, edits, radius){
+  const windows = [];
+  edits.forEach(e=>{
+    if(typeof e.new !== 'string') return;
+    const idx = text.indexOf(e.new);
+    if(idx === -1) return;
+    windows.push({ start: Math.max(0, idx - radius), end: Math.min(text.length, idx + e.new.length + radius) });
+  });
+  if(!windows.length) return '';
+  windows.sort((a,b)=> a.start - b.start);
+  const merged = [windows[0]];
+  for(let i=1;i<windows.length;i++){
+    const w = windows[i];
+    const last = merged[merged.length-1];
+    if(w.start <= last.end + 300){ last.end = Math.max(last.end, w.end); }
+    else{ merged.push({ start:w.start, end:w.end }); }
+  }
+  return merged.map(w => text.slice(w.start, w.end)).join('\n\n[...]\n\n');
+}
+
+// ---------------- áp dụng các chỉnh sửa (kiểu str-replace, an toàn) ----------------
+// Nếu không khớp nguyên văn, thử thêm 1 bước dự phòng: chuẩn hoá kiểu xuống dòng
+// (CRLF -> LF) — vài nguồn/API có thể trả lẫn kiểu xuống dòng khiến so khớp ký tự
+// tuyệt đối bị trượt dù nội dung "nhìn" giống hệt nhau. Chỉ áp dụng khi sau khi
+// chuẩn hoá vẫn tìm thấy ĐÚNG 1 vị trí duy nhất — không đánh đổi an toàn để lấy độ nhạy.
+function normalizeLineEndings(s){ return s.replace(/\r\n/g, '\n'); }
+
+function applyEdits(text, edits){
+  let working = text;
+  const results = [];
+  for(const e of edits){
+    if(typeof e.old !== 'string' || typeof e.new !== 'string' || e.old.length === 0){
+      results.push({ old: e.old, new: e.new, status:'invalid' });
+      continue;
+    }
+    let oldStr = e.old;
+    let count = working.split(oldStr).length - 1;
+
+    if(count === 0){
+      const normWorking = normalizeLineEndings(working);
+      const normOld = normalizeLineEndings(oldStr);
+      if(normWorking !== working || normOld !== oldStr){
+        const normCount = normWorking.split(normOld).length - 1;
+        if(normCount === 1){
+          working = normWorking; // chuẩn hoá luôn từ đây để nhất quán với các bước sau
+          oldStr = normOld;
+          count = 1;
+        }
+      }
+    }
+
+    if(count === 0){ results.push({ old:e.old, new:e.new, status:'not_found' }); continue; }
+    if(count > 1){ results.push({ old:e.old, new:e.new, status:'ambiguous', count }); continue; }
+    working = working.replace(oldStr, e.new);
+    results.push({ old:e.old, new:e.new, status:'applied' });
+  }
+  return { working, results };
+}
+
+// ---------------- "canary check": xác nhận nội dung đã ĐÚNG THẬT trên GitHub sau khi
+// đẩy (lấy cảm hứng từ nhóm skill garrytan/canary — giám sát hậu triển khai kiểu SRE).
+// Đợi 1 chút cho GitHub cập nhật xong rồi đọc lại raw content, so khớp với đúng những
+// gì mình vừa đẩy — nếu KHÁC (do webhook/Action tự sửa lại, branch protection chặn êm,
+// đẩy nhầm nhánh...), cảnh báo ngay cho người dùng biết thay vì để họ tưởng đã xong.
+async function verifyPushLanded(expectedContent, cfg){
+  await ghSleep(1500);
+  let liveContent;
+  try{
+    liveContent = await fetchGithubRawContent(cfg, null);
+  }catch(e){
+    log('ℹ️ Không kiểm tra lại được nội dung vừa đẩy trên GitHub (' + (e.message || String(e)) + ') — bản thân việc đẩy lên trước đó vẫn đã báo thành công, đây chỉ là bước xác nhận thêm cho chắc.', 'info');
+    return;
+  }
+  if(normalizeLineEndings(liveContent) === normalizeLineEndings(expectedContent)){
+    log('✅ Đã xác nhận: nội dung đang thật sự nằm trên GitHub khớp đúng với bản vừa đẩy.', 'success');
+  } else {
+    log('⚠️ CẢNH BÁO: vừa đẩy lên GitHub thành công, nhưng khi đọc lại thì nội dung trên GitHub KHÁC với bản vừa gửi — có thể do 1 GitHub Action/webhook khác đã tự sửa lại file, hoặc file bị đẩy vào sai nhánh/đường dẫn. Bạn nên kiểm tra trực tiếp trên GitHub để chắc chắn.', 'error');
+  }
+}
+
+// ---------------- bộ nhớ đệm mã nguồn (tránh tải lại GitHub không cần thiết) ----------------
+// Giữ lại bản mã nguồn vừa tải trong phiên làm việc này; các lệnh kế tiếp dùng lại
+// ngay (nhanh hơn nhiều, đỡ tốn 1 lượt gọi GitHub mỗi lần), trừ khi người dùng bấm
+// "🔄 Tải lại" hoặc vừa đẩy 1 bản sửa lên (khi đó tự cập nhật cache = bản mới nhất).
+// ---------------- lịch sử "hoàn tác" (revert) — lưu bản mã nguồn TRƯỚC mỗi lần đẩy lên
+// GitHub thành công, theo từng repo/branch/path riêng, để có thể tự động đưa file trở
+// lại đúng bản trước lệnh gần nhất nếu Claude Code sửa sai. Lưu trong localStorage nên
+// vẫn dùng được kể cả sau khi tải lại trang. Giữ tối đa REVERT_HISTORY_MAX bước gần nhất
+// cho mỗi file — bấm "↩️ Hoàn tác" nhiều lần sẽ lần lượt lùi về các bước trước đó nữa.
+const REVERT_HISTORY_KEY = 'ccc_revert_history_v1';
+const REVERT_HISTORY_MAX = 5;
+function loadRevertHistory(){
+  try{ return JSON.parse(localStorage.getItem(REVERT_HISTORY_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveRevertHistory(h){
+  try{ localStorage.setItem(REVERT_HISTORY_KEY, JSON.stringify(h)); }
+  catch(e){ /* localStorage đầy/bị chặn — bỏ qua, không ảnh hưởng luồng chính */ }
+}
+function pushRevertSnapshot(repoKey, snapshot){
+  const h = loadRevertHistory();
+  const arr = h[repoKey] || [];
+  arr.push(snapshot);
+  while(arr.length > REVERT_HISTORY_MAX) arr.shift();
+  h[repoKey] = arr;
+  saveRevertHistory(h);
+}
+function peekRevertSnapshot(repoKey){
+  const arr = loadRevertHistory()[repoKey] || [];
+  return arr.length ? arr[arr.length - 1] : null;
+}
+function popRevertSnapshot(repoKey){
+  const h = loadRevertHistory();
+  const arr = h[repoKey] || [];
+  if(!arr.length) return null;
+  const snap = arr.pop();
+  h[repoKey] = arr;
+  saveRevertHistory(h);
+  return snap;
+}
+
+let sourceCache = null; // { key, rawContent, fetchedAt }
+let lastOutline = null; // { index, graph } — bản đồ cấu trúc của lần đọc file gần nhất, dùng cho panel 🧭 Cấu trúc
+function cacheKeyFor(cfg){ return (cfg.repo||'') + '@' + (cfg.branch||'') + ':' + (cfg.path||''); }
+
+// ---------------- thanh tiến trình + nút Dừng (điều khiển tác vụ đang chạy) ----------------
+const progressWrap = document.getElementById('progressWrap');
+const progressBar = document.getElementById('progressBar');
+function setProgress(pct){
+  progressWrap.style.display = 'block';
+  progressBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+}
+function hideProgress(){
+  progressWrap.style.display = 'none';
+  progressBar.style.width = '0%';
+}
+let activeAbortController = null;
+const stopBtn = document.getElementById('stopBtn');
+stopBtn.addEventListener('click', ()=>{
+  if(activeAbortController){
+    log('Đã yêu cầu dừng — đang chờ tác vụ hiện tại kết thúc an toàn...', 'info');
+    activeAbortController.abort();
+  }
+});
+
+// ---------------- trạng thái thay đổi đang chờ đẩy ----------------
+let pending = null; // { newContent, filename, repoKey, memId }
+const pendingActions = document.getElementById('pendingActions');
+
+function showPendingActions(newContent, filename, repoKey, memId, previousContent){
+  pending = { newContent, filename, repoKey, memId, previousContent };
+  pendingActions.style.display = 'flex';
+}
+function clearPendingActions(){
+  pending = null;
+  pendingActions.style.display = 'none';
+}
+
+document.getElementById('showFullBtn').addEventListener('click', ()=>{
+  if(!pending) return;
+  const w = window.open('', '_blank');
+  w.document.write('<pre style="white-space:pre-wrap;word-break:break-word;font-family:monospace;font-size:12px;">' +
+    pending.newContent.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</pre>');
+});
+
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  if(!pending) return;
+  const blob = new Blob([pending.newContent], { type:'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = pending.filename || 'index.html';
+  a.click();
+  log('Đã tải file mới về máy: ' + a.download, 'success');
+});
+
+document.getElementById('cancelBtn').addEventListener('click', ()=>{
+  log('Đã huỷ bỏ thay đổi đang chờ.', 'info');
+  clearPendingActions();
+});
+
+document.getElementById('pushBtn').addEventListener('click', ()=> pushPending());
+
+// ---------------- "👁️ Xem trước giao diện": dựng thử bản HTML mới trong iframe cô lập ----------------
+const previewOverlay = document.getElementById('previewOverlay');
+const previewFrame = document.getElementById('previewFrame');
+function closePreviewOverlay(){
+  previewOverlay.classList.remove('show');
+  previewFrame.srcdoc = ''; // dừng hẳn mọi script/âm thanh đang chạy trong bản xem trước khi đóng
+}
+document.getElementById('previewBtn').addEventListener('click', ()=>{
+  if(!pending) return;
+  previewFrame.srcdoc = pending.newContent;
+  previewOverlay.classList.add('show');
+});
+document.getElementById('previewCloseBtn').addEventListener('click', closePreviewOverlay);
+previewOverlay.addEventListener('click', e=>{ if(e.target===previewOverlay) closePreviewOverlay(); });
+
+// ---------------- nút "↩️ Hoàn tác": tự động đưa file trên GitHub trở về đúng bản
+// TRƯỚC lệnh gần nhất đã đẩy lên — phòng trường hợp Claude Code sửa sai mã nguồn.
+// Hoạt động độc lập với "pendingActions" (vẫn dùng được sau khi lệnh đã tự động đẩy
+// lên xong), và chỉ xoá bước khỏi lịch sử SAU KHI đã hoàn tác thành công, để nếu việc
+// đẩy lên GitHub thất bại giữa chừng thì vẫn có thể bấm lại mà không mất dữ liệu.
+document.getElementById('revertBtn').addEventListener('click', async ()=>{
+  const missingCore = !settings.repo || !settings.branch || !settings.githubToken;
+  if(missingCore){
+    log('Chưa cấu hình đủ Repo/Token GitHub — bấm ⚙️ Cấu hình trước.', 'error');
+    openSettings();
+    return;
+  }
+  const key = cacheKeyFor(settings);
+  const snap = peekRevertSnapshot(key);
+  if(!snap){
+    log('Không có bản trước nào để hoàn tác cho file này (chưa có lệnh nào được đẩy lên GitHub trong trình duyệt này, hoặc đã hoàn tác về hết).', 'info');
+    return;
+  }
+  const ok = window.confirm('Hoàn tác: đưa file "' + (settings.path || 'index.html') + '" trên GitHub (' + settings.repo + ' @ ' + settings.branch + ') trở về ĐÚNG BẢN TRƯỚC lệnh gần nhất đã đẩy lên. Tiếp tục?');
+  if(!ok) return;
+  const revertBtn = document.getElementById('revertBtn');
+  revertBtn.disabled = true;
+  log('↩️ Đang hoàn tác — đưa file trở về bản trước lệnh gần nhất...', 'info');
+  try{
+    const r = await pushHtmlToGithub(snap.content, settings);
+    if(r.ok){
+      popRevertSnapshot(key); // chỉ xoá khỏi lịch sử sau khi đẩy hoàn tác thành công
+      log('✅ Đã hoàn tác thành công — file trên GitHub đã trở về đúng bản trước lệnh gần nhất. Bấm lại "↩️ Hoàn tác" nếu muốn lùi thêm bước trước đó nữa.', 'success');
+      sourceCache = { key, rawContent: snap.content, fetchedAt: Date.now() };
+      lastOutline = null;
+      clearPendingActions();
+    } else {
+      log('Hoàn tác thất bại: ' + r.error + ' — có thể thử bấm lại "↩️ Hoàn tác".', 'error');
+    }
+  }catch(e){
+    log('Lỗi khi hoàn tác: ' + (e.message || String(e)), 'error');
+  }finally{
+    revertBtn.disabled = false;
+  }
+});
+
+// Đẩy nội dung đang chờ (pending) lên GitHub. Dùng chung cho cả bấm nút "🚀 Đẩy lên GitHub"
+// bằng tay VÀ cho luồng tự động (autoPush) — để hành vi giống hệt nhau dù push thủ công
+// hay push tự động, chỉ khác nguồn gọi.
+async function pushPending(auto){
+  if(!pending) return;
+  const pushBtn = document.getElementById('pushBtn');
+  pushBtn.disabled = true;
+  log(auto ? '🚀 Đang tự động đẩy bản sửa lên GitHub (không cần bấm gì thêm)...' : 'Đang đẩy bản sửa lên GitHub...', 'info');
+  try{
+    const r = await pushHtmlToGithub(pending.newContent, settings);
+    if(r.ok){
+      log('✅ Đã đẩy thành công lên GitHub (' + settings.repo + ' @ ' + settings.branch + ').' + (auto ? ' Yêu cầu của bạn đã được thực hiện đầy đủ, không cần thao tác gì thêm.' : ''), 'success');
+      // Lưu lại bản TRƯỚC lệnh này vào lịch sử hoàn tác, để nút "↩️ Hoàn tác" có thể tự
+      // động đưa file trở về đúng bản này nếu chỉnh sửa vừa đẩy lên bị sai.
+      if(pending.repoKey && typeof pending.previousContent === 'string'){
+        pushRevertSnapshot(pending.repoKey, { content: pending.previousContent, savedAt: Date.now() });
+      }
+      sourceCache = { key: cacheKeyFor(settings), rawContent: pending.newContent, fetchedAt: Date.now() };
+      lastOutline = null; // nội dung file vừa đổi — bản đồ cấu trúc cũ không còn chính xác, dựng lại ở lệnh kế tiếp
+      if(pending.repoKey && pending.memId) updateMemoryEntry(pending.repoKey, pending.memId, { pushed:true });
+      clearPendingActions();
+      // ---- "canary check" sau khi đẩy (lấy cảm hứng từ nhóm skill giám sát hậu triển
+      // khai kiểu SRE — garrytan/canary): đọc lại NGAY nội dung vừa nằm trên GitHub để
+      // xác nhận đúng những gì mình định đẩy đã thật sự lên đó, phòng trường hợp GitHub
+      // báo "thành công" nhưng có yếu tố khác chen vào (branch protection/webhook tự động
+      // sửa lại, cache CDN cũ, đẩy nhầm nhánh...). Không chặn luồng chính, chỉ cảnh báo.
+      verifyPushLanded(pending.newContent, settings).catch(()=>{ /* chỉ là cảnh báo phụ, lỗi ở đây không quan trọng */ });
+    }else{
+      log('Đẩy lên GitHub thất bại: ' + r.error + (auto ? ' — bạn có thể bấm "🚀 Đẩy lên GitHub" bên dưới để thử lại thủ công, hoặc "⬇️ Tải file" để lấy bản đã sửa.' : ''), 'error');
+    }
+  }catch(e){
+    log('Lỗi khi đẩy lên GitHub: ' + (e.message || String(e)) + (auto ? ' — bạn có thể thử lại bằng nút "🚀 Đẩy lên GitHub" bên dưới.' : ''), 'error');
+  }finally{
+    pushBtn.disabled = false;
+  }
+}
+
+// ---------------- modal "🧠 Bộ nhớ dự án" ----------------
+const memoryOverlay = document.getElementById('memoryOverlay');
+const memoryList = document.getElementById('memoryList');
+const memorySearch = document.getElementById('memorySearch');
+const memoryCount = document.getElementById('memoryCount');
+const memoryImportInput = document.getElementById('memoryImportInput');
+
+function memoryStatusBadge(entry){
+  if(entry.status === 'error') return { cls:'err', text:'Lỗi' };
+  if(entry.status === 'no_edits') return { cls:'err', text:'Không tìm được chỗ sửa' };
+  if(entry.status === 'cancelled') return { cls:'err', text:'Đã huỷ' };
+  if(entry.pushed) return { cls:'pushed', text:'Đã đẩy GitHub' };
+  return { cls:'ok', text:'Đã sửa' };
+}
+
+function renderMemoryList(){
+  const repoKey = cacheKeyFor(settings);
+  const q = (memorySearch.value || '').trim().toLowerCase();
+  const all = getMemoryList(repoKey);
+  const filtered = q ? all.filter(e =>
+    (e.instruction && e.instruction.toLowerCase().includes(q)) ||
+    (e.refined && e.refined.toLowerCase().includes(q)) ||
+    (e.editsPreview || []).some(d => (d.old + ' ' + d.new).toLowerCase().includes(q))
+  ) : all;
+
+  memoryCount.textContent = settings.memoryEnabled === false
+    ? '⚠️ Bộ nhớ dự án đang TẮT (bật lại trong ⚙️ Cấu hình) — các lệnh mới sẽ không được ghi lại.'
+    : (filtered.length + ' / ' + all.length + ' lệnh trong lịch sử của repo hiện tại (' + (settings.repo || 'chưa cấu hình') + ').');
+
+  memoryList.innerHTML = '';
+  if(!filtered.length){
+    const empty = document.createElement('div');
+    empty.className = 'mem-empty';
+    empty.textContent = q ? 'Không tìm thấy lệnh nào khớp từ khoá tìm kiếm.' : 'Chưa có lịch sử cho repo này — bộ nhớ sẽ tự ghi lại sau mỗi lệnh bạn gửi.';
+    memoryList.appendChild(empty);
+    return;
+  }
+  filtered.forEach(entry=>{
+    const badge = memoryStatusBadge(entry);
+    const box = document.createElement('div');
+    box.className = 'mem-entry';
+    const d = new Date(entry.ts);
+    const when = d.toLocaleString('vi-VN');
+    box.innerHTML =
+      '<div class="mem-head">' +
+        '<span class="mem-time">' + when + '</span>' +
+        '<span class="mem-badge ' + badge.cls + '">' + badge.text + (entry.editCount ? (' · ' + entry.editCount + ' chỗ') : '') + '</span>' +
+      '</div>' +
+      '<p class="mem-instruction"></p>' +
+      '<div class="mem-diffs"></div>';
+    box.querySelector('.mem-instruction').textContent = entry.instruction || '(không có nội dung)';
+    const diffsEl = box.querySelector('.mem-diffs');
+    (entry.editsPreview || []).forEach(dEdit=>{
+      const row = document.createElement('div');
+      row.className = 'mem-diff-row';
+      const o = document.createElement('span'); o.className = 'old'; o.textContent = '− ' + dEdit.old;
+      const n = document.createElement('span'); n.className = 'new'; n.textContent = '+ ' + dEdit.new;
+      row.appendChild(o); row.appendChild(n);
+      diffsEl.appendChild(row);
+    });
+    if(entry.refined && entry.refined.trim() && entry.refined.trim() !== (entry.instruction||'').trim()){
+      const refinedRow = document.createElement('div');
+      refinedRow.className = 'mem-diff-row';
+      refinedRow.style.color = 'var(--muted)';
+      refinedRow.textContent = 'Mô tả kỹ thuật đã làm rõ: ' + entry.refined;
+      diffsEl.insertBefore(refinedRow, diffsEl.firstChild);
+    }
+    if((entry.editsPreview || []).length || (entry.refined && entry.refined.trim())){
+      box.addEventListener('click', ()=> box.classList.toggle('open'));
+    }
+    memoryList.appendChild(box);
+  });
+}
+
+function openMemory(){
+  memorySearch.value = '';
+  renderMemoryList();
+  memoryOverlay.classList.add('show');
+}
+document.getElementById('memoryBtn').addEventListener('click', openMemory);
+
+// ---------------- Panel "🧭 Cấu trúc file" ----------------
+const outlineOverlay = document.getElementById('outlineOverlay');
+const outlineList = document.getElementById('outlineList');
+function renderOutline(){
+  outlineList.innerHTML = '';
+  if(!lastOutline || !lastOutline.index.functions.length){
+    const empty = document.createElement('div');
+    empty.className = 'mem-empty';
+    empty.textContent = 'Chưa có bản đồ cấu trúc — gửi 1 lệnh trước (bản đồ được dựng tự động ngay khi tải mã nguồn) rồi mở lại panel này.';
+    outlineList.appendChild(empty);
+    return;
+  }
+  const rows = buildOutlineSummary(lastOutline.index, lastOutline.graph);
+  rows.forEach(r=>{
+    const item = document.createElement('div');
+    item.className = 'outline-item';
+    item.innerHTML =
+      '<span class="outline-name"></span>' +
+      '<span class="outline-meta"></span>';
+    item.querySelector('.outline-name').textContent = r.name + '()';
+    item.querySelector('.outline-meta').textContent =
+      r.lineCount + ' dòng · gọi ' + r.callsOut.length + ' hàm khác · được ' + r.callsIn.length + ' hàm gọi tới';
+    item.title = (r.callsOut.length ? 'Gọi tới: ' + r.callsOut.join(', ') + '\n' : '') +
+      (r.callsIn.length ? 'Được gọi bởi: ' + r.callsIn.join(', ') : '');
+    item.addEventListener('click', ()=>{
+      const insert = 'hàm ' + r.name + '() ';
+      cmdInput.value = cmdInput.value ? (cmdInput.value.replace(/\s*$/,'') + ' ' + insert) : insert;
+      cmdInput.focus();
+      autosizeCmdInput(); // set .value bằng code không tự bắn sự kiện 'input', nên gọi tay để khung vẫn tự giãn theo nội dung mới
+      outlineOverlay.classList.remove('show');
+    });
+    outlineList.appendChild(item);
+  });
+}
+document.getElementById('outlineBtn').addEventListener('click', ()=>{
+  renderOutline();
+  outlineOverlay.classList.add('show');
+});
+document.getElementById('outlineCloseBtn').addEventListener('click', ()=> outlineOverlay.classList.remove('show'));
+outlineOverlay.addEventListener('click', e=>{ if(e.target===outlineOverlay) outlineOverlay.classList.remove('show'); });
+document.getElementById('memoryCloseBtn').addEventListener('click', ()=> memoryOverlay.classList.remove('show'));
+memoryOverlay.addEventListener('click', e=>{ if(e.target===memoryOverlay) memoryOverlay.classList.remove('show'); });
+memorySearch.addEventListener('input', renderMemoryList);
+
+document.getElementById('memoryClearBtn').addEventListener('click', ()=>{
+  const repoKey = cacheKeyFor(settings);
+  if(!confirm('Xoá toàn bộ lịch sử bộ nhớ cho repo "' + (settings.repo || repoKey) + '"? Không thể hoàn tác.')) return;
+  clearMemoryForRepo(repoKey);
+  renderMemoryList();
+  log('Đã xoá bộ nhớ dự án cho repo hiện tại.', 'info');
+});
+
+document.getElementById('memoryExportBtn').addEventListener('click', ()=>{
+  const repoKey = cacheKeyFor(settings);
+  const data = { repoKey, exportedAt: new Date().toISOString(), entries: getMemoryList(repoKey) };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'claude-code-controller-memory.json';
+  a.click();
+});
+
+document.getElementById('memoryImportBtn').addEventListener('click', ()=> memoryImportInput.click());
+memoryImportInput.addEventListener('change', ()=>{
+  const file = memoryImportInput.files && memoryImportInput.files[0];
+  memoryImportInput.value = '';
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(String(reader.result));
+      const repoKey = (data && data.repoKey) || cacheKeyFor(settings);
+      const incoming = Array.isArray(data && data.entries) ? data.entries : [];
+      const store = loadMemoryStore();
+      const existingIds = new Set((store[repoKey] || []).map(e=>e.id));
+      const merged = (store[repoKey] || []).concat(incoming.filter(e => e && e.id && !existingIds.has(e.id)));
+      merged.sort((a,b)=> a.ts - b.ts);
+      store[repoKey] = merged.slice(-MEMORY_MAX_PER_REPO);
+      saveMemoryStore(store);
+      renderMemoryList();
+      log('Đã nhập bộ nhớ từ file — hợp nhất với lịch sử hiện có (không trùng lặp).', 'success');
+    }catch(e){
+      log('Không đọc được file bộ nhớ đã chọn: ' + (e.message || String(e)), 'error');
+    }
+  };
+  reader.readAsText(file);
+});
+
+// ---------------- đính kèm ảnh / file văn bản ----------------
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;       // tối đa 5MB / ảnh
+const MAX_TEXT_FILE_BYTES = 2 * 1024 * 1024;   // tối đa 2MB / file văn bản
+const MAX_TOTAL_ATTACH_BYTES = 15 * 1024 * 1024; // tổng tối đa các đính kèm gửi cho AI
+
+let attachments = []; // { id, kind:'image'|'text', name, mimeType, dataUrl?, text?, sizeBytes }
+let attachIdSeq = 0;
+
+const attachListEl = document.getElementById('attachList');
+const attachBtn = document.getElementById('attachBtn');
+const fileInput = document.getElementById('fileInput');
+
+function totalAttachBytes(){
+  return attachments.reduce((sum, a)=> sum + (a.sizeBytes || 0), 0);
+}
+
+function renderAttachments(){
+  attachListEl.innerHTML = '';
+  if(!attachments.length){ attachListEl.style.display = 'none'; return; }
+  attachListEl.style.display = 'flex';
+  attachments.forEach(a=>{
+    const chip = document.createElement('div');
+    chip.className = 'attach-chip';
+    if(a.kind === 'image'){
+      const img = document.createElement('img');
+      img.src = a.dataUrl;
+      chip.appendChild(img);
+    } else {
+      const icon = document.createElement('span');
+      icon.className = 'ficon';
+      icon.textContent = '📄';
+      chip.appendChild(icon);
+    }
+    const nameEl = document.createElement('span');
+    nameEl.className = 'fname';
+    nameEl.textContent = a.name;
+    nameEl.title = a.name;
+    chip.appendChild(nameEl);
+    const rmBtn = document.createElement('button');
+    rmBtn.type = 'button';
+    rmBtn.className = 'rmBtn';
+    rmBtn.textContent = '✕';
+    rmBtn.title = 'Bỏ đính kèm này';
+    rmBtn.addEventListener('click', ()=>{
+      attachments = attachments.filter(x => x.id !== a.id);
+      renderAttachments();
+    });
+    chip.appendChild(rmBtn);
+    attachListEl.appendChild(chip);
+  });
+}
+
+function looksLikeTextFile(file){
+  if(file.type && (file.type.startsWith('text/') || file.type === 'application/json')) return true;
+  return /\.(txt|md|json|js|jsx|ts|tsx|css|html|htm|csv|xml|yml|yaml|log|py|java|c|cpp|h|sh)$/i.test(file.name || '');
+}
+
+function addImageAttachment(file){
+  if(file.size > MAX_IMAGE_BYTES){
+    log('Bỏ qua ảnh "' + (file.name || 'ảnh dán') + '" — vượt quá ' + (MAX_IMAGE_BYTES/1024/1024) + 'MB.', 'error');
+    return;
+  }
+  if(totalAttachBytes() + file.size > MAX_TOTAL_ATTACH_BYTES){
+    log('Không thể đính kèm thêm "' + (file.name || 'ảnh dán') + '" — tổng dung lượng đính kèm đã đạt giới hạn.', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    attachments.push({
+      id: ++attachIdSeq, kind:'image', name: file.name || ('ảnh-dán-' + attachIdSeq + '.png'),
+      mimeType: file.type || 'image/png', dataUrl: reader.result, sizeBytes: file.size
+    });
+    renderAttachments();
+  };
+  reader.onerror = ()=> log('Không đọc được ảnh "' + (file.name || '') + '".', 'error');
+  reader.readAsDataURL(file);
+}
+
+function addTextAttachment(file){
+  if(file.size > MAX_TEXT_FILE_BYTES){
+    log('Bỏ qua file "' + file.name + '" — vượt quá ' + (MAX_TEXT_FILE_BYTES/1024/1024) + 'MB (chỉ hỗ trợ file văn bản nhỏ).', 'error');
+    return;
+  }
+  if(totalAttachBytes() + file.size > MAX_TOTAL_ATTACH_BYTES){
+    log('Không thể đính kèm thêm "' + file.name + '" — tổng dung lượng đính kèm đã đạt giới hạn.', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    attachments.push({
+      id: ++attachIdSeq, kind:'text', name: file.name, mimeType: file.type || 'text/plain',
+      text: String(reader.result), sizeBytes: file.size
+    });
+    renderAttachments();
+  };
+  reader.onerror = ()=> log('Không đọc được file "' + file.name + '".', 'error');
+  reader.readAsText(file);
+}
+
+function handleIncomingFiles(fileList){
+  Array.from(fileList || []).forEach(file=>{
+    if(file.type && file.type.startsWith('image/')){
+      addImageAttachment(file);
+    } else if(looksLikeTextFile(file)){
+      addTextAttachment(file);
+    } else {
+      log('Bỏ qua "' + file.name + '" — chỉ hỗ trợ đính kèm ảnh hoặc file văn bản (txt, md, json, code...).', 'error');
+    }
+  });
+}
+
+attachBtn.addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', ()=>{
+  handleIncomingFiles(fileInput.files);
+  fileInput.value = '';
+});
+
+// ---------------- xử lý gửi lệnh ----------------
+const form = document.getElementById('cmdForm');
+const cmdInput = document.getElementById('cmdInput');
+const sendBtn = document.getElementById('sendBtn');
+
+// Tự giãn chiều cao khi gõ, nhưng vẫn cho phép người dùng tự kéo giãn ô nhập lệnh
+// bằng tay (góc dưới bên phải) — nếu đã tự kéo, không tự động thu nhỏ lại nữa.
+let cmdManualResize = false;
+let cmdProgrammaticResize = false;
+function autosizeCmdInput(){
+  if(cmdManualResize) return;
+  cmdProgrammaticResize = true;
+  cmdInput.style.height = 'auto';
+  const maxAllowed = Math.max(120, window.innerHeight * 0.6); // khớp với max-height:60vh trong CSS
+  cmdInput.style.height = Math.min(maxAllowed, cmdInput.scrollHeight) + 'px';
+}
+cmdInput.addEventListener('input', autosizeCmdInput);
+if(window.ResizeObserver){
+  const cmdResizeObserver = new ResizeObserver(()=>{
+    if(cmdProgrammaticResize){ cmdProgrammaticResize = false; return; }
+    cmdManualResize = true;
+  });
+  cmdResizeObserver.observe(cmdInput);
+}
+
+// Dán ảnh trực tiếp (Ctrl+V) vào ô nhập lệnh
+cmdInput.addEventListener('paste', (ev)=>{
+  const items = (ev.clipboardData && ev.clipboardData.items) || [];
+  const imageFiles = [];
+  for(const item of items){
+    if(item.kind === 'file' && item.type && item.type.startsWith('image/')){
+      const f = item.getAsFile();
+      if(f) imageFiles.push(f);
+    }
+  }
+  if(imageFiles.length){
+    ev.preventDefault();
+    imageFiles.forEach(f => addImageAttachment(f));
+  }
+  // Nếu clipboard không chứa ảnh, để hành vi dán văn bản mặc định diễn ra bình thường.
+});
+
+// Kéo-thả ảnh/file vào ô nhập lệnh
+cmdInput.addEventListener('dragover', (ev)=> ev.preventDefault());
+cmdInput.addEventListener('drop', (ev)=>{
+  if(ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files.length){
+    ev.preventDefault();
+    handleIncomingFiles(ev.dataTransfer.files);
+  }
+});
+
+// ---------------- Bôi đen văn bản trong log để "Trả lời" (giống giao diện Claude AI) ----------------
+const quoteReplyBtn = document.createElement('button');
+quoteReplyBtn.type = 'button';
+quoteReplyBtn.className = 'quote-reply-btn';
+quoteReplyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Trả lời</span>';
+document.body.appendChild(quoteReplyBtn);
+
+let pendingQuoteText = '';
+
+function hideQuoteReplyBtn(){
+  quoteReplyBtn.classList.remove('show');
+  pendingQuoteText = '';
+}
+
+function showQuoteReplyBtnForRange(range){
+  const rect = range.getBoundingClientRect();
+  if(!rect || (!rect.width && !rect.height)){ hideQuoteReplyBtn(); return; }
+  const left = Math.max(60, Math.min(window.innerWidth - 60, rect.left + rect.width / 2));
+  const top = rect.top + window.scrollY - 10; // cách phía trên đoạn được bôi đen 1 chút
+  quoteReplyBtn.style.left = (left + window.scrollX) + 'px';
+  quoteReplyBtn.style.top = Math.max(8, top) + 'px';
+  quoteReplyBtn.classList.add('show');
+}
+
+function handleLogSelection(){
+  const sel = window.getSelection();
+  if(!sel || sel.isCollapsed || sel.rangeCount === 0){ hideQuoteReplyBtn(); return; }
+  const text = sel.toString().trim();
+  if(!text){ hideQuoteReplyBtn(); return; }
+  const range = sel.getRangeAt(0);
+  const container = range.commonAncestorContainer;
+  const el = container.nodeType === 1 ? container : container.parentElement;
+  // Chỉ hiện nút "Trả lời" khi đoạn bôi đen nằm trong khung log (câu trả lời/diễn biến của Claude Code)
+  if(!el || !logEl.contains(el)){ hideQuoteReplyBtn(); return; }
+  pendingQuoteText = text;
+  showQuoteReplyBtnForRange(range);
+}
+
+logEl.addEventListener('mouseup', ()=> setTimeout(handleLogSelection, 0));
+logEl.addEventListener('touchend', ()=> setTimeout(handleLogSelection, 0));
+document.addEventListener('selectionchange', ()=>{
+  const sel = window.getSelection();
+  if(!sel || sel.isCollapsed) hideQuoteReplyBtn();
+});
+window.addEventListener('scroll', hideQuoteReplyBtn, true);
+window.addEventListener('resize', hideQuoteReplyBtn);
+document.addEventListener('mousedown', (ev)=>{
+  if(!quoteReplyBtn.contains(ev.target)) hideQuoteReplyBtn();
+});
+
+quoteReplyBtn.addEventListener('click', ()=>{
+  if(!pendingQuoteText) return;
+  const quoted = '> ' + pendingQuoteText.replace(/\n+/g, '\n> ') + '\n\n';
+  const start = (cmdInput.selectionStart != null) ? cmdInput.selectionStart : cmdInput.value.length;
+  const end = (cmdInput.selectionEnd != null) ? cmdInput.selectionEnd : cmdInput.value.length;
+  const before = cmdInput.value.slice(0, start);
+  const after = cmdInput.value.slice(end);
+  cmdInput.value = before + quoted + after;
+  const caretPos = (before + quoted).length;
+  cmdInput.focus();
+  cmdInput.setSelectionRange(caretPos, caretPos);
+  autosizeCmdInput(); // set .value bằng code không tự bắn sự kiện 'input', nên gọi tay để khung tự giãn theo nội dung mới
+  window.getSelection().removeAllRanges();
+  hideQuoteReplyBtn();
+});
+
+form.addEventListener('submit', async (ev)=>{
+  ev.preventDefault();
+  const instruction = cmdInput.value.trim();
+  if(!instruction) return;
+
+  const missingCore = !settings.repo || !settings.token;
+  const missingAi = settings.mode === 'fcc' ? !settings.fccUrl : !settings.anthropicKey;
+  if(missingCore || missingAi){
+    log('Chưa cấu hình đủ Repo/Token GitHub và nguồn AI — bấm ⚙️ Cấu hình trước.', 'error');
+    openSettings();
+    return;
+  }
+
+  const attachmentsForRequest = attachments.slice();
+
+  log(instruction, 'user');
+  if(attachmentsForRequest.length){
+    log('Đính kèm ' + attachmentsForRequest.length + ' file: ' + attachmentsForRequest.map(a=>a.name).join(', '), 'info');
+  }
+  cmdInput.value = '';
+  cmdInput.style.height = '44px';
+  cmdManualResize = false;
+  attachments = [];
+  renderAttachments();
+  sendBtn.disabled = true;
+  stopBtn.style.display = 'inline-flex';
+  clearPendingActions();
+  setProgress(4);
+
+  const controller = new AbortController();
+  activeAbortController = controller;
+  const t0 = Date.now();
+  let repoKeyForMemory = '';
+
+  try{
+    // Tải mã nguồn TRƯỚC bước làm rõ yêu cầu, để có thể "ghim" bước làm rõ yêu cầu
+    // vào đúng nội dung thật của file (xem buildGroundingContext + refineInstruction ở trên)
+    // thay vì để AI đoán mò tên phần tử — đây là thay đổi chính giúp tăng độ chính xác.
+    const key = cacheKeyFor(settings);
+    repoKeyForMemory = key;
+    currentMemoryContext = buildMemoryContext(key);
+    let rawContent;
+    if(sourceCache && sourceCache.key === key){
+      rawContent = sourceCache.rawContent;
+      log('Dùng lại mã nguồn đã tải trong phiên này (' + rawContent.length.toLocaleString('vi-VN') + ' ký tự) — bỏ qua bước tải lại GitHub để nhanh hơn. Bấm "🔄 Tải lại" ở góc trên nếu file vừa bị sửa ở nơi khác.', 'info');
+    } else {
+      log('Đang tải mã nguồn hiện tại từ GitHub (' + settings.repo + ')...', 'info');
+      rawContent = await fetchGithubRawContent(settings, controller.signal);
+      sourceCache = { key, rawContent, fetchedAt: Date.now() };
+      log('Đã tải xong (' + rawContent.length.toLocaleString('vi-VN') + ' ký tự).', 'info');
+    }
+    setProgress(8);
+
+    const { stripped, map } = stripImages(rawContent);
+    if(map.length){
+      log('Đã tạm ẩn ' + map.length + ' ảnh nhúng base64 để giảm dung lượng gửi cho AI.', 'info');
+    }
+
+    // Dựng bản đồ cấu trúc (hàm + id + quan hệ gọi nhau) trên TOÀN BỘ file, kể cả khi file
+    // phải chia nhiều phần để gửi AI — nhờ vậy bản đồ phụ thuộc vẫn đúng trên toàn cục dù
+    // từng phần gửi đi có bị cắt nhỏ. Lưu lại để dùng ở panel "🧭 Cấu trúc file".
+    const symbolIndex = buildSymbolIndex(stripped);
+    const symbolGraph = buildSymbolGraph(symbolIndex);
+    lastOutline = { index: symbolIndex, graph: symbolGraph };
+    log('🧭 Đã dựng bản đồ cấu trúc file (' + symbolIndex.functions.length + ' hàm, ' + symbolIndex.ids.length + ' id) để mở rộng ngữ cảnh theo đúng phụ thuộc thay vì chỉ theo khoảng cách ký tự.', 'info');
+
+    let effectiveInstruction = instruction;
+    const autoRefineOn = settings.autoRefine !== false;
+    if(autoRefineOn){
+      const groundKeywords = expandKeywordsWithGraph(extractLikelyKeywords(instruction), symbolIndex, symbolGraph);
+      const groundingContext = buildGroundingContext(stripped, groundKeywords, 900, 12000);
+      log(groundingContext
+        ? '🧠 Đang đối chiếu yêu cầu của bạn với đúng đoạn mã liên quan trong file, rồi viết lại thành mô tả kỹ thuật chi tiết hơn...'
+        : '🧠 Đang làm rõ yêu cầu của bạn thành mô tả kỹ thuật chi tiết hơn, để AI đọc và hành động đúng ý hơn...', 'info');
+      try{
+        const rawRefined = await refineInstruction(settings, instruction, attachmentsForRequest, controller.signal, groundingContext);
+        const changed = rawRefined && rawRefined.trim() && rawRefined.trim() !== instruction.trim();
+        if(changed && settings.confirmRefine === true){
+          const confirmed = await askConfirmInstruction(instruction, rawRefined, controller.signal);
+          if(controller.signal.aborted) throw Object.assign(new Error('Aborted'), { name:'AbortError' });
+          if(confirmed === null){
+            log('Đã huỷ lệnh theo yêu cầu của bạn ở bước xác nhận mô tả kỹ thuật — chưa có gì bị thay đổi.', 'info');
+            addMemoryEntry(repoKeyForMemory, { instruction: redactPrivate(instruction), refined: redactPrivate(rawRefined), status:'cancelled' });
+            return;
+          }
+          effectiveInstruction = confirmed;
+          log('Đã xác nhận mô tả kỹ thuật để tiến hành sửa code:\n' + effectiveInstruction, 'ai');
+        } else if(changed){
+          effectiveInstruction = rawRefined;
+          log(effectiveInstruction, 'ai');
+        } else {
+          effectiveInstruction = rawRefined || instruction;
+        }
+      }catch(e){
+        if(e && e.name === 'AbortError') throw e;
+        log('Không thể tự làm rõ yêu cầu (' + (e.message || String(e)) + ') — dùng nguyên câu lệnh gốc của bạn để tiếp tục.', 'info');
+        effectiveInstruction = instruction;
+      }
+      setProgress(10);
+    }
+
+    const chunks = buildChunks(stripped);
+    const modelLabel = settings.mode === 'fcc' ? (settings.fccModel || settings.model || 'claude-sonnet-5') + ' qua FCC' : (settings.model || 'claude-sonnet-5');
+
+    let edits = [];
+    let lastReadHadGaps = false;
+    let lastUnreadChunkInfo = null;
+    if(chunks.length === 1){
+      log('Đang gửi toàn bộ mã nguồn (' + stripped.length.toLocaleString('vi-VN') + ' ký tự) cho AI (' + modelLabel + ') đọc và thực hiện yêu cầu...', 'info');
+      setProgress(35);
+      edits = await callClaude(settings, { slice: chunks[0].text, truncated:false }, effectiveInstruction, attachmentsForRequest, controller.signal);
+      setProgress(85);
+    } else {
+      const keywords = expandKeywordsWithGraph(extractLikelyKeywords(effectiveInstruction), symbolIndex, symbolGraph);
+      const orderedChunks = rankChunks(chunks, keywords);
+      const CONCURRENCY = Math.max(1, Math.min(4, orderedChunks.length));
+      if(keywords.length){
+        log('File lớn (' + stripped.length.toLocaleString('vi-VN') + ' ký tự, ' + chunks.length + ' phần) — tự động phát hiện manh mối trong yêu cầu để ưu tiên đọc đúng phần trước, và đọc song song nhiều phần cùng lúc (' + CONCURRENCY + ') cho nhanh.', 'info');
+      } else {
+        log('File lớn (' + stripped.length.toLocaleString('vi-VN') + ' ký tự, ' + chunks.length + ' phần) — Claude Code sẽ đọc song song ' + CONCURRENCY + ' phần cùng lúc để tìm đúng chỗ cần sửa, bạn không cần làm gì thêm.', 'info');
+      }
+
+      let doneCount = 0;
+      let stopEarly = false;
+      const chunkErrors = []; // các phần bị lỗi khi đọc song song — CHƯA được coi là "đã đọc"
+      for(let i=0; i<orderedChunks.length && !stopEarly; i += CONCURRENCY){
+        const batch = orderedChunks.slice(i, i + CONCURRENCY);
+        log('Đang đọc song song phần ' + batch.map(c=>c.index).join(', ') + ' / ' + chunks.length + '...', 'info');
+        const batchResults = await Promise.all(batch.map(c=>
+          callClaude(settings, { slice: c.text, truncated:true }, effectiveInstruction, attachmentsForRequest, controller.signal)
+            .then(r=>({ c, r }))
+            .catch(err=>({ c, err }))
+        ));
+        for(const item of batchResults){
+          doneCount++;
+          setProgress(10 + Math.round((doneCount/orderedChunks.length)*70));
+          if(item.err){
+            if(item.err && item.err.name === 'AbortError') throw item.err;
+            // KHÔNG bỏ qua luôn — chỉ ghi nhận là "chưa đọc được", sẽ thử đọc lại tuần tự
+            // bên dưới trước khi chấp nhận là thật sự không đọc được, để không bỏ sót
+            // thông tin trong phần này chỉ vì lỗi mạng/quá tải tạm thời.
+            log('⚠️ Lỗi khi đọc phần ' + item.c.index + '/' + chunks.length + ' (sẽ thử đọc lại riêng lẻ ngay sau đây): ' + (item.err.message || String(item.err)), 'error');
+            chunkErrors.push(item);
+            continue;
+          }
+          if(item.r && item.r.length){
+            log('Tìm thấy ' + item.r.length + ' chỉnh sửa liên quan trong phần ' + item.c.index + '/' + chunks.length + '.', 'info');
+            edits = edits.concat(item.r);
+          }
+        }
+        // Chỉ dừng sớm khi TOÀN BỘ các phần trong đợt này đọc thành công — nếu có phần
+        // nào lỗi, phải thử đọc lại (bên dưới) trước khi được phép dừng, để tránh bỏ sót
+        // thông tin nằm đúng trong phần bị lỗi đó.
+        if(edits.length && keywords.length && !chunkErrors.length){
+          stopEarly = true; // đã tìm thấy ở vùng ưu tiên cao — dừng sớm để tiết kiệm thời gian & số lượt gọi AI
+        }
+      }
+
+      // ---- Đọc lại TUẦN TỰ (từng phần một, không song song) các phần bị lỗi ở trên ----
+      // Đọc riêng lẻ giảm tải cho server AI (đặc biệt là FCC server chạy cục bộ, dễ bị
+      // quá tải khi nhận nhiều yêu cầu song song) và tăng cơ hội đọc thành công. Chỉ khi
+      // đã thử hết số lần này mà vẫn lỗi mới coi là thật sự "không đọc được".
+      let unreadChunks = [];
+      if(chunkErrors.length){
+        const CHUNK_RETRY_ATTEMPTS = 2;
+        let stillFailed = chunkErrors.slice();
+        for(let round=1; round<=CHUNK_RETRY_ATTEMPTS && stillFailed.length; round++){
+          const retryNow = stillFailed;
+          stillFailed = [];
+          for(const item of retryNow){
+            log('🔁 Đang đọc lại phần ' + item.c.index + '/' + chunks.length + ' bị lỗi trước đó (lần ' + round + '/' + CHUNK_RETRY_ATTEMPTS + ', đọc riêng lẻ)...', 'info');
+            try{
+              const r = await callClaude(settings, { slice: item.c.text, truncated:true }, effectiveInstruction, attachmentsForRequest, controller.signal);
+              if(r && r.length){
+                log('✅ Đọc lại thành công phần ' + item.c.index + '/' + chunks.length + ' — tìm thấy ' + r.length + ' chỉnh sửa liên quan.', 'success');
+                edits = edits.concat(r);
+              } else {
+                log('✅ Đọc lại thành công phần ' + item.c.index + '/' + chunks.length + ' — không có chỉnh sửa liên quan trong phần này.', 'info');
+              }
+            }catch(err){
+              if(err && err.name === 'AbortError') throw err;
+              log('✗ Vẫn lỗi khi đọc lại phần ' + item.c.index + '/' + chunks.length + ': ' + (err.message || String(err)), 'error');
+              stillFailed.push(item);
+            }
+          }
+        }
+        if(stillFailed.length){
+          unreadChunks = stillFailed.map(item => item.c.index);
+          log('❌ Không thể đọc được phần ' + unreadChunks.join(', ') + ' / ' + chunks.length + ' của file dù đã thử lại nhiều lần — thông tin trong (các) phần này CHƯA được AI xem xét. Kết quả bên dưới (nếu có) có thể chưa đầy đủ, và lệnh sẽ KHÔNG tự động đẩy lên GitHub để bạn xem lại trước.', 'error');
+        }
+      }
+      edits = dedupeEdits(edits);
+      lastReadHadGaps = unreadChunks.length > 0;
+      if(lastReadHadGaps) lastUnreadChunkInfo = { unreadChunks, total: chunks.length };
+    }
+
+    if(!edits.length){
+      log(lastReadHadGaps
+        ? 'Không xác định được thay đổi cụ thể nào, và có ' + lastUnreadChunkInfo.unreadChunks.length + '/' + lastUnreadChunkInfo.total + ' phần của file KHÔNG đọc được do lỗi lặp lại — rất có thể chỗ cần sửa nằm trong đúng (các) phần đó. Hãy thử gửi lại lệnh (bấm "🔄 Tải lại" trước nếu muốn), hoặc kiểm tra kết nối tới ' + (settings.mode === 'fcc' ? 'FCC server' : 'Anthropic API') + '.'
+        : 'AI đã đọc toàn bộ file nhưng không xác định được thay đổi cụ thể nào cho yêu cầu này. Hãy thử mô tả rõ hơn điều bạn muốn sửa.', 'error');
+      addMemoryEntry(repoKeyForMemory, { instruction: redactPrivate(instruction), refined: redactPrivate(effectiveInstruction), status:'no_edits' });
+      return;
+    }
+
+    if(lastReadHadGaps){
+      log('⚠️ Lưu ý: ' + lastUnreadChunkInfo.unreadChunks.length + '/' + lastUnreadChunkInfo.total + ' phần của file KHÔNG đọc được (xem lỗi bên trên) — (các) chỉnh sửa dưới đây chỉ dựa trên phần ĐÃ đọc được, có thể chưa đầy đủ nếu chỗ cần sửa còn nằm ở phần chưa đọc. Vì vậy lệnh này sẽ KHÔNG tự động đẩy lên GitHub dù đã bật tự động đẩy — hãy xem lại kỹ rồi mới bấm "🚀 Đẩy lên GitHub", hoặc gửi lại lệnh để đọc đầy đủ hơn.', 'error');
+    }
+
+    setProgress(92);
+    log('AI đề xuất ' + edits.length + ' chỉnh sửa (sau khi đọc toàn bộ file):', 'info');
+    logDiff(edits);
+
+    const diffImpactReport = buildDiffImpactReport(stripped, edits, symbolIndex, symbolGraph);
+    if(diffImpactReport) log(diffImpactReport, 'info');
+
+    const securityQualityReport = buildSecurityQualityReport(edits);
+    if(securityQualityReport) log(securityQualityReport, 'info');
+
+    const { working, results } = applyEdits(stripped, edits);
+    const failed = results.filter(r => r.status !== 'applied');
+    if(failed.length){
+      failed.forEach(f=>{
+        const reason = f.status === 'not_found' ? 'không tìm thấy đoạn cần sửa trong mã nguồn'
+          : f.status === 'ambiguous' ? ('đoạn cần sửa xuất hiện ' + f.count + ' lần, không xác định được vị trí duy nhất')
+          : 'dữ liệu chỉnh sửa không hợp lệ';
+        log('Bỏ qua 1 chỉnh sửa (' + reason + '): "' + String(f.old).slice(0,80) + '..."', 'error');
+      });
+      log('Có chỉnh sửa không áp dụng được — KHÔNG đẩy lên GitHub để tránh sửa nhầm. Hãy thử lại với mô tả rõ hơn.', 'error');
+      addMemoryEntry(repoKeyForMemory, { instruction: redactPrivate(instruction), refined: redactPrivate(effectiveInstruction), status:'error', editCount: edits.length });
+      return;
+    }
+
+    log('Đã áp dụng ' + results.length + ' chỉnh sửa ban đầu.', 'success');
+
+    // ---- Tự động kiểm tra kết quả có đúng/đủ yêu cầu chưa, tự sửa tiếp nếu chưa ----
+    let verifyWorking = working;
+    let appliedEditsLog = edits.slice();
+    const autoVerifyOn = settings.autoVerify !== false;
+    const MAX_VERIFY_ROUNDS = 3;
+    if(!autoVerifyOn){
+      log('(Tự động kiểm tra đang tắt — có thể bật lại trong ⚙️ Cấu hình.)', 'info');
+    } else {
+      let verifyRound = 0;
+      while(true){
+        setProgress(94);
+        log('🔍 Đang tự kiểm tra kết quả có đúng và đủ theo yêu cầu chưa...', 'info');
+        const contextInfo = verifyWorking.length <= SAFE_CHARS
+          ? { text: verifyWorking, truncated:false }
+          : (function(){
+              const ctx = buildVerifyContext(verifyWorking, appliedEditsLog, 700);
+              return ctx ? { text: ctx, truncated:true } : { text: verifyWorking.slice(0, SAFE_CHARS), truncated:true };
+            })();
+        // Đính kèm báo cáo ảnh hưởng thay đổi (nếu có) vào ngữ cảnh tự-kiểm-tra, để AI chủ
+        // động rà lại cả những hàm liên quan dây chuyền, không chỉ đúng chỗ vừa sửa.
+        if(diffImpactReport) contextInfo.text = diffImpactReport + '\n\n---\n\n' + contextInfo.text;
+
+        let verifyResult;
+        try{
+          verifyResult = await callClaudeVerify(settings, effectiveInstruction, appliedEditsLog, contextInfo, controller.signal);
+        }catch(e){
+          if(e && e.name === 'AbortError') throw e;
+          log('Không thể tự kiểm tra kết quả (' + (e.message || String(e)) + ') — vẫn giữ nguyên các chỉnh sửa đã áp dụng ở trên.', 'error');
+          break;
+        }
+
+        if(verifyResult.ok){
+          log('✅ Tự kiểm tra: đã đúng và đủ theo yêu cầu.', 'success');
+          break;
+        }
+
+        verifyRound++;
+        log('⚠️ Tự kiểm tra phát hiện CHƯA đúng/đủ: ' + (verifyResult.reason || '(không có mô tả chi tiết)'), 'error');
+
+        if(!verifyResult.fixes.length){
+          log('Bước tự kiểm tra không đề xuất được cách sửa cụ thể — dừng lại, giữ nguyên kết quả hiện tại. Bạn nên xem lại bên dưới và gửi thêm 1 lệnh mô tả rõ hơn nếu cần.', 'error');
+          break;
+        }
+        if(verifyRound > MAX_VERIFY_ROUNDS){
+          log('Đã tự động sửa tối đa ' + MAX_VERIFY_ROUNDS + ' lần nhưng vẫn chưa đạt — dừng lại để tránh lặp vô hạn. Giữ nguyên kết quả hiện tại, bạn nên xem lại bên dưới.', 'error');
+          break;
+        }
+
+        log('🔧 Đang tự động sửa lại (lần ' + verifyRound + '/' + MAX_VERIFY_ROUNDS + ')...', 'info');
+        const fixApply = applyEdits(verifyWorking, verifyResult.fixes);
+        const fixFailed = fixApply.results.filter(r => r.status !== 'applied');
+        if(fixFailed.length){
+          fixFailed.forEach(f=>{
+            const reason = f.status === 'not_found' ? 'không tìm thấy đoạn cần sửa trong mã nguồn hiện tại'
+              : f.status === 'ambiguous' ? ('đoạn cần sửa xuất hiện ' + f.count + ' lần, không xác định được vị trí duy nhất')
+              : 'dữ liệu chỉnh sửa không hợp lệ';
+            log('Bỏ qua 1 chỉnh sửa tự động (' + reason + '): "' + String(f.old).slice(0,80) + '..."', 'error');
+          });
+        }
+        const appliedFixes = fixApply.results.filter(r => r.status === 'applied').map(r=>({ old:r.old, new:r.new }));
+        if(!appliedFixes.length){
+          log('Không có chỉnh sửa tự động nào áp dụng được — dừng lại, giữ nguyên kết quả trước đó.', 'error');
+          break;
+        }
+        logDiff(appliedFixes);
+        const verifySecurityReport = buildSecurityQualityReport(appliedFixes);
+        if(verifySecurityReport) log(verifySecurityReport, 'info');
+        verifyWorking = fixApply.working;
+        appliedEditsLog = appliedEditsLog.concat(appliedFixes);
+      }
+    }
+
+    const finalContent = restoreImages(verifyWorking, map);
+    const elapsedSec = ((Date.now() - t0) / 1000).toFixed(1);
+    setProgress(100);
+    log('Hoàn tất ' + appliedEditsLog.length + ' chỉnh sửa (kể cả tự sửa nếu có) trong ' + elapsedSec + ' giây. Xem lại bên trên, sau đó chọn hành động bên dưới.', 'success');
+
+    const pageQualityReport = buildPageQualityChecklist(finalContent);
+    if(pageQualityReport) log(pageQualityReport, 'info');
+
+    const perfLinksReport = buildPerformanceAndLinksChecklist(finalContent);
+    if(perfLinksReport) log(perfLinksReport, 'info');
+
+    const seoSocialReport = buildSeoSocialChecklist(finalContent);
+    if(seoSocialReport) log(seoSocialReport, 'info');
+
+    const codeHygieneReport = buildCodeHygieneChecklist(finalContent);
+    if(codeHygieneReport) log(codeHygieneReport, 'info');
+
+    const formSecurityReport = buildFormSecurityChecklist(finalContent);
+    if(formSecurityReport) log(formSecurityReport, 'info');
+
+    const editsPreview = appliedEditsLog.slice(0, 20).map(e => ({ old: truncateSnippet(e.old, 160), new: truncateSnippet(e.new, 160) }));
+    const memId = addMemoryEntry(repoKeyForMemory, {
+      instruction: redactPrivate(instruction), refined: redactPrivate(effectiveInstruction),
+      status:'applied', editCount: appliedEditsLog.length, editsPreview, pushed:false
+    });
+    showPendingActions(finalContent, (settings.path || 'index.html').split('/').pop(), repoKeyForMemory, memId, rawContent);
+    if(settings.autoPush !== false && !lastReadHadGaps){
+      await pushPending(true);
+    } else if(!lastReadHadGaps){
+      log('(Tự động đẩy lên GitHub đang tắt — xem lại thay đổi bên dưới rồi bấm "🚀 Đẩy lên GitHub" khi sẵn sàng, hoặc bật lại trong ⚙️ Cấu hình.)', 'info');
+    }
+
+  }catch(e){
+    if(e && e.name === 'AbortError'){
+      log('Đã dừng theo yêu cầu — chưa có thay đổi nào được áp dụng hay đẩy lên GitHub.', 'info');
+      addMemoryEntry(repoKeyForMemory, { instruction: redactPrivate(instruction), status:'cancelled' });
+    } else {
+      log(e.message || String(e), 'error');
+      addMemoryEntry(repoKeyForMemory, { instruction: redactPrivate(instruction), status:'error' });
+    }
+  }finally{
+    sendBtn.disabled = false;
+    stopBtn.style.display = 'none';
+    activeAbortController = null;
+    setTimeout(hideProgress, 400);
+  }
+});
+
+})();
+</script>
+</body>
+</html>

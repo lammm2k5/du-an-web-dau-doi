@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🤖 Claude Code Controller v3 — Agent đa file</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0714;
+  --bg-2:#0e0a1c;
+  --panel:#17102e;
+  --panel-2:#1f1740;
+  --panel-hover:#281d51;
+  --border:#3d2a6b;
+  --border-soft:#2b1e53;
+  --text:#f4eefe;
+  --muted:#ab9cd4;
+  --accent:#a855f7;
+  --accent-2:#e879f9;
+  --accent-3:#7c3aed;
+  --accent-soft:rgba(168,85,247,.18);
+  --green:#34e0a1;
+  --green-soft:rgba(52,224,161,.14);
+  --red:#fb7185;
+  --red-soft:rgba(251,113,133,.14);
+  --blue:#38bdf8;
+  --blue-soft:rgba(56,189,248,.14);
+  --gold:#fbbf24;
+  --gold-soft:rgba(251,191,36,.14);
+  --radius-lg:18px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow-soft:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lift:0 12px 36px rgba(88,20,160,.35);
+}
+*{box-sizing:border-box;}
+::selection{ background:var(--accent-soft); color:var(--text); }
+body{
+  margin:0; color:var(--text);
+  background:
+    radial-gradient(1200px 620px at 10% -12%, rgba(168,85,247,.38), transparent 62%),
+    radial-gradient(1000px 560px at 105% -5%, rgba(232,121,249,.28), transparent 58%),
+    radial-gradient(900px 620px at 50% 115%, rgba(56,189,248,.16), transparent 60%),
+    radial-gradient(700px 400px at 85% 40%, rgba(251,191,36,.06), transparent 55%),
+    var(--bg);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  display:flex; flex-direction:column; min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+code,.mono{ font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 22px; border-bottom:1px solid var(--border-soft);
+  background:linear-gradient(180deg, rgba(23,16,46,.92), rgba(14,10,28,.85));
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  position:sticky; top:0; z-index:20; flex-wrap:wrap; gap:10px;
+}
+header::after{
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  background:linear-gradient(90deg, var(--accent-3), var(--accent), var(--accent-2), var(--blue));
+  opacity:.75;
+}
+header .brand{ display:flex; align-items:center; gap:12px; min-width:0; }
+.brand-icon-wrap{ position:relative; flex-shrink:0; }
+header .brand-icon{
+  width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+  font-size:19px; background:linear-gradient(145deg, var(--accent-2), var(--accent) 55%, var(--accent-3));
+  box-shadow:0 4px 18px rgba(168,85,247,.5), 0 0 0 1px rgba(232,121,249,.25) inset;
+  flex-shrink:0; padding:0; border:none; cursor:pointer; overflow:hidden; transition:transform .15s ease, box-shadow .15s ease;
+}
+header .brand-icon:hover{ transform:translateY(-1px) scale(1.04); box-shadow:0 6px 22px rgba(168,85,247,.6), 0 0 0 1px rgba(232,121,249,.3) inset; }
+header .brand-icon img{ width:100%; height:100%; object-fit:cover; display:block; }
+.logo-popover{
+  display:none; position:absolute; top:46px; left:0; z-index:30; min-width:170px;
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:8px; flex-direction:column; gap:6px; box-shadow:var(--shadow-soft);
+}
+.logo-popover.show{ display:flex; animation:fadeIn .15s ease; }
+.logo-popover button{
+  width:100%; justify-content:flex-start; font-size:12px; padding:7px 10px; background:var(--panel-2);
+}
+.logo-popover button:hover{ background:var(--accent-soft); }
+.logo-popover .hint{ font-size:10.5px; color:var(--muted); padding:2px 2px 0; line-height:1.5; }
+header h1{ font-size:16px; margin:0; font-weight:800; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+header .brand-title{
+  background:linear-gradient(90deg, var(--blue), var(--accent-2), var(--accent-3), var(--blue));
+  background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:brandTitleShift 5s linear infinite;
+}
+@keyframes brandTitleShift{
+  0%{ background-position:0% 50%; }
+  100%{ background-position:300% 50%; }
+}
+header .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+button{
+  background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  padding:8px 14px; border-radius:10px; cursor:pointer; font:inherit; font-weight:600; font-size:12.5px;
+  transition:all .15s ease;
+}
+button:hover{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); transform:translateY(-1px); }
+button:active{ transform:translateY(0) scale(.97); }
+button:disabled{ opacity:.45; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+button.primary{
+  background:linear-gradient(135deg,var(--accent-2),var(--accent) 65%,var(--accent-3)); color:#fff; border-color:transparent;
+  font-weight:700; box-shadow:0 4px 18px rgba(168,85,247,.45);
+}
+button.primary:hover{ box-shadow:0 10px 28px rgba(168,85,247,.55); }
+button.danger{ color:var(--red); border-color:rgba(251,113,133,.4); }
+button.danger:hover{ background:var(--red-soft); border-color:var(--red); color:var(--red); }
+button.ghost{ background:transparent; }
+#stopBtn:not(:disabled){
+  color:var(--red); border-color:rgba(248,113,113,.5); background:linear-gradient(135deg, rgba(251,113,133,.24), rgba(251,113,133,.1));
+  box-shadow:0 0 0 0 rgba(251,113,133,.35); animation:stopGlow 2.2s ease-in-out infinite;
+}
+#stopBtn:not(:disabled):hover{ background:linear-gradient(135deg, rgba(251,113,133,.36), rgba(251,113,133,.14)); border-color:var(--red); }
+@keyframes stopGlow{
+  0%, 100%{ box-shadow:0 0 0 0 rgba(251,113,133,.32); }
+  50%{ box-shadow:0 0 0 6px rgba(251,113,133,0); }
+}
+main{ flex:1; max-width:960px; width:100%; margin:0 auto; padding:22px 16px 150px; }
+#settings{
+  display:none; background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--radius-lg);
+  padding:18px; margin-bottom:18px; box-shadow:var(--shadow-soft); animation:fadeIn .2s ease;
+}
+#settings.show{ display:block; }
+#settings label{ display:block; font-size:12px; color:var(--muted); margin:10px 0 4px; font-weight:600; }
+#settings input,#settings select{
+  width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  padding:9px 11px; border-radius:var(--radius-sm); font:inherit; font-size:13px; transition:border-color .15s ease;
+}
+#settings input:focus,#settings select:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+#settings .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+#settings .row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+#settings .hint{ font-size:11.5px; color:var(--muted); margin-top:4px; line-height:1.6; }
+#settings .toggles{ display:flex; gap:18px; margin-top:12px; flex-wrap:wrap; }
+#settings .toggles label{ display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text); margin:0; font-weight:600; cursor:pointer; }
+#settings .toggles input{ width:auto; accent-color:var(--accent); }
+#log{ display:flex; flex-direction:column; gap:10px; font-size:13.5px; line-height:1.6; }
+#log .line{ padding:10px 14px; border-radius:var(--radius-md); white-space:pre-wrap; word-break:break-word; animation:fadeIn .25s ease; }
+@keyframes fadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+#log .l-user{
+  color:#fff; background:linear-gradient(135deg,var(--accent-2),var(--accent) 60%,var(--accent-3));
+  align-self:flex-end; max-width:88%; font-weight:500; box-shadow:0 4px 18px rgba(168,85,247,.4);
+}
+#log .l-info{ color:var(--muted); background:var(--panel); border:1px solid var(--border-soft); font-size:12.5px; }
+#log .l-stat{ color:var(--muted); background:transparent; border:1px dashed var(--border-soft); font-size:11px; padding:5px 10px; opacity:.85; }
+#log .l-tool{ color:var(--blue); background:rgba(56,189,248,.08); border:1px solid rgba(56,189,248,.25); font-size:12px; font-family:'JetBrains Mono',monospace; }
+#log .l-ai{ color:var(--text); background:var(--panel); border:1px solid var(--border-soft); }
+#log .l-error{ color:var(--red); background:var(--red-soft); border:1px solid rgba(248,113,113,.28); font-weight:600; }
+#log .l-error::before{ content:"✗ "; }
+#log .l-success{ color:var(--green); background:var(--green-soft); border:1px solid rgba(74,222,128,.25); font-weight:600; }
+#log .l-success::before{ content:"✓ "; }
+#todoBox{
+  background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--radius-md);
+  padding:12px 16px; margin:6px 0; font-size:12.5px; box-shadow:var(--shadow-soft); animation:fadeIn .2s ease;
+}
+#todoBox ul{ margin:8px 0 0; padding-left:18px; }
+#todoBox li{ margin:3px 0; transition:color .2s ease; }
+#todoBox li.done{ color:var(--green); text-decoration:line-through; }
+#todoBox li.doing{ color:var(--gold); font-weight:600; }
+#pending{
+  display:none; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:16px; margin-top:14px; box-shadow:var(--shadow-soft);
+}
+#pending.show{ display:block; animation:fadeIn .25s ease; }
+#pending .file{ padding:9px 10px; border-bottom:1px solid var(--border-soft); font-size:12.5px; border-radius:var(--radius-sm); transition:background .15s ease; }
+#pending .file:hover{ background:var(--panel-2); }
+#pending .file:last-child{ border-bottom:none; }
+#pending .filehead{ display:flex; justify-content:space-between; align-items:center; cursor:pointer; gap:8px; font-family:'JetBrains Mono',monospace; }
+#pending .tag{ font-size:10.5px; padding:3px 9px; border-radius:999px; font-weight:700; flex-shrink:0; }
+#pending .tag.new{ background:var(--green-soft); color:var(--green); }
+#pending .tag.mod{ background:var(--blue-soft); color:var(--blue); }
+.diffbody{ margin-top:8px; background:#0d0920; border-radius:var(--radius-sm); padding:8px 9px; max-height:340px; overflow:auto; box-shadow:inset 0 0 0 1px var(--border-soft); }
+.diffline{
+  font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace; font-size:11.5px; white-space:pre-wrap;
+  word-break:break-word; padding:1px 6px; border-radius:4px;
+}
+.diffline.add{ color:#9beeb8; background:rgba(52,224,161,.1); border-left:3px solid var(--green); }
+.diffline.del{ color:#ffb4ac; background:rgba(251,113,133,.1); border-left:3px solid var(--red); }
+.diffline.ctx{ color:var(--muted); }
+.diffskip{ color:var(--muted); font-size:10.5px; padding:3px 4px; font-style:italic; opacity:.8; }
+form#cmdForm{
+  position:fixed; bottom:0; left:0; right:0;
+  background:linear-gradient(180deg, rgba(10,7,20,0), rgba(10,7,20,.96) 30%);
+  padding:18px 18px 20px; display:flex; justify-content:center;
+}
+form#cmdForm .inner{
+  max-width:960px; width:100%; display:flex; flex-direction:column; gap:8px;
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:10px; box-shadow:var(--shadow-lift);
+}
+.attach-list{ display:none; flex-wrap:wrap; gap:8px; padding:2px 4px 0; }
+.attach-list.show{ display:flex; }
+.attach-chip{
+  display:flex; align-items:center; gap:6px; background:var(--panel-2); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:5px 9px; font-size:11.5px; color:var(--text); max-width:220px;
+}
+.attach-chip img{ width:26px; height:26px; object-fit:cover; border-radius:5px; flex-shrink:0; }
+.attach-chip .ficon{ font-size:14px; flex-shrink:0; }
+.attach-chip .fname{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px; }
+.attach-chip .rmBtn{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:0 2px; line-height:1; }
+.attach-chip .rmBtn:hover{ color:var(--red); }
+.cmd-row{ display:flex; gap:8px; align-items:flex-end; }
+#attachBtn{
+  flex-shrink:0; width:42px; height:42px; background:var(--panel-2); border:1px solid var(--border);
+  color:var(--muted); border-radius:var(--radius-sm); cursor:pointer; transition:all .15s ease;
+  display:inline-flex; align-items:center; justify-content:center; padding:0;
+}
+#attachBtn svg{ width:19px; height:19px; transition:transform .2s cubic-bezier(.34,1.56,.64,1); }
+#attachBtn:hover{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); transform:none; }
+#attachBtn:hover svg{ transform:rotate(90deg); }
+#attachBtn:active svg{ transform:rotate(90deg) scale(.88); }
+.progress-wrap{ height:3px; border-radius:3px; background:var(--border-soft); overflow:hidden; margin:2px 4px 0; }
+.progress-bar{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transition:width .25s ease; }
+#cmdInput{
+  flex:1; background:transparent; border:none; color:var(--text); font:inherit; font-size:14px;
+  resize:none; outline:none; padding:10px 8px; min-height:24px; max-height:160px; line-height:1.4;
+  scrollbar-width:thin; scrollbar-color:var(--border) var(--panel-2);
+}
+#cmdInput::placeholder{ color:#5a6275; }
+#cmdInput::-webkit-scrollbar{ width:10px; }
+#cmdInput::-webkit-scrollbar-track{ background:var(--panel-2); border-radius:var(--radius-sm); }
+#cmdInput::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; border:2px solid var(--panel-2); }
+#sendBtn{
+  flex-shrink:0; display:inline-flex; align-items:center; gap:6px; height:42px;
+  background:linear-gradient(135deg,var(--accent-2),var(--accent) 65%,var(--accent-3)); color:#fff; border:none;
+  border-radius:var(--radius-sm); padding:0 20px; font-weight:700; cursor:pointer; font-size:13.5px;
+  box-shadow:0 4px 18px rgba(168,85,247,.45); transition:transform .15s ease, opacity .15s ease;
+}
+#sendBtn:hover:not(:disabled){ transform:translateY(-1px); }
+#sendBtn:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="brand-icon-wrap">
+      <button type="button" id="brandIconBtn" class="brand-icon" title="Bấm để đổi logo">
+        <span id="brandIconEmoji">🤖</span>
+        <img id="brandIconImg" style="display:none" alt="Logo">
+      </button>
+      <div class="logo-popover" id="logoPopover">
+        <button type="button" id="logoChangeBtn">🖼️ Đổi logo</button>
+        <button type="button" id="logoResetBtn">↺ Dùng logo mặc định</button>
+        <div class="hint">Ảnh sẽ được lưu ngay trên trình duyệt này.</div>
+      </div>
+      <input type="file" id="logoInput" accept="image/*" style="display:none">
+    </div>
+    <h1><span class="brand-title">Claude Code Controller v3</span></h1>
+  </div>
+  <div class="actions">
+    <button id="settingsBtn">⚙️ Cấu hình</button>
+    <button id="newSessionBtn" class="ghost">🆕 Phiên mới</button>
+    <button id="stopBtn" disabled>⏹ Dừng</button>
+  </div>
+</header>
+<main>
+  <div id="settings">
+    <div class="row">
+      <div>
+        <label>Chế độ AI</label>
+        <select id="s_mode">
+          <option value="api">Anthropic API (khoá riêng)</option>
+          <option value="fcc">Free Claude Code — proxy trên máy tôi</option>
+          <option value="deepseek">DeepSeek API (khoá riêng)</option>
+          <option value="gemini">Gemini API — trực tiếp hoặc qua proxy trên máy tôi</option>
+        </select>
+      </div>
+      <div>
+        <label>Model</label>
+        <input id="s_model" placeholder="claude-sonnet-5 / deepseek-chat">
+      </div>
+    </div>
+    <div id="apiFields">
+      <label>Anthropic API Key</label>
+      <input id="s_key" type="password" placeholder="sk-ant-...">
+    </div>
+    <div id="fccFields" style="display:none">
+      <div class="row">
+        <div><label>FCC URL</label><input id="s_fcc_url" placeholder="http://localhost:8082"></div>
+        <div><label>FCC Token</label><input id="s_fcc_token" type="password"></div>
+      </div>
+    </div>
+    <div id="deepseekFields" style="display:none">
+      <div class="row">
+        <div><label>DeepSeek API Key</label><input id="s_ds_key" type="password" placeholder="sk-..."></div>
+        <div><label>DeepSeek Base URL</label><input id="s_ds_url" placeholder="https://api.deepseek.com"></div>
+      </div>
+      <p class="hint">DeepSeek tự động cache ngữ cảnh lặp lại phía server (không cần cấu hình thêm), giúp các lượt sau rẻ &amp; nhanh hơn.</p>
+    </div>
+    <div id="geminiFields" style="display:none">
+      <div class="row">
+        <div>
+          <label>Kết nối Gemini</label>
+          <select id="s_gemini_conn">
+            <option value="direct">Gọi thẳng Google AI API (khoá riêng)</option>
+            <option value="proxy">Qua proxy chạy trên máy tôi (agent Gemini + proxy local)</option>
+          </select>
+        </div>
+        <div><label>Gemini API Key</label><input id="s_gemini_key" type="password" placeholder="AIza... (bỏ trống nếu proxy tự quản lý khoá)"></div>
+      </div>
+      <div id="geminiProxyFields" style="display:none">
+        <div class="row">
+          <div><label>Proxy URL (trên máy bạn)</label><input id="s_gemini_proxy_url" placeholder="http://localhost:8081"></div>
+          <div><label>Proxy Token (nếu proxy yêu cầu)</label><input id="s_gemini_proxy_token" type="password"></div>
+        </div>
+        <p class="hint">Dùng khi bạn chạy 1 proxy cục bộ để "hoà" agent Gemini với máy mình — ví dụ 1 server nhỏ forward request dạng REST của Gemini (POST &lt;Proxy URL&gt;/v1beta/models/&lt;model&gt;:generateContent hoặc :streamGenerateContent) sang generativelanguage.googleapis.com, hoặc tận dụng phiên đăng nhập Google/quota mà bạn đã đăng nhập sẵn trong Gemini CLI (thư mục gemini-cli) trên máy. Cách này giúp giấu khoá API khỏi trình duyệt và vượt giới hạn CORS. Proxy Token (nếu có) sẽ được gửi kèm dạng header "Authorization: Bearer ...".</p>
+      </div>
+      <p class="hint">Model gợi ý: gemini-2.5-pro, gemini-2.5-flash, gemini-3-pro-preview...</p>
+    </div>
+    <div class="toggles">
+      <label><input type="checkbox" id="s_stream" checked> Streaming (xem AI gõ chữ trực tiếp)</label>
+      <label><input type="checkbox" id="s_cache" checked> Prompt caching (Anthropic/FCC — tiết kiệm chi phí)</label>
+    </div>
+    <hr style="border-color:var(--border-soft);margin:14px 0;">
+    <div class="row">
+      <div><label>GitHub owner</label><input id="s_owner" placeholder="lammm2k5"></div>
+      <div><label>GitHub repo</label><input id="s_repo" placeholder="test-y-hoc-tbump"></div>
+    </div>
+    <div class="row">
+      <div><label>Branch</label><input id="s_branch" placeholder="main"></div>
+      <div><label>GitHub PAT (cần để push)</label><input id="s_token" type="password" placeholder="ghp_..."></div>
+    </div>
+    <p class="hint">PAT cần quyền "repo" (hoặc "contents: write" nếu là fine-grained token). Mọi thông tin chỉ lưu trong localStorage trên máy bạn, không gửi đi đâu khác ngoài GitHub/Anthropic/DeepSeek/FCC. Phiên làm việc (hội thoại + thay đổi tạm) cũng tự lưu theo repo/branch để bạn không mất tiến độ khi tải lại trang.</p>
+    <button id="saveSettingsBtn" class="primary" style="margin-top:10px;">Lưu cấu hình</button>
+  </div>
+
+  <div id="log"></div>
+  <div id="todoBox" style="display:none"></div>
+  <div id="pending">
+    <div style="font-weight:700;margin-bottom:8px;">📝 Thay đổi đang chờ (chưa push) — bấm vào tên file để xem diff:</div>
+    <div id="pendingList"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button id="pushBtn" class="primary">🚀 Xác nhận &amp; Push lên GitHub</button>
+      <button id="discardBtn" class="danger">Huỷ thay đổi</button>
+    </div>
+  </div>
+</main>
+<form id="cmdForm">
+  <div class="inner">
+    <div id="attachList" class="attach-list"></div>
+    <div class="cmd-row">
+      <input id="fileInput" type="file" multiple accept="image/*,.pdf,.txt,.md,.json,.csv,.js,.ts,.jsx,.tsx,.html,.css,.py,.java,.c,.cpp,.go,.rs,.yml,.yaml,.xml,.log" style="display:none">
+      <button id="attachBtn" type="button" title="Đính kèm file/hình ảnh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      </button>
+      <textarea id="cmdInput" placeholder="Ra lệnh cho agent, vd: 'Thêm mục FAQ vào cuối trang, đọc data.json để lấy style hiện có'" rows="1"></textarea>
+      <button id="sendBtn" class="primary" type="submit">Gửi</button>
+    </div>
+    <div id="progressWrap" class="progress-wrap" style="display:none;"><div id="progressBar" class="progress-bar"></div></div>
+  </div>
+</form>
+
+<script>
+const LS_KEY = 'ccc_v3_settings';
+let settings = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+let aborter = null;
+let expandedDiffs = new Set();
+let state = {
+  tree: null,          // [{path,type,sha,size}]
+  files: new Map(),    // path -> {original, current, sha, isNew}
+  todos: [],
+  messages: [],        // conversation history sent to the model (Anthropic block format — canonical, converted at the API boundary)
+  claudeMd: null,
+  claudeMdTried: false
+};
+
+// ---------------- settings UI ----------------
+const $ = id => document.getElementById(id);
+
+// ---------------- logo tuỳ chỉnh (bấm vào icon để đổi) ----------------
+const LOGO_KEY = 'ccc_v3_logo';
+const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2MB
+function applyLogo(dataUrl){
+  const emoji = $('brandIconEmoji'), img = $('brandIconImg');
+  if(dataUrl){ img.src = dataUrl; img.style.display = 'block'; emoji.style.display = 'none'; }
+  else { img.style.display = 'none'; img.src = ''; emoji.style.display = ''; }
+}
+(function loadLogo(){
+  try{ const saved = localStorage.getItem(LOGO_KEY); if(saved) applyLogo(saved); }catch(e){}
+})();
+function closeLogoPopover(){ $('logoPopover').classList.remove('show'); }
+$('brandIconBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  $('logoPopover').classList.toggle('show');
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.brand-icon-wrap')) closeLogoPopover();
+});
+$('logoChangeBtn').addEventListener('click', ()=> $('logoInput').click());
+$('logoInput').addEventListener('change', ()=>{
+  const file = $('logoInput').files && $('logoInput').files[0];
+  $('logoInput').value = '';
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ log('Vui lòng chọn 1 file ảnh cho logo.', 'l-error'); return; }
+  if(file.size > LOGO_MAX_BYTES){ log('Ảnh logo quá lớn (>2MB), hãy chọn ảnh nhỏ hơn.', 'l-error'); return; }
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{ localStorage.setItem(LOGO_KEY, r.result); }catch(e){ log('Không lưu được logo (bộ nhớ trình duyệt đầy).', 'l-error'); }
+    applyLogo(r.result);
+    closeLogoPopover();
+  };
+  r.onerror = ()=> log('Không đọc được file ảnh.', 'l-error');
+  r.readAsDataURL(file);
+});
+$('logoResetBtn').addEventListener('click', ()=>{
+  try{ localStorage.removeItem(LOGO_KEY); }catch(e){}
+  applyLogo(null);
+  closeLogoPopover();
+});
+
+function refreshModeFields(){
+  const mode = $('s_mode').value;
+  $('apiFields').style.display = mode==='api' ? 'block' : 'none';
+  $('fccFields').style.display = mode==='fcc' ? 'block' : 'none';
+  $('deepseekFields').style.display = mode==='deepseek' ? 'block' : 'none';
+  $('geminiFields').style.display = mode==='gemini' ? 'block' : 'none';
+  $('geminiProxyFields').style.display = (mode==='gemini' && $('s_gemini_conn').value==='proxy') ? 'block' : 'none';
+}
+$('s_mode').addEventListener('change', refreshModeFields);
+$('s_gemini_conn').addEventListener('change', refreshModeFields);
+$('settingsBtn').addEventListener('click', ()=> $('settings').classList.toggle('show'));
+function loadSettingsUI(){
+  $('s_mode').value = settings.mode || 'api';
+  $('s_model').value = settings.model || 'claude-sonnet-5';
+  $('s_key').value = settings.anthropicKey || '';
+  $('s_fcc_url').value = settings.fccUrl || 'http://localhost:8082';
+  $('s_fcc_token').value = settings.fccToken || '';
+  $('s_ds_key').value = settings.deepseekKey || '';
+  $('s_ds_url').value = settings.deepseekUrl || 'https://api.deepseek.com';
+  $('s_gemini_conn').value = settings.geminiConn || 'direct';
+  $('s_gemini_key').value = settings.geminiKey || '';
+  $('s_gemini_proxy_url').value = settings.geminiProxyUrl || 'http://localhost:8081';
+  $('s_gemini_proxy_token').value = settings.geminiProxyToken || '';
+  $('s_stream').checked = settings.streaming !== false;
+  $('s_cache').checked = settings.caching !== false;
+  $('s_owner').value = settings.owner || '';
+  $('s_repo').value = settings.repo || '';
+  $('s_branch').value = settings.branch || 'main';
+  $('s_token').value = settings.ghToken || '';
+  refreshModeFields();
+}
+$('saveSettingsBtn').addEventListener('click', ()=>{
+  const prevKey = sessionKey();
+  settings = {
+    mode: $('s_mode').value, model: $('s_model').value.trim() || 'claude-sonnet-5',
+    anthropicKey: $('s_key').value.trim(), fccUrl: $('s_fcc_url').value.trim(), fccToken: $('s_fcc_token').value.trim(),
+    deepseekKey: $('s_ds_key').value.trim(), deepseekUrl: $('s_ds_url').value.trim() || 'https://api.deepseek.com',
+    geminiConn: $('s_gemini_conn').value, geminiKey: $('s_gemini_key').value.trim(),
+    geminiProxyUrl: $('s_gemini_proxy_url').value.trim() || 'http://localhost:8081', geminiProxyToken: $('s_gemini_proxy_token').value.trim(),
+    streaming: $('s_stream').checked, caching: $('s_cache').checked,
+    owner: $('s_owner').value.trim(), repo: $('s_repo').value.trim(), branch: $('s_branch').value.trim() || 'main',
+    ghToken: $('s_token').value.trim()
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(settings));
+  $('settings').classList.remove('show');
+  log('Đã lưu cấu hình.', 'l-success');
+  if(sessionKey() !== prevKey) tryRestoreSession(); // owner/repo/branch đổi -> thử khôi phục phiên khác
+});
+loadSettingsUI();
+if(!settings.owner) $('settings').classList.add('show');
+
+// ---------------- thanh tiến độ trả lời của AI ----------------
+const progressWrap = $('progressWrap'), progressBar = $('progressBar');
+let progressHideTimer = null;
+function setProgress(pct){
+  clearTimeout(progressHideTimer);
+  progressWrap.style.display = 'block';
+  progressBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+}
+function hideProgress(){
+  clearTimeout(progressHideTimer);
+  progressHideTimer = setTimeout(()=>{ progressWrap.style.display = 'none'; progressBar.style.width = '0%'; }, 350);
+}
+
+// ---------------- logging ----------------
+function log(text, cls){
+  const d = document.createElement('div');
+  d.className = 'line ' + (cls || 'l-info');
+  d.textContent = text;
+  $('log').appendChild(d);
+  window.scrollTo(0, document.body.scrollHeight);
+  return d;
+}
+function renderTodos(){
+  const box = $('todoBox');
+  if(!state.todos.length){ box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = '<b>📋 Kế hoạch:</b><ul>' + state.todos.map(t=>{
+    const c = t.status==='completed'?'done':(t.status==='in_progress'?'doing':'');
+    return '<li class="'+c+'">' + escapeHtml(t.content) + '</li>';
+  }).join('') + '</ul>';
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// ---------------- line diff (LCS-based, capped for perf) ----------------
+function computeLineDiff(oldText, newText){
+  const a = (oldText||'').split('\n'), b = (newText||'').split('\n');
+  const n = a.length, m = b.length;
+  if((n+1)*(m+1) > 2000000) return null; // file quá lớn để diff chi tiết trong trình duyệt
+  const dp = new Array(n+1);
+  for(let i=0;i<=n;i++) dp[i] = new Int32Array(m+1);
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--)
+    dp[i][j] = a[i]===b[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  const out=[]; let i=0,j=0;
+  while(i<n && j<m){
+    if(a[i]===b[j]){ out.push({t:'=',l:a[i]}); i++; j++; }
+    else if(dp[i+1][j] >= dp[i][j+1]){ out.push({t:'-',l:a[i]}); i++; }
+    else { out.push({t:'+',l:b[j]}); j++; }
+  }
+  while(i<n){ out.push({t:'-',l:a[i]}); i++; }
+  while(j<m){ out.push({t:'+',l:b[j]}); j++; }
+  return out;
+}
+function diffLineHtml(t,l){
+  const cls = t==='+' ? 'add' : t==='-' ? 'del' : 'ctx';
+  const sign = t==='+'?'+':t==='-'?'-':' ';
+  return '<div class="diffline '+cls+'">'+sign+' '+escapeHtml(l)+'</div>';
+}
+function diffHtml(oldText, newText){
+  const d = computeLineDiff(oldText, newText);
+  if(!d) return '<div class="diffskip">File quá lớn để hiển thị diff chi tiết trong trình duyệt.</div>';
+  if(!d.length) return '<div class="diffskip">Không có khác biệt.</div>';
+  let html=''; let i=0;
+  while(i<d.length){
+    if(d[i].t==='='){
+      let j=i; while(j<d.length && d[j].t==='=') j++;
+      const runLen = j-i;
+      if(runLen>6){
+        for(let k=i;k<i+2;k++) html+=diffLineHtml('=',d[k].l);
+        html += '<div class="diffskip">⋯ '+(runLen-4)+' dòng không đổi ⋯</div>';
+        for(let k=j-2;k<j;k++) html+=diffLineHtml('=',d[k].l);
+      } else {
+        for(let k=i;k<j;k++) html+=diffLineHtml('=',d[k].l);
+      }
+      i=j;
+    } else { html += diffLineHtml(d[i].t, d[i].l); i++; }
+  }
+  return html;
+}
+
+// ---------------- GitHub helpers ----------------
+function ghHeaders(){
+  const h = { 'Accept': 'application/vnd.github+json' };
+  if(settings.ghToken) h['Authorization'] = 'Bearer ' + settings.ghToken;
+  return h;
+}
+function ghApi(path){ return 'https://api.github.com/repos/' + settings.owner + '/' + settings.repo + path; }
+function b64ToUtf8(b64){
+  const bin = atob(b64.replace(/\n/g,''));
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+function utf8ToB64(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+async function ghGetJson(path){
+  const r = await fetch(ghApi(path), { headers: ghHeaders() });
+  if(!r.ok) throw new Error('GitHub API lỗi (' + r.status + ') tại ' + path + ': ' + (await r.text()).slice(0,200));
+  return r.json();
+}
+async function loadTree(){
+  const ref = await ghGetJson('/git/ref/heads/' + settings.branch);
+  const commitSha = ref.object.sha;
+  const commit = await ghGetJson('/git/commits/' + commitSha);
+  const tree = await ghGetJson('/git/trees/' + commit.tree.sha + '?recursive=1');
+  state.tree = tree.tree.filter(t => t.type === 'blob');
+  state.baseCommitSha = commitSha;
+  return state.tree;
+}
+const BINARY_EXT = /\.(png|jpe?g|gif|webp|ico|zip|pdf|mp4|mp3|woff2?|ttf|eot)$/i;
+async function fetchFileText(path){
+  if(state.files.has(path)) return state.files.get(path).current;
+  const entry = state.tree.find(t=>t.path===path);
+  if(!entry) throw new Error('Không tìm thấy file "' + path + '" trong repo.');
+  if(BINARY_EXT.test(path)) throw new Error('File "' + path + '" là file nhị phân (ảnh/font/...), không đọc được dạng text.');
+  const blob = await ghGetJson('/git/blobs/' + entry.sha);
+  const text = b64ToUtf8(blob.content);
+  state.files.set(path, { original: text, current: text, sha: entry.sha, isNew: false });
+  return text;
+}
+
+// ---------------- glob matching ----------------
+function globToRegExp(glob){
+  let re = '';
+  for(let i=0;i<glob.length;i++){
+    const c = glob[i];
+    if(c==='*'){
+      if(glob[i+1]==='*'){ re+='.*'; i++; if(glob[i+1]==='/') i++; }
+      else re += '[^/]*';
+    } else if(c==='?'){ re+='[^/]'; }
+    else if('.+^$()|[]{}\\'.includes(c)){ re += '\\'+c; }
+    else re += c;
+  }
+  return new RegExp('^'+re+'$', 'i');
+}
+
+// ---------------- tool implementations ----------------
+async function toolListFiles(){
+  if(!state.tree) await loadTree();
+  return state.tree.map(t => t.path + ' (' + t.size + ' bytes)').join('\n');
+}
+async function toolGlob(input){
+  if(!state.tree) await loadTree();
+  let re; try{ re = globToRegExp(input.pattern); } catch(e){ return 'Mẫu glob không hợp lệ: ' + e.message; }
+  const matches = state.tree.filter(t=>re.test(t.path)).map(t=>t.path).slice(0,200);
+  if(!matches.length) return 'Không có file nào khớp mẫu "' + input.pattern + '".';
+  return matches.join('\n');
+}
+async function toolReadFile(input){
+  if(!state.tree) await loadTree();
+  const text = await fetchFileText(input.path);
+  const lines = text.split('\n');
+  let s = input.start_line ? Math.max(1, input.start_line) : 1;
+  let e = input.end_line ? Math.min(lines.length, input.end_line) : lines.length;
+  const MAXLINES = 800;
+  if(e - s + 1 > MAXLINES) e = s + MAXLINES - 1;
+  const slice = lines.slice(s-1, e).map((l,i)=> (s+i) + '\t' + l).join('\n');
+  return 'Tổng ' + lines.length + ' dòng. Hiển thị dòng ' + s + '-' + e + ':\n' + slice;
+}
+async function toolGrep(input){
+  if(!state.tree) await loadTree();
+  let re;
+  try{ re = new RegExp(input.pattern, 'i'); } catch(e){ return 'Regex không hợp lệ: ' + e.message; }
+  const targets = input.path ? [input.path] : state.tree.filter(t=>!BINARY_EXT.test(t.path)).map(t=>t.path);
+  const max = input.max_matches || 60;
+  let out = [], scanned = 0, budget = 15 * 1024 * 1024;
+  for(const p of targets){
+    if(out.length >= max || budget <= 0) break;
+    let text;
+    try{ text = await fetchFileText(p); } catch(e){ continue; }
+    budget -= text.length;
+    const lines = text.split('\n');
+    for(let i=0;i<lines.length;i++){
+      if(re.test(lines[i])){
+        out.push(p + ':' + (i+1) + ':  ' + lines[i].trim().slice(0,200));
+        if(out.length >= max) break;
+      }
+    }
+    scanned++;
+  }
+  if(!out.length) return 'Không tìm thấy kết quả khớp với "' + input.pattern + '" (đã quét ' + scanned + ' file).';
+  return out.join('\n') + (out.length>=max ? '\n...(đã cắt bớt, thu hẹp pattern hoặc chỉ định path để xem thêm)' : '');
+}
+async function toolEditFile(input){
+  if(!state.files.has(input.path)) await fetchFileText(input.path);
+  const f = state.files.get(input.path);
+  const count = f.current.split(input.old_str).length - 1;
+  if(count === 0) return 'LỖI: không tìm thấy old_str trong file "' + input.path + '". Hãy đọc lại file để lấy đúng đoạn text hiện tại.';
+  if(count > 1) return 'LỖI: old_str khớp ' + count + ' lần trong "' + input.path + '" (phải khớp DUY NHẤT 1 lần). Hãy thêm ngữ cảnh xung quanh để old_str là duy nhất.';
+  f.current = f.current.split(input.old_str).join(input.new_str);
+  return 'Đã sửa "' + input.path + '" thành công (1 chỗ).';
+}
+async function toolMultiEdit(input){
+  if(!state.files.has(input.path)) await fetchFileText(input.path);
+  const f = state.files.get(input.path);
+  const backup = f.current;
+  const edits = input.edits || [];
+  for(let i=0;i<edits.length;i++){
+    const e = edits[i];
+    const count = f.current.split(e.old_str).length - 1;
+    if(count === 0){ f.current = backup; return 'LỖI ở edit #' + (i+1) + ': không tìm thấy old_str trong "' + input.path + '". Đã hoàn tác TOÀN BỘ multi_edit này (atomic). Hãy đọc lại file.'; }
+    if(count > 1){ f.current = backup; return 'LỖI ở edit #' + (i+1) + ': old_str khớp ' + count + ' lần (cần duy nhất). Đã hoàn tác toàn bộ multi_edit.'; }
+    f.current = f.current.split(e.old_str).join(e.new_str);
+  }
+  return 'Đã áp dụng ' + edits.length + ' chỉnh sửa nguyên tử (atomic) vào "' + input.path + '".';
+}
+async function toolWriteFile(input){
+  const existing = state.tree && state.tree.find(t=>t.path===input.path);
+  if(!state.files.has(input.path)){
+    state.files.set(input.path, { original: existing ? null : null, current: input.content, sha: existing ? existing.sha : null, isNew: !existing });
+  } else {
+    state.files.get(input.path).current = input.content;
+  }
+  return 'Đã ghi toàn bộ nội dung file "' + input.path + '" (' + input.content.length + ' ký tự).';
+}
+async function toolTodoWrite(input){
+  state.todos = input.todos || [];
+  renderTodos();
+  scheduleSave();
+  return 'Đã cập nhật kế hoạch (' + state.todos.length + ' việc).';
+}
+async function toolWebFetch(input){
+  let r;
+  try{ r = await fetch(input.url); }
+  catch(e){ return 'LỖI: không tải được URL (rất có thể do trang không cho phép CORS từ trình duyệt — đây là giới hạn của trình duyệt, không sửa được). Chi tiết: ' + e.message; }
+  if(!r.ok) return 'LỖI HTTP ' + r.status + ' khi tải ' + input.url;
+  const raw = await r.text();
+  const text = raw.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ')
+    .replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  return text.slice(0, 6000) || '(trang không có nội dung text đọc được)';
+}
+// "Task" — subagent: chạy 1 vòng lặp agent con độc lập (không dùng chung lịch sử hội thoại
+// với agent chính), để đào sâu/khám phá 1 việc cụ thể mà không làm phình context của agent chính.
+async function toolTask(input){
+  log('🧩 Subagent bắt đầu: ' + (input.description||''), 'l-tool');
+  const subTools = TOOLS.filter(t => t.name !== 'task');
+  const subSystem = 'Bạn là 1 subagent chuyên biệt được agent chính giao 1 việc CỤ THỂ, KHÉP KÍN. ' +
+    'Dùng tool để hoàn thành đúng việc được giao, rồi trả lời bằng 1 đoạn TÓM TẮT kết quả súc tích (không tool call) để kết thúc — agent chính chỉ nhìn thấy đúng đoạn tóm tắt này, không thấy các bước chi tiết.';
+  let messages = [{ role:'user', content: input.prompt }];
+  for(let i=0;i<8;i++){
+    let data;
+    try{ data = await callModel(messages, aborter ? aborter.signal : undefined, { tools: subTools, system: subSystem }); }
+    catch(e){ return 'LỖI subagent: ' + e.message; }
+    const content = data.content || [];
+    const text = content.filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    const toolCalls = content.filter(b=>b.type==='tool_use');
+    messages.push({ role:'assistant', content });
+    if(!toolCalls.length){ log('🧩 Subagent xong: ' + text.slice(0,200), 'l-tool'); return text || '(subagent không trả về nội dung gì)'; }
+    const resultBlocks = [];
+    for(const tc of toolCalls){
+      const r = await executeTool(tc.name, tc.input);
+      resultBlocks.push({ type:'tool_result', tool_use_id: tc.id, content: String(r) });
+    }
+    messages.push({ role:'user', content: resultBlocks });
+  }
+  return '(subagent đạt giới hạn 8 bước, dừng lại)';
+}
+async function loadClaudeMd(){
+  if(state.claudeMdTried) return;
+  state.claudeMdTried = true;
+  try{
+    if(!state.tree) await loadTree();
+    if(state.tree.find(t=>t.path==='CLAUDE.md')) state.claudeMd = await fetchFileText('CLAUDE.md');
+  }catch(e){ /* không có CLAUDE.md — bỏ qua */ }
+}
+
+const TOOLS = [
+  { name:'list_files', description:'Liệt kê toàn bộ đường dẫn file trong repo. Luôn gọi cái này đầu tiên nếu chưa biết cấu trúc repo.',
+    input_schema:{type:'object', properties:{}, required:[]} },
+  { name:'glob', description:'Tìm đường dẫn file khớp mẫu glob (hỗ trợ *, **, ?), vd "src/**/*.css" hoặc "*.json". Nhanh hơn grep khi chỉ cần lọc theo tên/đường dẫn.',
+    input_schema:{type:'object', properties:{ pattern:{type:'string'} }, required:['pattern']} },
+  { name:'read_file', description:'Đọc nội dung 1 file. Với file lớn, dùng start_line/end_line để đọc từng đoạn (tối đa ~800 dòng/lần).',
+    input_schema:{type:'object', properties:{ path:{type:'string'}, start_line:{type:'integer'}, end_line:{type:'integer'} }, required:['path']} },
+  { name:'grep', description:'Tìm kiếm regex (không phân biệt hoa/thường) trong 1 file hoặc toàn repo (bỏ qua file nhị phân). Trả về dòng khớp kèm số dòng.',
+    input_schema:{type:'object', properties:{ pattern:{type:'string'}, path:{type:'string'}, max_matches:{type:'integer'} }, required:['pattern']} },
+  { name:'edit_file', description:'Thay CHÍNH XÁC 1 đoạn text duy nhất (old_str) bằng đoạn mới (new_str) trong 1 file. old_str phải khớp DUY NHẤT 1 lần, kể cả khoảng trắng/xuống dòng. LUÔN read_file trước khi edit để lấy đúng text hiện tại.',
+    input_schema:{type:'object', properties:{ path:{type:'string'}, old_str:{type:'string'}, new_str:{type:'string'} }, required:['path','old_str','new_str']} },
+  { name:'multi_edit', description:'Áp dụng NHIỀU chỉnh sửa old_str→new_str vào CÙNG 1 file trong 1 lần gọi duy nhất, theo thứ tự, có tính NGUYÊN TỬ (nếu 1 edit lỗi thì hoàn tác toàn bộ). Ưu tiên dùng cái này thay vì gọi edit_file nhiều lần liên tiếp trên cùng 1 file — tiết kiệm số lượt gọi model.',
+    input_schema:{type:'object', properties:{ path:{type:'string'}, edits:{type:'array', items:{type:'object', properties:{old_str:{type:'string'}, new_str:{type:'string'}}, required:['old_str','new_str']}} }, required:['path','edits']} },
+  { name:'write_file', description:'Tạo file mới hoặc GHI ĐÈ TOÀN BỘ nội dung 1 file. Ưu tiên edit_file/multi_edit cho sửa nhỏ; chỉ dùng write_file cho file mới hoặc viết lại toàn bộ.',
+    input_schema:{type:'object', properties:{ path:{type:'string'}, content:{type:'string'} }, required:['path','content']} },
+  { name:'todo_write', description:'Ghi/cập nhật danh sách việc cần làm theo từng bước, để người dùng theo dõi tiến độ. Gọi mỗi khi kế hoạch thay đổi. Chỉ cần dùng cho việc nhiều bước.',
+    input_schema:{type:'object', properties:{ todos:{type:'array', items:{type:'object', properties:{content:{type:'string'}, status:{type:'string', enum:['pending','in_progress','completed']}}, required:['content','status']}} }, required:['todos']} },
+  { name:'web_fetch', description:'Tải và đọc nội dung text của 1 URL bên ngoài (vd để tra cứu thông tin y khoa, tham khảo cách trang khác trình bày...). Chỉ hoạt động với trang cho phép CORS từ trình duyệt.',
+    input_schema:{type:'object', properties:{ url:{type:'string'} }, required:['url']} },
+  { name:'task', description:'Giao 1 việc con cụ thể, khép kín cho 1 subagent độc lập chạy riêng (có đủ các tool trừ task) rồi CHỈ trả về bản tóm tắt kết quả. Dùng khi cần khám phá/đọc nhiều file để tìm hiểu 1 việc mà không muốn làm phình lịch sử hội thoại chính.',
+    input_schema:{type:'object', properties:{ description:{type:'string', description:'mô tả ngắn việc giao'}, prompt:{type:'string', description:'chỉ dẫn đầy đủ cho subagent'} }, required:['description','prompt']} }
+];
+const READ_ONLY_TOOLS = new Set(['list_files','glob','read_file','grep','web_fetch']);
+
+async function executeTool(name, input){
+  try{
+    switch(name){
+      case 'list_files': return await toolListFiles();
+      case 'glob': return await toolGlob(input);
+      case 'read_file': return await toolReadFile(input);
+      case 'grep': return await toolGrep(input);
+      case 'edit_file': return await toolEditFile(input);
+      case 'multi_edit': return await toolMultiEdit(input);
+      case 'write_file': return await toolWriteFile(input);
+      case 'todo_write': return await toolTodoWrite(input);
+      case 'web_fetch': return await toolWebFetch(input);
+      case 'task': return await toolTask(input);
+      default: return 'LỖI: tool không tồn tại: ' + name;
+    }
+  }catch(e){ return 'LỖI khi chạy tool ' + name + ': ' + (e.message || String(e)); }
+}
+
+// ---------------- networking: retry/backoff + SSE reader ----------------
+function sleep(ms, signal){
+  return new Promise((resolve, reject)=>{
+    const t = setTimeout(resolve, ms);
+    if(signal) signal.addEventListener('abort', ()=>{ clearTimeout(t); reject(Object.assign(new Error('aborted'),{name:'AbortError'})); }, {once:true});
+  });
+}
+function backoffMs(attempt){ return Math.min(20000, 800 * Math.pow(2, attempt)) + Math.random()*400; }
+async function fetchWithRetry(url, options, signal, maxRetries){
+  maxRetries = maxRetries==null ? 4 : maxRetries;
+  let attempt = 0;
+  while(true){
+    let res;
+    try{ res = await fetch(url, { ...options, signal }); }
+    catch(e){
+      if(e.name==='AbortError') throw e;
+      if(attempt>=maxRetries) throw e;
+      log('⚠️ Lỗi mạng, thử lại... (lần ' + (attempt+1) + '/' + maxRetries + ')', 'l-info');
+      await sleep(backoffMs(attempt), signal); attempt++; continue;
+    }
+    if(res.status===429 || res.status>=500){
+      if(attempt>=maxRetries) return res;
+      const retryAfter = res.headers.get('retry-after');
+      const wait = retryAfter ? parseFloat(retryAfter)*1000 : backoffMs(attempt);
+      log('⚠️ Model đang quá tải/giới hạn (' + res.status + '), thử lại sau ~' + Math.round(wait/1000) + 's... (lần ' + (attempt+1) + '/' + maxRetries + ')', 'l-info');
+      await sleep(wait, signal); attempt++; continue;
+    }
+    return res;
+  }
+}
+async function readSSE(res, handleEvent, signal){
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  while(true){
+    if(signal && signal.aborted) throw Object.assign(new Error('aborted'),{name:'AbortError'});
+    const { value, done } = await reader.read();
+    if(done) break;
+    buf += decoder.decode(value, { stream:true });
+    let idx;
+    while((idx = buf.indexOf('\n\n')) >= 0){
+      const rawEvent = buf.slice(0, idx); buf = buf.slice(idx+2);
+      const dataLines = rawEvent.split('\n').filter(l=>l.startsWith('data:')).map(l=>l.slice(5).trim());
+      if(!dataLines.length) continue;
+      const dataStr = dataLines.join('\n');
+      if(dataStr==='[DONE]'){ continue; }
+      try{ handleEvent(JSON.parse(dataStr)); }catch(e){ /* dòng không phải JSON hợp lệ — bỏ qua */ }
+    }
+  }
+}
+
+// ---------------- Anthropic-style provider (api + fcc) ----------------
+function normalizeAnthropic(j){ return { content: j.content || [], stop_reason: j.stop_reason, usage: j.usage || {} }; }
+async function streamAnthropic(res, signal, onDelta){
+  const blocks = []; let usage = {}; let stop_reason = null;
+  await readSSE(res, (evt)=>{
+    switch(evt.type){
+      case 'message_start': usage = { ...(evt.message.usage||{}) }; break;
+      case 'content_block_start':
+        blocks[evt.index] = evt.content_block.type==='tool_use'
+          ? { type:'tool_use', id:evt.content_block.id, name:evt.content_block.name, _raw:'', input:{} }
+          : { type:'text', text:'' };
+        break;
+      case 'content_block_delta':
+        if(evt.delta.type==='text_delta'){ blocks[evt.index].text += evt.delta.text; if(onDelta) onDelta('text', blocks[evt.index].text); }
+        else if(evt.delta.type==='input_json_delta'){ blocks[evt.index]._raw += evt.delta.partial_json; }
+        break;
+      case 'content_block_stop':
+        if(blocks[evt.index] && blocks[evt.index].type==='tool_use'){
+          try{ blocks[evt.index].input = JSON.parse(blocks[evt.index]._raw || '{}'); }catch(e){ blocks[evt.index].input = {}; }
+        }
+        break;
+      case 'message_delta':
+        if(evt.delta && evt.delta.stop_reason) stop_reason = evt.delta.stop_reason;
+        if(evt.usage) usage = { ...usage, ...evt.usage };
+        break;
+    }
+  }, signal);
+  return {
+    content: blocks.filter(Boolean).map(b => b.type==='tool_use' ? { type:'tool_use', id:b.id, name:b.name, input:b.input } : { type:'text', text:b.text }),
+    stop_reason, usage
+  };
+}
+async function callAnthropicLike(messages, signal, opts){
+  const useStream = settings.streaming !== false;
+  let url, headers;
+  if(settings.mode==='fcc'){
+    url = (settings.fccUrl||'http://localhost:8082').replace(/\/+$/,'') + '/v1/messages';
+    headers = {'Content-Type':'application/json'};
+    if(settings.fccToken) headers['Authorization'] = 'Bearer ' + settings.fccToken;
+  } else {
+    url = 'https://api.anthropic.com/v1/messages';
+    headers = {'Content-Type':'application/json','x-api-key':settings.anthropicKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+  }
+  const useCache = settings.caching !== false;
+  const systemBlocks = [{ type:'text', text: opts.system, ...(useCache ? { cache_control:{type:'ephemeral'} } : {}) }];
+  const tools = opts.tools.map((t, idx) => idx===opts.tools.length-1 && useCache ? { ...t, cache_control:{type:'ephemeral'} } : t);
+  const body = { model: settings.model || 'claude-sonnet-5', max_tokens: 4096, system: systemBlocks, messages, tools, stream: useStream };
+  const res = await fetchWithRetry(url, { method:'POST', headers, body: JSON.stringify(body) }, signal);
+  if(!res.ok) throw new Error('Lỗi gọi model (' + res.status + '): ' + (await res.text()).slice(0,300));
+  return useStream ? streamAnthropic(res, signal, opts.onDelta) : normalizeAnthropic(await res.json());
+}
+
+// ---------------- OpenAI-compatible provider (DeepSeek) ----------------
+function toOpenAITools(tools){ return tools.map(t=>({ type:'function', function:{ name:t.name, description:t.description, parameters:t.input_schema } })); }
+function toOpenAIMessages(system, messages){
+  const out = [{ role:'system', content: system }];
+  for(const m of messages){
+    if(m.role==='user'){
+      if(typeof m.content === 'string'){ out.push({ role:'user', content:m.content }); continue; }
+      const toolResults = m.content.filter(b=>b.type==='tool_result');
+      const others = m.content.filter(b=>b.type!=='tool_result');
+      for(const tr of toolResults) out.push({ role:'tool', tool_call_id: tr.tool_use_id, content: String(tr.content) });
+      const images = others.filter(b=>b.type==='image');
+      const docs = others.filter(b=>b.type==='document');
+      let text = others.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+      if(docs.length) text += (text?'\n':'') + docs.map(d=>'[Đã đính kèm file "' + (d.title||'tài liệu') + '" — provider hiện tại không đọc trực tiếp được nội dung file này, chỉ nhìn thấy tên file.]').join('\n');
+      if(!text && !images.length) continue;
+      if(images.length){
+        const parts = [];
+        if(text) parts.push({ type:'text', text });
+        for(const im of images) parts.push({ type:'image_url', image_url:{ url:'data:' + im.source.media_type + ';base64,' + im.source.data } });
+        out.push({ role:'user', content: parts });
+      } else if(text){
+        out.push({ role:'user', content:text });
+      }
+    } else if(m.role==='assistant'){
+      const arr = Array.isArray(m.content) ? m.content : [{ type:'text', text:m.content }];
+      const text = arr.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+      const toolUses = arr.filter(b=>b.type==='tool_use');
+      const msg = { role:'assistant', content: text || null };
+      if(toolUses.length) msg.tool_calls = toolUses.map(tu=>({ id: tu.id, type:'function', function:{ name: tu.name, arguments: JSON.stringify(tu.input||{}) } }));
+      out.push(msg);
+    }
+  }
+  return out;
+}
+function normalizeOpenAI(j){
+  const choice = j.choices[0]; const msg = choice.message; const content = [];
+  if(msg.content) content.push({ type:'text', text: msg.content });
+  for(const tc of (msg.tool_calls||[])){
+    let input = {}; try{ input = JSON.parse(tc.function.arguments || '{}'); }catch(e){}
+    content.push({ type:'tool_use', id: tc.id, name: tc.function.name, input });
+  }
+  return { content, stop_reason: choice.finish_reason,
+    usage: j.usage ? { input_tokens:j.usage.prompt_tokens, output_tokens:j.usage.completion_tokens, cache_read_input_tokens:j.usage.prompt_cache_hit_tokens } : {} };
+}
+async function streamOpenAI(res, signal, onDelta){
+  let textAcc = ''; const toolCalls = {}; let finish = null; let usage = {};
+  await readSSE(res, (evt)=>{
+    if(evt.usage) usage = { input_tokens:evt.usage.prompt_tokens, output_tokens:evt.usage.completion_tokens, cache_read_input_tokens:evt.usage.prompt_cache_hit_tokens };
+    const choice = evt.choices && evt.choices[0]; if(!choice) return;
+    if(choice.finish_reason) finish = choice.finish_reason;
+    const delta = choice.delta || {};
+    if(delta.content){ textAcc += delta.content; if(onDelta) onDelta('text', textAcc); }
+    if(delta.tool_calls){
+      for(const tc of delta.tool_calls){
+        const i = tc.index;
+        if(!toolCalls[i]) toolCalls[i] = { id: tc.id || ('call_'+i), name:'', args:'' };
+        if(tc.id) toolCalls[i].id = tc.id;
+        if(tc.function){ if(tc.function.name) toolCalls[i].name += tc.function.name; if(tc.function.arguments) toolCalls[i].args += tc.function.arguments; }
+      }
+    }
+  }, signal);
+  const content = [];
+  if(textAcc) content.push({ type:'text', text:textAcc });
+  for(const i of Object.keys(toolCalls)){
+    const tc = toolCalls[i]; let input = {}; try{ input = JSON.parse(tc.args || '{}'); }catch(e){}
+    content.push({ type:'tool_use', id: tc.id, name: tc.name, input });
+  }
+  return { content, stop_reason: finish, usage };
+}
+async function callDeepSeek(messages, signal, opts){
+  const useStream = settings.streaming !== false;
+  const url = (settings.deepseekUrl || 'https://api.deepseek.com').replace(/\/+$/,'') + '/chat/completions';
+  const headers = {'Content-Type':'application/json','Authorization':'Bearer ' + settings.deepseekKey};
+  const body = { model: settings.model || 'deepseek-chat', messages: toOpenAIMessages(opts.system, messages), tools: toOpenAITools(opts.tools), stream: useStream, max_tokens: 4096 };
+  const res = await fetchWithRetry(url, { method:'POST', headers, body: JSON.stringify(body) }, signal);
+  if(!res.ok) throw new Error('Lỗi gọi DeepSeek (' + res.status + '): ' + (await res.text()).slice(0,300));
+  return useStream ? streamOpenAI(res, signal, opts.onDelta) : normalizeOpenAI(await res.json());
+}
+
+// ---------------- Gemini provider (trực tiếp hoặc qua proxy trên máy tôi) ----------------
+// Chuyển lịch sử hội thoại từ định dạng block kiểu Anthropic (canonical trong state.messages)
+// sang định dạng "contents" của Gemini (role user/model, parts text/functionCall/functionResponse).
+function toGeminiContents(messages){
+  const idToName = {}; // tool_use.id -> tên tool, để khớp functionResponse theo TÊN (Gemini không dùng id để khớp)
+  const contents = [];
+  for(const m of messages){
+    if(m.role==='user'){
+      if(typeof m.content === 'string'){ contents.push({ role:'user', parts:[{ text:m.content }] }); continue; }
+      const toolResults = (m.content||[]).filter(b=>b.type==='tool_result');
+      const others = (m.content||[]).filter(b=>b.type!=='tool_result');
+      const parts = [];
+      for(const tr of toolResults){
+        const name = idToName[tr.tool_use_id] || 'unknown_tool';
+        parts.push({ functionResponse: { name, response: { result: String(tr.content) } } });
+      }
+      const text = others.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+      if(text) parts.push({ text });
+      for(const b of others){
+        if(b.type==='image' || b.type==='document') parts.push({ inlineData:{ mimeType: b.source.media_type, data: b.source.data } });
+      }
+      if(parts.length) contents.push({ role:'user', parts });
+    } else if(m.role==='assistant'){
+      const arr = Array.isArray(m.content) ? m.content : [{ type:'text', text:m.content }];
+      const parts = [];
+      for(const b of arr){
+        if(b.type==='text' && b.text) parts.push({ text:b.text });
+        else if(b.type==='tool_use'){ idToName[b.id] = b.name; parts.push({ functionCall:{ name:b.name, args:b.input||{} } }); }
+      }
+      if(parts.length) contents.push({ role:'model', parts });
+    }
+  }
+  return contents;
+}
+// Gemini chỉ hiểu 1 tập con của JSON Schema (kiểu OpenAPI) — lọc bớt field lạ để tránh lỗi 400.
+function toGeminiSchema(schema){
+  if(!schema || typeof schema !== 'object') return schema;
+  const out = {};
+  if(schema.type) out.type = schema.type; else out.type = 'object';
+  if(schema.description) out.description = schema.description;
+  if(schema.enum) out.enum = schema.enum;
+  if(schema.properties){
+    out.properties = {};
+    for(const k in schema.properties) out.properties[k] = toGeminiSchema(schema.properties[k]);
+  }
+  if(schema.items) out.items = toGeminiSchema(schema.items);
+  if(schema.required) out.required = schema.required;
+  return out;
+}
+function toGeminiTools(tools){
+  return [{ functionDeclarations: tools.map(t=>({ name:t.name, description:t.description, parameters: toGeminiSchema(t.input_schema) })) }];
+}
+function normalizeGemini(j){
+  const cand = (j.candidates && j.candidates[0]) || {};
+  const parts = (cand.content && cand.content.parts) || [];
+  const content = [];
+  for(const p of parts){
+    if(p.text) content.push({ type:'text', text:p.text });
+    else if(p.functionCall) content.push({ type:'tool_use', id:'call_'+Math.random().toString(36).slice(2,10), name:p.functionCall.name, input:p.functionCall.args||{} });
+  }
+  const um = j.usageMetadata || {};
+  return { content, stop_reason: cand.finishReason,
+    usage: { input_tokens:um.promptTokenCount, output_tokens:um.candidatesTokenCount, cache_read_input_tokens:um.cachedContentTokenCount } };
+}
+async function streamGemini(res, signal, onDelta){
+  let textAcc = ''; const toolBlocks = []; let finish = null; let usage = {};
+  await readSSE(res, (evt)=>{
+    const cand = evt.candidates && evt.candidates[0]; if(!cand) return;
+    if(cand.finishReason) finish = cand.finishReason;
+    if(evt.usageMetadata) usage = { input_tokens:evt.usageMetadata.promptTokenCount, output_tokens:evt.usageMetadata.candidatesTokenCount, cache_read_input_tokens:evt.usageMetadata.cachedContentTokenCount };
+    const parts = (cand.content && cand.content.parts) || [];
+    for(const p of parts){
+      if(p.text){ textAcc += p.text; if(onDelta) onDelta('text', textAcc); }
+      else if(p.functionCall){ toolBlocks.push({ type:'tool_use', id:'call_'+Math.random().toString(36).slice(2,10), name:p.functionCall.name, input:p.functionCall.args||{} }); }
+    }
+  }, signal);
+  const content = [];
+  if(textAcc) content.push({ type:'text', text:textAcc });
+  content.push(...toolBlocks);
+  return { content, stop_reason:finish, usage };
+}
+async function callGemini(messages, signal, opts){
+  const useStream = settings.streaming !== false;
+  const model = settings.model || 'gemini-2.5-pro';
+  const isProxy = settings.geminiConn === 'proxy';
+  const headers = {'Content-Type':'application/json'};
+  let base;
+  if(isProxy){
+    base = (settings.geminiProxyUrl || 'http://localhost:8081').replace(/\/+$/,'');
+    if(settings.geminiProxyToken) headers['Authorization'] = 'Bearer ' + settings.geminiProxyToken;
+    if(settings.geminiKey) headers['x-goog-api-key'] = settings.geminiKey; // gửi kèm phòng khi proxy không tự quản lý khoá
+  } else {
+    base = 'https://generativelanguage.googleapis.com';
+    headers['x-goog-api-key'] = settings.geminiKey;
+  }
+  const path = '/v1beta/models/' + encodeURIComponent(model) + ':' + (useStream ? 'streamGenerateContent?alt=sse' : 'generateContent');
+  const body = {
+    systemInstruction: { parts:[{ text: opts.system }] },
+    contents: toGeminiContents(messages),
+    tools: toGeminiTools(opts.tools),
+    generationConfig: { maxOutputTokens: 4096 }
+  };
+  const res = await fetchWithRetry(base + path, { method:'POST', headers, body: JSON.stringify(body) }, signal);
+  if(!res.ok){
+    const bodyText = (await res.text()).slice(0,300);
+    let hint = '';
+    if(isProxy && res.status===404){
+      hint = ' — Proxy trả 404 "Not Found" cho đường dẫn "/v1beta/models/...": nhiều khả năng proxy này KHÔNG nói đúng giao thức gốc của Gemini (proxy chỉ hỗ trợ định dạng kiểu OpenAI "/chat/completions", ví dụ LiteLLM/router đa provider — tên model dạng "provider/model" như bạn đang dùng là dấu hiệu điển hình). Cách sửa: chuyển "Chế độ AI" sang "DeepSeek API (khoá riêng)", điền "DeepSeek Base URL" = địa chỉ proxy của bạn (vd: ' + base + '), "DeepSeek API Key" = token/khoá của proxy, giữ nguyên tên model — vì chế độ đó nói đúng giao thức OpenAI-compatible mà proxy dạng này thường hỗ trợ.';
+    }
+    throw new Error('Lỗi gọi Gemini (' + res.status + '): ' + bodyText + hint);
+  }
+  return useStream ? streamGemini(res, signal, opts.onDelta) : normalizeGemini(await res.json());
+}
+
+// ---------------- model dispatcher ----------------
+function defaultSystem(){
+  let system = 'Bạn là 1 coding agent tự động, có quyền dùng tool để đọc/tìm/sửa file trong 1 repo GitHub thật (chủ đề: trang web y học). ' +
+    'Quy trình bắt buộc: (1) list_files hoặc glob nếu chưa rõ cấu trúc, (2) read_file các phần liên quan TRƯỚC khi sửa, (3) với việc nhiều bước, gọi todo_write để lập kế hoạch và cập nhật trạng thái khi xong từng bước, (4) dùng edit_file cho 1 chỗ sửa nhỏ, multi_edit khi cần NHIỀU chỗ sửa trong CÙNG 1 file (nguyên tử, đỡ tốn lượt gọi), write_file chỉ cho file mới hoặc viết lại toàn bộ, (5) SAU KHI sửa xong, có thể read_file lại đoạn vừa sửa để tự kiểm tra, (6) nếu có việc con cần khám phá sâu/tốn nhiều bước đọc file mà không muốn làm phình hội thoại chính, giao cho tool "task" (subagent). ' +
+    'File có thể rất lớn (hàng MB) — chỉ đọc phần cần thiết bằng start_line/end_line, đừng cố đọc hết 1 file khổng lồ. ' +
+    'KHÔNG tự push — mọi thay đổi chỉ nằm trong bộ nhớ tạm, người dùng sẽ tự bấm nút push sau khi xem lại. ' +
+    'Khi đã hoàn tất toàn bộ yêu cầu, trả lời bằng 1 đoạn văn bản tóm tắt (không gọi thêm tool) để kết thúc lượt làm việc.';
+  if(state.claudeMd) system += '\n\n--- Hướng dẫn riêng của dự án (từ CLAUDE.md trong repo) ---\n' + state.claudeMd.slice(0, 4000);
+  return system;
+}
+async function callModel(messages, signal, opts){
+  opts = opts || {};
+  const callOpts = { system: opts.system || defaultSystem(), tools: opts.tools || TOOLS, onDelta: opts.onDelta };
+  if(settings.mode==='deepseek') return callDeepSeek(messages, signal, callOpts);
+  if(settings.mode==='gemini') return callGemini(messages, signal, callOpts);
+  return callAnthropicLike(messages, signal, callOpts);
+}
+
+// ---------------- context compaction ----------------
+async function maybeCompact(){
+  const approxChars = JSON.stringify(state.messages).length;
+  if(approxChars < 220000) return;
+  log('🧵 Lịch sử hội thoại khá dài, đang tự nén ngữ cảnh để tránh vượt giới hạn...', 'l-info');
+  const summarizePrompt = 'Tóm tắt CỰC KỲ súc tích (dạng gạch đầu dòng) những gì đã làm, các quyết định quan trọng, và các việc CÒN DANG DỞ trong phiên làm việc này, để 1 agent khác đọc tóm tắt này và tiếp tục công việc mà không cần xem lại toàn bộ lịch sử chi tiết.';
+  try{
+    const data = await callModel([...state.messages, { role:'user', content: summarizePrompt }], aborter.signal, {});
+    const summaryText = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim() || '(không có tóm tắt)';
+    state.messages = [{ role:'user', content: '[Ngữ cảnh phiên trước đã được tự động nén]\n' + summaryText }];
+    log('✅ Đã nén ngữ cảnh xong, tiếp tục làm việc (file đang sửa dở không bị ảnh hưởng).', 'l-success');
+  }catch(e){ log('⚠️ Nén ngữ cảnh thất bại, tiếp tục với lịch sử đầy đủ: ' + e.message, 'l-info'); }
+}
+
+// ---------------- agent loop ----------------
+async function runAgent(userContent){
+  await loadClaudeMd();
+  state.messages.push({ role:'user', content: userContent });
+  scheduleSave();
+  setProgress(6);
+  const MAX_TURNS = 25;
+  for(let turn=0; turn<MAX_TURNS; turn++){
+    await maybeCompact();
+    setProgress(Math.min(45, 10 + turn*3));
+    let liveEl = null;
+    const onDelta = (kind, textSoFar) => {
+      if(kind==='text'){
+        if(!liveEl) liveEl = log('', 'l-ai');
+        liveEl.textContent = textSoFar; window.scrollTo(0, document.body.scrollHeight);
+        setProgress(Math.min(72, 45 + Math.floor(textSoFar.length/60)));
+      }
+    };
+    const t0 = performance.now();
+    let data;
+    try{ data = await callModel(state.messages, aborter.signal, { onDelta }); }
+    catch(e){
+      if(e.name==='AbortError'){ log('Đã dừng theo yêu cầu.', 'l-info'); hideProgress(); return; }
+      log('Lỗi: ' + e.message, 'l-error'); hideProgress(); return;
+    }
+    setProgress(78);
+    const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+    const content = data.content || [];
+    const textParts = content.filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    const toolCalls = content.filter(b=>b.type==='tool_use');
+    if(textParts && !liveEl) log(textParts, 'l-ai'); // dự phòng khi streaming tắt hoặc lỗi
+    if(data.usage && Object.keys(data.usage).length){
+      const u = data.usage, parts = [];
+      if(u.input_tokens!=null) parts.push(u.input_tokens + ' in');
+      if(u.output_tokens!=null) parts.push(u.output_tokens + ' out');
+      if(u.cache_read_input_tokens) parts.push(u.cache_read_input_tokens + ' cache-hit');
+      if(u.cache_creation_input_tokens) parts.push(u.cache_creation_input_tokens + ' cache-write');
+      log('⏱ ' + elapsed + 's · ' + (parts.join(' / ') || 'token n/a'), 'l-stat');
+    }
+    state.messages.push({ role:'assistant', content });
+    scheduleSave();
+
+    if(!toolCalls.length){ setProgress(100); hideProgress(); showPending(); return; }
+
+    // các tool chỉ-đọc liền kề chạy song song (giống Claude Code thật); tool có thể đổi trạng thái chạy tuần tự
+    const results = new Array(toolCalls.length);
+    let toolsDone = 0;
+    const runOne = async (tc, i) => {
+      log('🔧 ' + tc.name + '(' + JSON.stringify(tc.input).slice(0,160) + ')', 'l-tool');
+      const r = await executeTool(tc.name, tc.input);
+      log(String(r).slice(0,300), 'l-tool');
+      results[i] = { type:'tool_result', tool_use_id: tc.id, content: String(r) };
+      toolsDone++;
+      setProgress(80 + Math.round((toolsDone/toolCalls.length)*15));
+    };
+    let i = 0;
+    while(i < toolCalls.length){
+      if(READ_ONLY_TOOLS.has(toolCalls[i].name)){
+        let j = i; const batch = [];
+        while(j < toolCalls.length && READ_ONLY_TOOLS.has(toolCalls[j].name)){ batch.push(j); j++; }
+        await Promise.all(batch.map(idx => runOne(toolCalls[idx], idx)));
+        i = j;
+      } else { await runOne(toolCalls[i], i); i++; }
+    }
+    state.messages.push({ role:'user', content: results });
+    scheduleSave();
+  }
+  setProgress(100); hideProgress();
+  log('Đã đạt giới hạn số bước (an toàn), dừng lại. Bạn có thể ra lệnh tiếp để agent làm tiếp.', 'l-info');
+  showPending();
+}
+
+// ---------------- pending changes / diff / push ----------------
+function dirtyFiles(){
+  const out = [];
+  for(const [path, f] of state.files.entries()){
+    if(f.isNew || f.current !== f.original) out.push({ path, ...f });
+  }
+  return out;
+}
+function showPending(){
+  const dirty = dirtyFiles();
+  const box = $('pending'), list = $('pendingList');
+  if(!dirty.length){ box.classList.remove('show'); return; }
+  list.innerHTML = dirty.map(f=>{
+    const expanded = expandedDiffs.has(f.path);
+    const diffSection = expanded ? '<div class="diffbody">' + diffHtml(f.isNew ? '' : (f.original||''), f.current) + '</div>' : '';
+    return '<div class="file" data-path="' + escapeHtml(f.path) + '"><div class="filehead">' +
+      '<span>' + (expanded?'▾':'▸') + ' ' + escapeHtml(f.path) + '</span>' +
+      '<span class="tag ' + (f.isNew?'new':'mod') + '">' + (f.isNew?'MỚI':'SỬA') + '</span></div>' + diffSection + '</div>';
+  }).join('');
+  list.querySelectorAll('.filehead').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const path = el.parentElement.getAttribute('data-path');
+      if(expandedDiffs.has(path)) expandedDiffs.delete(path); else expandedDiffs.add(path);
+      showPending();
+    });
+  });
+  box.classList.add('show');
+}
+$('discardBtn').addEventListener('click', ()=>{
+  for(const f of dirtyFiles()) state.files.get(f.path).current = state.files.get(f.path).original ?? '';
+  for(const [path,f] of [...state.files.entries()]) if(f.isNew) state.files.delete(path);
+  expandedDiffs.clear();
+  showPending();
+  scheduleSave();
+  log('Đã huỷ toàn bộ thay đổi đang chờ.', 'l-info');
+});
+$('pushBtn').addEventListener('click', async ()=>{
+  const dirty = dirtyFiles();
+  if(!dirty.length) return;
+  if(!settings.ghToken){ log('Cần nhập GitHub PAT trong Cấu hình để push.', 'l-error'); return; }
+  $('pushBtn').disabled = true;
+  try{
+    log('Đang tạo blob cho ' + dirty.length + ' file...', 'l-info');
+    const blobs = [];
+    for(const f of dirty){
+      const r = await fetch(ghApi('/git/blobs'), { method:'POST', headers:{...ghHeaders(),'Content-Type':'application/json'},
+        body: JSON.stringify({ content: utf8ToB64(f.current), encoding:'base64' }) });
+      if(!r.ok) throw new Error('Tạo blob lỗi cho ' + f.path + ': ' + (await r.text()).slice(0,200));
+      const j = await r.json();
+      blobs.push({ path: f.path, mode:'100644', type:'blob', sha: j.sha });
+    }
+    const ref = await ghGetJson('/git/ref/heads/' + settings.branch);
+    const baseCommit = await ghGetJson('/git/commits/' + ref.object.sha);
+    log('Đang tạo tree mới...', 'l-info');
+    const treeRes = await fetch(ghApi('/git/trees'), { method:'POST', headers:{...ghHeaders(),'Content-Type':'application/json'},
+      body: JSON.stringify({ base_tree: baseCommit.tree.sha, tree: blobs }) });
+    if(!treeRes.ok) throw new Error('Tạo tree lỗi: ' + (await treeRes.text()).slice(0,200));
+    const tree = await treeRes.json();
+    log('Đang tạo commit...', 'l-info');
+    const commitRes = await fetch(ghApi('/git/commits'), { method:'POST', headers:{...ghHeaders(),'Content-Type':'application/json'},
+      body: JSON.stringify({ message: 'Agent update: ' + dirty.map(f=>f.path).join(', ').slice(0,200), tree: tree.sha, parents: [ref.object.sha] }) });
+    if(!commitRes.ok) throw new Error('Tạo commit lỗi: ' + (await commitRes.text()).slice(0,200));
+    const commit = await commitRes.json();
+    const patchRes = await fetch(ghApi('/git/refs/heads/' + settings.branch), { method:'PATCH', headers:{...ghHeaders(),'Content-Type':'application/json'},
+      body: JSON.stringify({ sha: commit.sha }) });
+    if(!patchRes.ok) throw new Error('Cập nhật branch lỗi: ' + (await patchRes.text()).slice(0,200));
+    for(const f of dirty){ const ff = state.files.get(f.path); ff.original = ff.current; ff.isNew = false; ff.sha = null; }
+    state.tree = null; // buộc load lại tree ở lần dùng tool tiếp theo
+    expandedDiffs.clear();
+    showPending();
+    scheduleSave();
+    log('✅ Đã push thành công lên nhánh "' + settings.branch + '". Commit: ' + commit.sha.slice(0,7), 'l-success');
+  }catch(e){
+    log('Lỗi khi push: ' + e.message, 'l-error');
+  }finally{
+    $('pushBtn').disabled = false;
+  }
+});
+
+// ---------------- session persistence (autosave theo owner/repo/branch) ----------------
+function sessionKey(){ return 'ccc_v3_session::' + (settings.owner||'') + '/' + (settings.repo||'') + '@' + (settings.branch||'main'); }
+let saveTimer = null;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveSession, 400); }
+function saveSession(){
+  if(!settings.owner || !settings.repo) return;
+  try{
+    localStorage.setItem(sessionKey(), JSON.stringify({ messages: state.messages, files: [...state.files.entries()], todos: state.todos, ts: Date.now() }));
+  }catch(e){ /* quota hoặc lỗi serialize — bỏ qua, không chặn agent */ }
+}
+function tryRestoreSession(){
+  if(!settings.owner || !settings.repo) return false;
+  try{
+    const raw = localStorage.getItem(sessionKey());
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    state.messages = data.messages || [];
+    state.files = new Map(data.files || []);
+    state.todos = data.todos || [];
+    renderTodos();
+    $('log').innerHTML = '';
+    for(const m of state.messages){
+      if(m.role==='user' && typeof m.content==='string') log(m.content, 'l-user');
+      else if(m.role==='assistant'){
+        const text = (Array.isArray(m.content)?m.content:[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+        if(text) log(text, 'l-ai');
+      }
+    }
+    showPending();
+    log('🔄 Đã khôi phục phiên làm việc trước cho repo này (' + new Date(data.ts).toLocaleString('vi-VN') + ').', 'l-info');
+    return true;
+  }catch(e){ return false; }
+}
+function newSession(){
+  try{ localStorage.removeItem(sessionKey()); }catch(e){}
+  state = { tree:null, files:new Map(), todos:[], messages:[], claudeMd:null, claudeMdTried:false };
+  expandedDiffs.clear();
+  $('log').innerHTML = '';
+  renderTodos(); showPending();
+  log('🆕 Đã bắt đầu phiên mới (lịch sử hội thoại &amp; thay đổi tạm đã xoá — repo GitHub không bị ảnh hưởng).'.replace('&amp;','&'), 'l-info');
+}
+$('newSessionBtn').addEventListener('click', ()=>{
+  if(dirtyFiles().length && !confirm('Có thay đổi chưa push. Bắt đầu phiên mới sẽ xoá các thay đổi tạm này. Tiếp tục?')) return;
+  newSession();
+});
+
+// ---------------- đính kèm file / hình ảnh ----------------
+const IMAGE_MAX_BYTES = 20 * 1024 * 1024;  // 20MB / ảnh (mức tối đa còn an toàn để mã hoá base64 & gửi qua API)
+const DOC_MAX_BYTES = 32 * 1024 * 1024;    // 32MB / tài liệu (pdf...) — mức tối đa mà Anthropic API chấp nhận cho 1 file PDF
+const TEXT_MAX_CHARS = 300000;             // cắt bớt file text quá dài khi nhúng vào lệnh
+const MAX_ATTACHMENTS = 20;
+const TEXT_EXT_RE = /\.(txt|md|markdown|json|csv|js|mjs|ts|jsx|tsx|html?|css|py|java|c|cpp|h|hpp|go|rs|yml|yaml|xml|log|sh|sql)$/i;
+let pendingAttachments = []; // {id, kind:'image'|'document'|'text', name, mediaType, data(base64, image/document), text(text), sizeKB}
+let attachSeq = 0;
+
+function fileIconFor(kind, mediaType){
+  if(kind==='image') return '🖼️';
+  if(mediaType==='application/pdf') return '📕';
+  if(kind==='text') return '📄';
+  return '📎';
+}
+function renderAttachList(){
+  const box = $('attachList');
+  if(!pendingAttachments.length){ box.classList.remove('show'); box.innerHTML=''; return; }
+  box.classList.add('show');
+  box.innerHTML = pendingAttachments.map(a=>{
+    const thumb = a.kind==='image' ? '<img src="data:' + a.mediaType + ';base64,' + a.data + '" alt="">'
+      : '<span class="ficon">' + fileIconFor(a.kind, a.mediaType) + '</span>';
+    return '<span class="attach-chip" data-id="' + a.id + '">' + thumb +
+      '<span class="fname" title="' + escapeHtml(a.name) + '">' + escapeHtml(a.name) + '</span>' +
+      '<button type="button" class="rmBtn" data-id="' + a.id + '" title="Bỏ đính kèm">✕</button></span>';
+  }).join('');
+  box.querySelectorAll('.rmBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      pendingAttachments = pendingAttachments.filter(a => a.id !== btn.getAttribute('data-id'));
+      renderAttachList();
+    });
+  });
+}
+function readAsDataURL(file){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = ()=> reject(new Error('Không đọc được file "' + file.name + '"'));
+    r.readAsDataURL(file);
+  });
+}
+function readAsText(file){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = ()=> reject(new Error('Không đọc được file "' + file.name + '"'));
+    r.readAsText(file);
+  });
+}
+async function addAttachmentFile(file){
+  if(pendingAttachments.length >= MAX_ATTACHMENTS){ log('Chỉ đính kèm tối đa ' + MAX_ATTACHMENTS + ' file mỗi lệnh.', 'l-error'); return; }
+  const isImage = file.type.startsWith('image/');
+  const isPdf = file.type === 'application/pdf';
+  const isTexty = file.type.startsWith('text/') || TEXT_EXT_RE.test(file.name) || (!file.type && file.size < 2 * 1024 * 1024);
+  try{
+    if(isImage){
+      if(file.size > IMAGE_MAX_BYTES){ log('Ảnh "' + file.name + '" quá lớn (>20MB), bỏ qua.', 'l-error'); return; }
+      const dataUrl = await readAsDataURL(file);
+      const base64 = dataUrl.split(',')[1] || '';
+      pendingAttachments.push({ id:'a'+(++attachSeq), kind:'image', name:file.name, mediaType:file.type||'image/png', data:base64, sizeKB:Math.round(file.size/1024) });
+    } else if(isPdf){
+      if(file.size > DOC_MAX_BYTES){ log('File "' + file.name + '" quá lớn (>32MB), bỏ qua.', 'l-error'); return; }
+      const dataUrl = await readAsDataURL(file);
+      const base64 = dataUrl.split(',')[1] || '';
+      pendingAttachments.push({ id:'a'+(++attachSeq), kind:'document', name:file.name, mediaType:'application/pdf', data:base64, sizeKB:Math.round(file.size/1024) });
+    } else if(isTexty){
+      let text = await readAsText(file);
+      let truncated = false;
+      if(text.length > TEXT_MAX_CHARS){ text = text.slice(0, TEXT_MAX_CHARS); truncated = true; }
+      pendingAttachments.push({ id:'a'+(++attachSeq), kind:'text', name:file.name, text, truncated, sizeKB:Math.round(file.size/1024) });
+    } else {
+      log('Không hỗ trợ định dạng file "' + file.name + '" (' + (file.type||'không rõ') + ') — chỉ nhận ảnh, PDF, hoặc file text/code.', 'l-error');
+      return;
+    }
+    renderAttachList();
+  }catch(e){ log(e.message || String(e), 'l-error'); }
+}
+$('attachBtn').addEventListener('click', ()=> $('fileInput').click());
+$('fileInput').addEventListener('change', async ()=>{
+  const files = Array.from($('fileInput').files || []);
+  for(const f of files) await addAttachmentFile(f);
+  $('fileInput').value = '';
+});
+// cho phép kéo-thả file/ảnh thẳng vào ô nhập lệnh
+$('cmdInput').addEventListener('dragover', e=> e.preventDefault());
+$('cmdInput').addEventListener('drop', async e=>{
+  e.preventDefault();
+  const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
+  for(const f of files) await addAttachmentFile(f);
+});
+// dán ảnh trực tiếp (Ctrl+V) vào ô nhập lệnh
+$('cmdInput').addEventListener('paste', async e=>{
+  const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
+  const imgItems = items.filter(it=>it.type && it.type.startsWith('image/'));
+  for(const it of imgItems){ const f = it.getAsFile(); if(f) await addAttachmentFile(f); }
+});
+// Ghép attachment hiện tại thành content blocks (định dạng Anthropic — canonical) cho 1 lượt gửi lệnh
+function buildUserContent(text){
+  const blocks = [];
+  for(const a of pendingAttachments){
+    if(a.kind==='image') blocks.push({ type:'image', source:{ type:'base64', media_type:a.mediaType, data:a.data } });
+    else if(a.kind==='document') blocks.push({ type:'document', source:{ type:'base64', media_type:a.mediaType, data:a.data }, title:a.name });
+  }
+  let finalText = text;
+  const textAttachments = pendingAttachments.filter(a=>a.kind==='text');
+  if(textAttachments.length){
+    finalText += (finalText?'\n\n':'') + textAttachments.map(a =>
+      '--- Nội dung file đính kèm "' + a.name + '"' + (a.truncated ? ' (đã cắt bớt, chỉ hiển thị phần đầu)' : '') + ' ---\n' + a.text
+    ).join('\n\n');
+  }
+  if(!blocks.length) return finalText; // không có ảnh/tài liệu -> gửi dạng chuỗi như cũ cho gọn
+  blocks.push({ type:'text', text: finalText || '(xem file đính kèm)' });
+  return blocks;
+}
+
+// ---------------- form ----------------
+const form = $('cmdForm'), input = $('cmdInput'), sendBtn = $('sendBtn'), stopBtn = $('stopBtn');
+input.addEventListener('input', ()=>{ input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,160)+'px'; });
+input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); form.requestSubmit(); } });
+form.addEventListener('submit', async e=>{
+  e.preventDefault();
+  const text = input.value.trim();
+  if(!text && !pendingAttachments.length) return;
+  if(!settings.owner || !settings.repo){ log('Hãy cấu hình owner/repo GitHub trước.', 'l-error'); $('settings').classList.add('show'); return; }
+  if(settings.mode==='api' && !settings.anthropicKey){ log('Hãy nhập Anthropic API key trong Cấu hình.', 'l-error'); return; }
+  if(settings.mode==='deepseek' && !settings.deepseekKey){ log('Hãy nhập DeepSeek API key trong Cấu hình.', 'l-error'); return; }
+  if(settings.mode==='gemini' && settings.geminiConn!=='proxy' && !settings.geminiKey){ log('Hãy nhập Gemini API key trong Cấu hình (hoặc chuyển sang chế độ proxy trên máy tôi).', 'l-error'); return; }
+  if(settings.mode==='gemini' && settings.geminiConn==='proxy' && !settings.geminiProxyUrl){ log('Hãy nhập Proxy URL cho Gemini trong Cấu hình.', 'l-error'); return; }
+  const attachNote = pendingAttachments.length ? ('\n📎 ' + pendingAttachments.map(a=>a.name).join(', ')) : '';
+  log((text || '(chỉ gửi file đính kèm)') + attachNote, 'l-user');
+  const userContent = buildUserContent(text);
+  pendingAttachments = []; renderAttachList();
+  input.value=''; input.style.height='auto';
+  sendBtn.disabled = true; stopBtn.disabled = false;
+  aborter = new AbortController();
+  try{ await runAgent(userContent); } finally { sendBtn.disabled = false; stopBtn.disabled = true; hideProgress(); }
+});
+stopBtn.addEventListener('click', ()=>{ if(aborter) aborter.abort(); hideProgress(); });
+
+if(!tryRestoreSession()){
+  log('Sẵn sàng. Tool: list_files / glob / read_file / grep / edit_file / multi_edit / write_file / todo_write / web_fetch / task (subagent) trên repo "' + (settings.owner||'?') + '/' + (settings.repo||'?') + '". Streaming + prompt caching + chạy song song tool chỉ-đọc + tự nén ngữ cảnh khi hội thoại dài + tự lưu phiên làm việc theo repo. Nếu repo có file CLAUDE.md, agent sẽ tự đọc làm hướng dẫn riêng. Thay đổi chỉ được push sau khi bạn xác nhận. Có thể đính kèm ảnh/PDF/file text (nút 📎, kéo-thả, hoặc dán trực tiếp).', 'l-info');
+}
+</script>
+</body>
+</html>

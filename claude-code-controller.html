@@ -1,0 +1,2731 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🤖 Claude Code Controller v4 — Tự học &amp; Bộ nhớ dài hạn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0714;
+  --bg-2:#0e0a1c;
+  --panel:#17102e;
+  --panel-2:#1f1740;
+  --panel-hover:#281d51;
+  --border:#3d2a6b;
+  --border-soft:#2b1e53;
+  --text:#f4eefe;
+  --muted:#ab9cd4;
+  --accent:#a855f7;
+  --accent-2:#e879f9;
+  --accent-3:#7c3aed;
+  --accent-soft:rgba(168,85,247,.18);
+  --green:#34e0a1;
+  --green-soft:rgba(52,224,161,.14);
+  --red:#fb7185;
+  --red-soft:rgba(251,113,133,.14);
+  --blue:#38bdf8;
+  --blue-soft:rgba(56,189,248,.14);
+  --gold:#fbbf24;
+  --gold-soft:rgba(251,191,36,.14);
+  --radius-lg:18px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow-soft:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lift:0 12px 36px rgba(88,20,160,.35);
+}
+*{box-sizing:border-box;}
+::selection{ background:var(--accent-soft); color:var(--text); }
+body{
+  margin:0; color:var(--text);
+  background:
+    radial-gradient(1200px 620px at 10% -12%, rgba(168,85,247,.38), transparent 62%),
+    radial-gradient(1000px 560px at 105% -5%, rgba(232,121,249,.28), transparent 58%),
+    radial-gradient(900px 620px at 50% 115%, rgba(56,189,248,.16), transparent 60%),
+    radial-gradient(700px 400px at 85% 40%, rgba(251,191,36,.06), transparent 55%),
+    var(--bg);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  display:flex; flex-direction:column; min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+code,.mono{ font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 22px; border-bottom:1px solid var(--border-soft);
+  background:linear-gradient(180deg, rgba(23,16,46,.92), rgba(14,10,28,.85));
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  position:sticky; top:0; z-index:20; flex-wrap:wrap; gap:10px;
+}
+header::after{
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  background:linear-gradient(90deg, var(--accent-3), var(--accent), var(--accent-2), var(--blue));
+  opacity:.75;
+}
+header .brand{ display:flex; align-items:center; gap:12px; min-width:0; }
+.brand-icon-wrap{ position:relative; flex-shrink:0; }
+header .brand-icon{
+  width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+  font-size:19px; background:linear-gradient(145deg, var(--accent-2), var(--accent) 55%, var(--accent-3));
+  box-shadow:0 4px 18px rgba(168,85,247,.5), 0 0 0 1px rgba(232,121,249,.25) inset;
+  flex-shrink:0; padding:0; border:none; cursor:pointer; overflow:hidden; transition:transform .15s ease, box-shadow .15s ease;
+}
+header .brand-icon:hover{ transform:translateY(-1px) scale(1.04); box-shadow:0 6px 22px rgba(168,85,247,.6), 0 0 0 1px rgba(232,121,249,.3) inset; }
+header .brand-icon img{ width:100%; height:100%; object-fit:cover; display:block; }
+.logo-popover{
+  display:none; position:absolute; top:46px; left:0; z-index:30; min-width:170px;
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:8px; flex-direction:column; gap:6px; box-shadow:var(--shadow-soft);
+}
+.logo-popover.show{ display:flex; animation:fadeIn .15s ease; }
+.logo-popover button{
+  width:100%; display:flex; align-items:center; justify-content:flex-start; text-align:left; font-size:12px; padding:7px 10px; background:var(--panel-2);
+}
+.logo-popover button:hover{ background:var(--accent-soft); }
+.logo-popover .hint{ font-size:10.5px; color:var(--muted); padding:2px 2px 0; line-height:1.5; }
+header h1{ font-size:16px; margin:0; font-weight:800; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+header .brand-title{
+  background:linear-gradient(90deg, var(--blue), var(--accent-2), var(--accent-3), var(--blue));
+  background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:brandTitleShift 5s linear infinite;
+}
+@keyframes brandTitleShift{
+  0%{ background-position:0% 50%; }
+  100%{ background-position:300% 50%; }
+}
+header .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+button{
+  background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  padding:8px 14px; border-radius:10px; cursor:pointer; font:inherit; font-weight:600; font-size:12.5px;
+  transition:all .15s ease;
+}
+button:hover{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); transform:translateY(-1px); }
+button:active{ transform:translateY(0) scale(.97); }
+button:disabled{ opacity:.45; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+button.primary{
+  background:linear-gradient(135deg,var(--accent-2),var(--accent) 65%,var(--accent-3)); color:#fff; border-color:transparent;
+  font-weight:700; box-shadow:0 4px 18px rgba(168,85,247,.45);
+}
+button.primary:hover{ box-shadow:0 10px 28px rgba(168,85,247,.55); }
+button.danger{ color:var(--red); border-color:rgba(251,113,133,.4); }
+button.danger:hover{ background:var(--red-soft); border-color:var(--red); color:var(--red); }
+button.ghost{ background:transparent; }
+#stopBtn:not(:disabled){
+  color:var(--red); border-color:rgba(248,113,113,.5); background:linear-gradient(135deg, rgba(251,113,133,.24), rgba(251,113,133,.1));
+  box-shadow:0 0 0 0 rgba(251,113,133,.35); animation:stopGlow 2.2s ease-in-out infinite;
+}
+#stopBtn:not(:disabled):hover{ background:linear-gradient(135deg, rgba(251,113,133,.36), rgba(251,113,133,.14)); border-color:var(--red); }
+@keyframes stopGlow{
+  0%, 100%{ box-shadow:0 0 0 0 rgba(251,113,133,.32); }
+  50%{ box-shadow:0 0 0 6px rgba(251,113,133,0); }
+}
+main{ flex:1; max-width:960px; width:100%; margin:0 auto; padding:22px 16px 150px; }
+#settings{
+  display:none; background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--radius-lg);
+  padding:18px; margin-bottom:18px; box-shadow:var(--shadow-soft); animation:fadeIn .2s ease;
+}
+#settings.show{ display:block; }
+#settings label{ display:block; font-size:12px; color:var(--muted); margin:10px 0 4px; font-weight:600; }
+#settings input,#settings select{
+  width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  padding:9px 11px; border-radius:var(--radius-sm); font:inherit; font-size:13px; transition:border-color .15s ease;
+}
+#settings input:focus,#settings select:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+#settings .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+#settings .row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+#settings .hint{ font-size:11.5px; color:var(--muted); margin-top:4px; line-height:1.6; }
+#settings .toggles{ display:flex; gap:18px; margin-top:12px; flex-wrap:wrap; }
+#settings .toggles label{ display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text); margin:0; font-weight:600; cursor:pointer; }
+#settings .toggles input{ width:auto; accent-color:var(--accent); }
+#log{ display:flex; flex-direction:column; gap:10px; font-size:13.5px; line-height:1.6; }
+#log .line{ padding:10px 14px; border-radius:var(--radius-md); white-space:pre-wrap; word-break:break-word; animation:fadeIn .25s ease; }
+@keyframes fadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+#log .l-user{
+  color:#fff; background:linear-gradient(135deg,var(--accent-2),var(--accent) 60%,var(--accent-3));
+  align-self:flex-end; max-width:88%; font-weight:500; box-shadow:0 4px 18px rgba(168,85,247,.4);
+}
+#log .l-info{ color:var(--muted); background:var(--panel); border:1px solid var(--border-soft); font-size:12.5px; }
+#log .l-stat{ color:var(--muted); background:transparent; border:1px dashed var(--border-soft); font-size:11px; padding:5px 10px; opacity:.85; }
+#log .l-tool{ color:var(--blue); background:rgba(56,189,248,.08); border:1px solid rgba(56,189,248,.25); font-size:12px; font-family:'JetBrains Mono',monospace; }
+#log .l-ai{ color:var(--text); background:var(--panel); border:1px solid var(--border-soft); }
+#log .l-error{ color:var(--red); background:var(--red-soft); border:1px solid rgba(248,113,113,.28); font-weight:600; }
+#log .l-error::before{ content:"✗ "; }
+#log .l-success{ color:var(--green); background:var(--green-soft); border:1px solid rgba(74,222,128,.25); font-weight:600; }
+#log .l-success::before{ content:"✓ "; }
+.resp-actions{ display:flex; gap:8px; flex-wrap:wrap; margin:-2px 0 4px; animation:fadeIn .2s ease; }
+.resp-actions .raBtn{ font-size:11.5px; padding:6px 11px; }
+.resp-actions .raBtn.primary{ background:linear-gradient(135deg,var(--green),#22c58f); color:#062b1e; box-shadow:0 4px 14px rgba(52,224,161,.35); border-color:transparent; }
+.resp-actions .raBtn.primary:hover{ color:#062b1e; }
+.resp-actions .raBtn:disabled{ opacity:.5; }
+.subfields{ border:1px solid var(--border-soft); border-radius:var(--radius-md); padding:11px 12px; margin-top:8px; }
+.subfields .subtitle{ font-size:11.5px; font-weight:700; color:var(--accent-2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.03em; }
+#todoBox{
+  background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--radius-md);
+  padding:12px 16px; margin:6px 0; font-size:12.5px; box-shadow:var(--shadow-soft); animation:fadeIn .2s ease;
+}
+#todoBox ul{ margin:8px 0 0; padding-left:18px; }
+#todoBox li{ margin:3px 0; transition:color .2s ease; }
+#todoBox li.done{ color:var(--green); text-decoration:line-through; }
+#todoBox li.doing{ color:var(--gold); font-weight:600; }
+#pending{
+  display:none; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:16px; margin-top:14px; box-shadow:var(--shadow-soft);
+}
+#pending.show{ display:block; animation:fadeIn .25s ease; }
+#pending .file{ padding:9px 10px; border-bottom:1px solid var(--border-soft); font-size:12.5px; border-radius:var(--radius-sm); transition:background .15s ease; }
+#pending .file:hover{ background:var(--panel-2); }
+#pending .file:last-child{ border-bottom:none; }
+#pending .filehead{ display:flex; justify-content:space-between; align-items:center; cursor:pointer; gap:8px; font-family:'JetBrains Mono',monospace; }
+#pending .tag{ font-size:10.5px; padding:3px 9px; border-radius:999px; font-weight:700; flex-shrink:0; }
+#pending .tag.new{ background:var(--green-soft); color:var(--green); }
+#pending .tag.mod{ background:var(--blue-soft); color:var(--blue); }
+#pending .tag.del{ background:var(--red-soft); color:var(--red); }
+.diffbody{ margin-top:8px; background:#0d0920; border-radius:var(--radius-sm); padding:8px 9px; max-height:340px; overflow:auto; box-shadow:inset 0 0 0 1px var(--border-soft); }
+.diffline{
+  font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace; font-size:11.5px; white-space:pre-wrap;
+  word-break:break-word; padding:1px 6px; border-radius:4px;
+}
+.diffline.add{ color:#9beeb8; background:rgba(52,224,161,.1); border-left:3px solid var(--green); }
+.diffline.del{ color:#ffb4ac; background:rgba(251,113,133,.1); border-left:3px solid var(--red); }
+.diffline.ctx{ color:var(--muted); }
+.diffskip{ color:var(--muted); font-size:10.5px; padding:3px 4px; font-style:italic; opacity:.8; }
+form#cmdForm{
+  position:fixed; bottom:0; left:0; right:0;
+  background:linear-gradient(180deg, rgba(10,7,20,0), rgba(10,7,20,.96) 30%);
+  padding:18px 18px 20px; display:flex; justify-content:center;
+}
+form#cmdForm .inner{
+  max-width:960px; width:100%; display:flex; flex-direction:column; gap:8px;
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:10px; box-shadow:var(--shadow-lift); position:relative;
+}
+.attach-list{ display:none; flex-wrap:wrap; gap:8px; padding:2px 4px 0; }
+.attach-list.show{ display:flex; }
+.attach-chip{
+  display:flex; align-items:center; gap:6px; background:var(--panel-2); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:5px 9px; font-size:11.5px; color:var(--text); max-width:220px;
+}
+.attach-chip img{ width:26px; height:26px; object-fit:cover; border-radius:5px; flex-shrink:0; }
+.attach-chip .ficon{ font-size:14px; flex-shrink:0; }
+.attach-chip .fname{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px; }
+.attach-chip .rmBtn{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:0 2px; line-height:1; }
+.attach-chip .rmBtn:hover{ color:var(--red); }
+.cmd-row{ display:flex; gap:8px; align-items:flex-end; }
+/* ---- hộp công cụ (toolbox): các lệnh mẫu gộp vào 1 popover nổi lên TRÊN hàng "Tự động",
+   thay vì chiếm nhiều hàng cố định như trước — bấm nút 🧰 để mở/đóng. ---- */
+#toolboxBtn{
+  flex-shrink:0; width:42px; height:42px; padding:0; display:inline-flex; align-items:center; justify-content:center;
+  font-size:18px; border-radius:var(--radius-sm);
+}
+#toolboxBtn.active{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); }
+.cmd-chips-popover{
+  display:none; position:fixed; background:var(--panel-2); border:1px solid var(--border);
+  border-radius:var(--radius-md); box-shadow:var(--shadow-soft); padding:10px;
+  max-height:min(320px, 50vh); overflow-y:auto; flex-wrap:wrap; gap:6px; z-index:25;
+}
+.cmd-chips-popover.show{ display:flex; animation:fadeIn .12s ease; }
+.cmd-chip{
+  background:var(--panel); border:1px solid var(--border); color:var(--muted);
+  border-radius:999px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer;
+  white-space:nowrap; transition:all .15s ease;
+}
+.cmd-chip:hover{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); transform:translateY(-1px); }
+#agentSelect{
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  background:var(--panel-2) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="%238b8599" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 6px center;
+  background-size:9px 6px;
+  border:1px solid var(--border); color:var(--text);
+  border-radius:var(--radius-sm); padding:0 16px 0 8px; font:inherit; font-size:16px; font-weight:600;
+  width:52px; height:42px; max-width:52px; flex-shrink:0; text-align:left; text-align-last:left;
+}
+.skill-tags{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 12px; }
+.skill-tag{
+  background:var(--panel-2); border:1px solid var(--border-soft); color:var(--muted);
+  border-radius:8px; padding:4px 9px; font-size:11px; cursor:default;
+}
+.skill-tag b{ color:var(--text); }
+.custom-skill-row{ display:flex; align-items:center; gap:8px; background:var(--panel-2); border:1px solid var(--border-soft); border-radius:8px; padding:6px 10px; margin-bottom:6px; font-size:12px; }
+.custom-skill-row span{ overflow-wrap:anywhere; }
+.custom-skill-row .rmBtn{ margin-left:auto; flex-shrink:0; background:none; border:none; color:var(--red); cursor:pointer; font-size:14px; }
+/* ---- lịch sử phiên làm việc (modal) ---- */
+.hist-overlay{ display:none; position:fixed; inset:0; background:rgba(5,3,12,.72); z-index:50; align-items:center; justify-content:center; padding:20px; }
+.hist-overlay.show{ display:flex; animation:fadeIn .15s ease; }
+.hist-modal{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-soft); width:100%; max-width:560px; max-height:80vh; display:flex; flex-direction:column; padding:16px; }
+.hist-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; }
+.hist-head b{ font-size:14px; }
+#histSearch{ width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text); padding:9px 11px; border-radius:var(--radius-sm); font:inherit; font-size:13px; margin-bottom:10px; }
+#histSearch:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+#histList{ overflow:auto; display:flex; flex-direction:column; gap:6px; }
+.hist-row{ background:var(--panel-2); border:1px solid var(--border-soft); border-radius:8px; padding:8px 10px; font-size:12px; cursor:pointer; transition:border-color .15s ease; }
+.hist-row:hover{ border-color:var(--accent); }
+.hist-row .ht{ font-weight:700; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hist-row .hm{ color:var(--muted); font-size:11px; display:flex; justify-content:space-between; gap:6px; }
+.hist-empty{ color:var(--muted); font-size:12px; padding:8px 2px; }
+/* ---- thanh gợi ý lưu skill mới sau khi agent hoàn thành việc ---- */
+.skill-suggest-bar{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:-2px 0 4px; padding:9px 12px;
+  background:var(--gold-soft); border:1px solid rgba(251,191,36,.35); border-radius:var(--radius-md);
+  font-size:12px; color:var(--text); animation:fadeIn .2s ease;
+}
+.skill-suggest-bar button{ font-size:11.5px; padding:6px 11px; }
+#attachBtn{
+  flex-shrink:0; width:42px; height:42px; background:var(--panel-2); border:1px solid var(--border);
+  color:var(--muted); border-radius:var(--radius-sm); cursor:pointer; transition:all .15s ease;
+  display:inline-flex; align-items:center; justify-content:center; padding:0;
+}
+#attachBtn svg{ width:19px; height:19px; transition:transform .2s cubic-bezier(.34,1.56,.64,1); }
+#attachBtn:hover{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); transform:none; }
+#attachBtn:hover svg{ transform:rotate(90deg); }
+#attachBtn:active svg{ transform:rotate(90deg) scale(.88); }
+.progress-wrap{ height:3px; border-radius:3px; background:var(--border-soft); overflow:hidden; margin:2px 4px 0; }
+.progress-bar{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transition:width .25s ease; }
+#cmdInput{
+  flex:1; background:transparent; border:none; color:var(--text); font:inherit; font-size:14px;
+  resize:none; outline:none; padding:10px 8px; min-height:24px; max-height:160px; line-height:1.4;
+  scrollbar-width:thin; scrollbar-color:var(--border) var(--panel-2);
+}
+#cmdInput::placeholder{ color:#5a6275; }
+#cmdInput::-webkit-scrollbar{ width:10px; }
+#cmdInput::-webkit-scrollbar-track{ background:var(--panel-2); border-radius:var(--radius-sm); }
+#cmdInput::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; border:2px solid var(--panel-2); }
+#sendBtn{
+  flex-shrink:0; display:inline-flex; align-items:center; gap:6px; height:42px;
+  background:linear-gradient(135deg,var(--accent-2),var(--accent) 65%,var(--accent-3)); color:#fff; border:none;
+  border-radius:var(--radius-sm); padding:0 20px; font-weight:700; cursor:pointer; font-size:13.5px;
+  box-shadow:0 4px 18px rgba(168,85,247,.45); transition:transform .15s ease, opacity .15s ease;
+}
+#sendBtn:hover:not(:disabled){ transform:translateY(-1px); }
+#sendBtn:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="brand-icon-wrap">
+      <button type="button" id="brandIconBtn" class="brand-icon" title="Bấm để đổi logo" aria-label="Đổi logo ứng dụng" aria-haspopup="true">
+        <span id="brandIconEmoji">🤖</span>
+        <img id="brandIconImg" style="display:none" alt="Logo">
+      </button>
+      <div class="logo-popover" id="logoPopover">
+        <button type="button" id="logoChangeBtn">🖼️ Đổi logo</button>
+        <button type="button" id="logoResetBtn">↺ Dùng logo mặc định</button>
+        <div class="hint">Ảnh sẽ được lưu ngay trên trình duyệt này.</div>
+      </div>
+      <input type="file" id="logoInput" accept="image/*" style="display:none">
+    </div>
+    <h1><span class="brand-title">Claude Code Controller v4</span></h1>
+  </div>
+  <div class="actions">
+    <button id="settingsBtn">⚙️ Cấu hình</button>
+    <button id="histBtn" class="ghost">🕘 Lịch sử</button>
+    <button id="newSessionBtn" class="ghost">🆕 Phiên mới</button>
+    <button id="stopBtn" disabled>⏹ Dừng</button>
+  </div>
+</header>
+<main>
+  <div id="settings">
+    <div class="row">
+      <div>
+        <label>Chế độ AI</label>
+        <select id="s_mode">
+          <option value="api">Anthropic API (khoá riêng)</option>
+          <option value="fcc">Free Claude Code — proxy trên máy tôi</option>
+          <option value="deepseek">DeepSeek API (khoá riêng)</option>
+          <option value="gemini">Gemini API — trực tiếp hoặc qua proxy trên máy tôi</option>
+        </select>
+      </div>
+      <div id="modelFieldWrap">
+        <label>Model</label>
+        <input id="s_model" placeholder="claude-sonnet-5 / deepseek-chat">
+      </div>
+    </div>
+    <div id="apiFields">
+      <label>Anthropic API Key</label>
+      <input id="s_key" type="password" placeholder="sk-ant-...">
+    </div>
+    <div id="fccFields" style="display:none">
+      <div class="row">
+        <div><label>FCC URL</label><input id="s_fcc_url" placeholder="http://localhost:8082"></div>
+        <div><label>FCC Token</label><input id="s_fcc_token" type="password"></div>
+      </div>
+    </div>
+    <div id="deepseekFields" style="display:none">
+      <div class="row">
+        <div><label>DeepSeek API Key</label><input id="s_ds_key" type="password" placeholder="sk-..."></div>
+        <div><label>DeepSeek Base URL</label><input id="s_ds_url" placeholder="https://api.deepseek.com"></div>
+      </div>
+      <p class="hint">DeepSeek tự động cache ngữ cảnh lặp lại phía server (không cần cấu hình thêm), giúp các lượt sau rẻ &amp; nhanh hơn.</p>
+    </div>
+    <div id="geminiFields" style="display:none">
+      <p class="hint">Gemini trực tiếp và Proxy trên máy giờ là 2 agent TÁCH RIÊNG hoàn toàn (model, khoá/URL, cấu hình khác nhau). Chọn dùng 1 trong 2, hoặc tick "kết hợp" để cả 2 cùng trả lời mỗi câu lệnh.</p>
+      <div class="subfields">
+        <div class="subtitle">🔵 Gemini API — trực tiếp</div>
+        <div class="row">
+          <div><label>Model (Gemini trực tiếp)</label><input id="s_gemini_model" placeholder="gemini-2.5-pro"></div>
+          <div><label>Gemini API Key</label><input id="s_gemini_key" type="password" placeholder="AIza..."></div>
+        </div>
+      </div>
+      <div class="subfields">
+        <div class="subtitle">🟣 Proxy trên máy tôi</div>
+        <div class="row">
+          <div><label>Model (qua Proxy)</label><input id="s_proxy_model" placeholder="gemini-2.5-flash / model riêng của proxy"></div>
+          <div><label>Proxy Token (nếu proxy yêu cầu)</label><input id="s_gemini_proxy_token" type="password"></div>
+        </div>
+        <label style="margin-top:8px;">Proxy URL (trên máy bạn)</label>
+        <input id="s_gemini_proxy_url" placeholder="http://localhost:8081">
+        <p class="hint">Server nhỏ trên máy bạn forward request dạng REST của Gemini (POST &lt;Proxy URL&gt;/v1beta/models/&lt;model&gt;:generateContent hoặc :streamGenerateContent) sang generativelanguage.googleapis.com, hoặc tận dụng phiên đăng nhập/quota Gemini CLI đã đăng nhập sẵn trên máy. Proxy Token (nếu có) gửi kèm header "Authorization: Bearer ...".</p>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label>Khi KHÔNG kết hợp, dùng agent nào</label>
+          <select id="s_gemini_run">
+            <option value="direct">Chỉ Gemini trực tiếp</option>
+            <option value="proxy">Chỉ Proxy trên máy</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <label style="display:flex;align-items:center;gap:7px;margin:0;font-size:12.5px;font-weight:600;cursor:pointer;">
+            <input type="checkbox" id="s_combine" style="width:auto;accent-color:var(--accent);"> 🔗 Kết hợp Gemini + Proxy để cùng trả lời
+          </label>
+        </div>
+      </div>
+      <p class="hint">Khi tick "kết hợp": mỗi lượt, cả 2 agent (Gemini trực tiếp và Proxy trên máy) đều được gọi song song bằng model/cấu hình riêng của chúng; câu trả lời + các lệnh tool của cả 2 sẽ được gộp lại thành 1 câu trả lời duy nhất (loại trùng tool gọi giống hệt nhau).</p>
+    </div>
+    <div class="toggles">
+      <label><input type="checkbox" id="s_stream" checked> Streaming (xem AI gõ chữ trực tiếp)</label>
+      <label><input type="checkbox" id="s_cache" checked> Prompt caching (Anthropic/FCC — tiết kiệm chi phí)</label>
+    </div>
+    <hr style="border-color:var(--border-soft);margin:14px 0;">
+    <div class="row">
+      <div><label>GitHub owner</label><input id="s_owner" placeholder="lammm2k5"></div>
+      <div><label>GitHub repo</label><input id="s_repo" placeholder="test-y-hoc-tbump"></div>
+    </div>
+    <div class="row">
+      <div><label>Branch</label><input id="s_branch" placeholder="main"></div>
+      <div><label>GitHub PAT (cần để push)</label><input id="s_token" type="password" placeholder="ghp_..."></div>
+    </div>
+    <label>File index của trang web (dùng cho nút Tải HTML / Xem trước / Push nhanh dưới mỗi câu trả lời)</label>
+    <input id="s_index_path" placeholder="index.html">
+    <p class="hint">PAT cần quyền "repo" (hoặc "contents: write" nếu là fine-grained token). Mọi thông tin chỉ lưu trong localStorage trên máy bạn, không gửi đi đâu khác ngoài GitHub/Anthropic/DeepSeek/FCC. Phiên làm việc (hội thoại + thay đổi tạm) cũng tự lưu theo repo/branch để bạn không mất tiến độ khi tải lại trang.</p>
+    <button id="saveSettingsBtn" class="primary" style="margin-top:10px;">Lưu cấu hình</button>
+    <hr style="border-color:var(--border-soft);margin:14px 0;">
+    <div>
+      <label>🧠 Kỹ năng (Skills) có sẵn — agent tự tải chi tiết bằng tool <code class="mono">skill_use</code> khi cần</label>
+      <div class="skill-tags" id="skillTags"></div>
+      <label>🤖 Agent chuyên biệt có sẵn — dùng cho tool <code class="mono">task</code> hoặc dropdown "Ép agent" cạnh ô gửi</label>
+      <div class="skill-tags" id="agentTags"></div>
+      <label>➕ Thêm kỹ năng riêng (skill tự định nghĩa, lưu trên máy bạn)</label>
+      <div id="customSkillList"></div>
+      <div class="row">
+        <div><label>id (vd: my-skill)</label><input id="cs_id" placeholder="id-khong-dau-cach"></div>
+        <div><label>Mô tả ngắn</label><input id="cs_desc" placeholder="Mô tả ngắn gọn kỹ năng này"></div>
+      </div>
+      <label>Nội dung chi tiết (checklist/quy trình — agent sẽ đọc nguyên văn khi gọi skill_use)</label>
+      <textarea id="cs_content" rows="3" style="width:100%;resize:vertical;" placeholder="- Bước/quy tắc 1&#10;- Bước/quy tắc 2"></textarea>
+      <button id="addCustomSkillBtn" type="button" style="margin-top:8px;">➕ Thêm skill</button>
+    </div>
+    <hr style="border-color:var(--border-soft);margin:14px 0;">
+    <div>
+      <label>🧠 Bộ nhớ dài hạn của dự án (xuyên phiên) — agent tự ghi qua tool <code class="mono">memory_write</code> khi học được điều gì đáng nhớ; bạn cũng có thể thêm/xoá tay. Nội dung này tự động đưa vào mọi phiên làm việc sau (khác CLAUDE.md — file này agent KHÔNG tự sửa được).</label>
+      <div id="memoryList"></div>
+      <textarea id="mem_text" rows="2" style="width:100%;resize:vertical;" placeholder="Ghi chú mới, vd: Repo dùng Tailwind qua CDN, không cài npm"></textarea>
+      <button id="addMemoryBtn" type="button" style="margin-top:8px;">➕ Thêm ghi chú</button>
+    </div>
+  </div>
+
+  <div id="log"></div>
+  <div id="todoBox" style="display:none"></div>
+  <div id="pending">
+    <div style="font-weight:700;margin-bottom:8px;">📝 Thay đổi đang chờ (chưa push) — bấm vào tên file để xem diff:</div>
+    <div id="pendingList"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button id="pushBtn" class="primary">🚀 Xác nhận &amp; Push lên GitHub</button>
+      <button id="undoBtn" type="button" title="Quay về trạng thái file trước khi lượt (turn) gần nhất bắt đầu, không mất các thay đổi từ trước đó">↩️ Hoàn tác lượt cuối</button>
+      <button id="discardBtn" class="danger">Huỷ thay đổi</button>
+    </div>
+  </div>
+</main>
+<div id="histOverlay" class="hist-overlay">
+  <div class="hist-modal">
+    <div class="hist-head">
+      <b>🕘 Lịch sử phiên làm việc (repo hiện tại)</b>
+      <button type="button" id="histCloseBtn" class="ghost">✕ Đóng</button>
+    </div>
+    <input id="histSearch" placeholder="🔎 Tìm theo nội dung đã trao đổi...">
+    <div id="histList"></div>
+  </div>
+</div>
+<form id="cmdForm">
+  <div class="inner">
+    <div id="cmdChips" class="cmd-chips-popover"></div>
+    <div id="attachList" class="attach-list"></div>
+    <div class="cmd-row">
+      <button id="toolboxBtn" type="button" title="Hộp công cụ — các lệnh mẫu dựng sẵn">🧰</button>
+      <select id="agentSelect" title="Ép agent chính giao việc này cho 1 subagent chuyên biệt">
+        <option value="">🤖</option>
+      </select>
+      <input id="fileInput" type="file" multiple accept="image/*,.pdf,.txt,.md,.json,.csv,.js,.ts,.jsx,.tsx,.html,.css,.py,.java,.c,.cpp,.go,.rs,.yml,.yaml,.xml,.log" style="display:none">
+      <button id="attachBtn" type="button" title="Đính kèm file/hình ảnh" aria-label="Đính kèm file hoặc hình ảnh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <textarea id="cmdInput" aria-label="Lệnh gửi cho agent" placeholder="Ra lệnh cho agent, vd: 'Thêm mục FAQ vào cuối trang, đọc data.json để lấy style hiện có'" rows="1"></textarea>
+      <button id="sendBtn" class="primary" type="submit">Gửi</button>
+    </div>
+    <div id="progressWrap" class="progress-wrap" style="display:none;"><div id="progressBar" class="progress-bar"></div></div>
+  </div>
+</form>
+
+<script>
+const LS_KEY = 'ccc_v3_settings';
+let settings = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+let aborter = null;
+let expandedDiffs = new Set();
+let state = {
+  tree: null,          // [{path,type,sha,size}]
+  files: new Map(),    // path -> {original, current, sha, isNew}
+  todos: [],
+  messages: [],        // conversation history sent to the model (Anthropic block format — canonical, converted at the API boundary)
+  claudeMd: null,
+  claudeMdTried: false,
+  checkpoints: []       // [{label, files:[[path,{...}]...], todos}] — snapshot trước mỗi lượt user, để "Hoàn tác lượt cuối"
+};
+
+// ---------------- settings UI ----------------
+const $ = id => document.getElementById(id);
+
+// ---------------- logo tuỳ chỉnh (bấm vào icon để đổi) ----------------
+const LOGO_KEY = 'ccc_v3_logo';
+const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2MB
+function applyLogo(dataUrl){
+  const emoji = $('brandIconEmoji'), img = $('brandIconImg');
+  if(dataUrl){ img.src = dataUrl; img.style.display = 'block'; emoji.style.display = 'none'; }
+  else { img.style.display = 'none'; img.src = ''; emoji.style.display = ''; }
+}
+(function loadLogo(){
+  try{ const saved = localStorage.getItem(LOGO_KEY); if(saved) applyLogo(saved); }catch(e){}
+})();
+function closeLogoPopover(){ $('logoPopover').classList.remove('show'); }
+$('brandIconBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  $('logoPopover').classList.toggle('show');
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.brand-icon-wrap')) closeLogoPopover();
+});
+$('logoChangeBtn').addEventListener('click', ()=> $('logoInput').click());
+$('logoInput').addEventListener('change', ()=>{
+  const file = $('logoInput').files && $('logoInput').files[0];
+  $('logoInput').value = '';
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ log('Vui lòng chọn 1 file ảnh cho logo.', 'l-error'); return; }
+  if(file.size > LOGO_MAX_BYTES){ log('Ảnh logo quá lớn (>2MB), hãy chọn ảnh nhỏ hơn.', 'l-error'); return; }
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{ localStorage.setItem(LOGO_KEY, r.result); }catch(e){ log('Không lưu được logo (bộ nhớ trình duyệt đầy).', 'l-error'); }
+    applyLogo(r.result);
+    closeLogoPopover();
+  };
+  r.onerror = ()=> log('Không đọc được file ảnh.', 'l-error');
+  r.readAsDataURL(file);
+});
+$('logoResetBtn').addEventListener('click', ()=>{
+  try{ localStorage.removeItem(LOGO_KEY); }catch(e){}
+  applyLogo(null);
+  closeLogoPopover();
+});
+
+function refreshModeFields(){
+  const mode = $('s_mode').value;
+  $('apiFields').style.display = mode==='api' ? 'block' : 'none';
+  $('fccFields').style.display = mode==='fcc' ? 'block' : 'none';
+  $('deepseekFields').style.display = mode==='deepseek' ? 'block' : 'none';
+  $('geminiFields').style.display = mode==='gemini' ? 'block' : 'none';
+  $('modelFieldWrap').style.display = mode==='gemini' ? 'none' : 'block'; // gemini dùng 2 ô model riêng (trực tiếp + proxy)
+}
+$('s_mode').addEventListener('change', refreshModeFields);
+$('settingsBtn').addEventListener('click', ()=> $('settings').classList.toggle('show'));
+function loadSettingsUI(){
+  $('s_mode').value = settings.mode || 'api';
+  $('s_model').value = settings.model || 'claude-sonnet-5';
+  $('s_key').value = settings.anthropicKey || '';
+  $('s_fcc_url').value = settings.fccUrl || 'http://localhost:8082';
+  $('s_fcc_token').value = settings.fccToken || '';
+  $('s_ds_key').value = settings.deepseekKey || '';
+  $('s_ds_url').value = settings.deepseekUrl || 'https://api.deepseek.com';
+  $('s_gemini_model').value = settings.geminiModel || 'gemini-2.5-pro';
+  $('s_gemini_key').value = settings.geminiKey || '';
+  $('s_proxy_model').value = settings.proxyModel || '';
+  $('s_gemini_proxy_url').value = settings.geminiProxyUrl || 'http://localhost:8081';
+  $('s_gemini_proxy_token').value = settings.geminiProxyToken || '';
+  $('s_gemini_run').value = settings.geminiRunMode || 'direct';
+  $('s_combine').checked = !!settings.combineGeminiProxy;
+  $('s_stream').checked = settings.streaming !== false;
+  $('s_cache').checked = settings.caching !== false;
+  $('s_owner').value = settings.owner || 'lammm2k5';
+  $('s_repo').value = settings.repo || 'test-y-hoc-tbump';
+  $('s_branch').value = settings.branch || 'main';
+  $('s_token').value = settings.ghToken || '';
+  $('s_index_path').value = settings.indexPath || 'index.html';
+  refreshModeFields();
+}
+$('saveSettingsBtn').addEventListener('click', ()=>{
+  const prevKey = sessionKey();
+  settings = {
+    mode: $('s_mode').value, model: $('s_model').value.trim() || 'claude-sonnet-5',
+    anthropicKey: $('s_key').value.trim(), fccUrl: $('s_fcc_url').value.trim(), fccToken: $('s_fcc_token').value.trim(),
+    deepseekKey: $('s_ds_key').value.trim(), deepseekUrl: $('s_ds_url').value.trim() || 'https://api.deepseek.com',
+    geminiModel: $('s_gemini_model').value.trim() || 'gemini-2.5-pro', geminiKey: $('s_gemini_key').value.trim(),
+    proxyModel: $('s_proxy_model').value.trim(),
+    geminiProxyUrl: $('s_gemini_proxy_url').value.trim() || 'http://localhost:8081', geminiProxyToken: $('s_gemini_proxy_token').value.trim(),
+    geminiRunMode: $('s_gemini_run').value, combineGeminiProxy: $('s_combine').checked,
+    streaming: $('s_stream').checked, caching: $('s_cache').checked,
+    owner: $('s_owner').value.trim(), repo: $('s_repo').value.trim(), branch: $('s_branch').value.trim() || 'main',
+    ghToken: $('s_token').value.trim(), indexPath: $('s_index_path').value.trim() || 'index.html'
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(settings));
+  $('settings').classList.remove('show');
+  log('Đã lưu cấu hình.', 'l-success');
+  if(sessionKey() !== prevKey) tryRestoreSession(); // owner/repo/branch đổi -> thử khôi phục phiên khác
+  try{ renderMemoryList(); }catch(e){} // bộ nhớ dài hạn & lịch sử phiên khoá theo owner/repo -> làm mới khi đổi repo
+});
+loadSettingsUI();
+
+// ---------------- UI: skills / agents / commands ----------------
+function escapeAttr(s){ return escapeHtml(s||'').replace(/"/g,'&quot;'); }
+function renderSkillAgentTags(){
+  $('skillTags').innerHTML = getAllSkills().map(s =>
+    '<span class="skill-tag" title="' + escapeAttr(s.content.slice(0,300)) + '">' + s.icon + ' <b>' + escapeHtml(s.id) + '</b> — ' + escapeHtml(s.description) + '</span>'
+  ).join('');
+  $('agentTags').innerHTML = AGENTS.map(a =>
+    '<span class="skill-tag" title="' + escapeAttr(a.system.slice(0,300)) + '">' + a.icon + ' <b>' + escapeHtml(a.id) + '</b> — ' + escapeHtml(a.description) + '</span>'
+  ).join('');
+  renderCustomSkillList();
+}
+function renderCustomSkillList(){
+  const custom = loadCustomSkills();
+  $('customSkillList').innerHTML = custom.length ? custom.map((s,i) =>
+    '<div class="custom-skill-row"><span>🧩 <b>' + escapeHtml(s.id) + '</b> — ' + escapeHtml(s.description) + '</span><button type="button" class="rmBtn" data-i="' + i + '" title="Xoá" aria-label="Xoá kỹ năng ' + escapeHtml(s.id) + '">✕</button></div>'
+  ).join('') : '<p class="hint" style="margin:0 0 8px;">Chưa có skill riêng nào.</p>';
+  $('customSkillList').querySelectorAll('.rmBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const list = loadCustomSkills();
+      list.splice(Number(btn.dataset.i), 1);
+      saveCustomSkillsList(list);
+      renderSkillAgentTags();
+    });
+  });
+}
+$('addCustomSkillBtn').addEventListener('click', ()=>{
+  const id = $('cs_id').value.trim().toLowerCase().replace(/\s+/g,'-');
+  const desc = $('cs_desc').value.trim();
+  const contentTxt = $('cs_content').value.trim();
+  if(!id || !desc || !contentTxt){ log('Điền đủ id, mô tả và nội dung cho skill riêng.', 'l-error'); return; }
+  if(findSkillById(id)){ log('Đã tồn tại skill/id "' + id + '", hãy đặt id khác.', 'l-error'); return; }
+  const list = loadCustomSkills();
+  list.push({ id, icon:'🧩', keywords:[], description: desc, content: contentTxt });
+  saveCustomSkillsList(list);
+  $('cs_id').value=''; $('cs_desc').value=''; $('cs_content').value='';
+  renderSkillAgentTags();
+  log('Đã thêm skill riêng "' + id + '".', 'l-success');
+});
+
+function renderCommandChips(){
+  $('cmdChips').innerHTML = COMMANDS.map(c =>
+    '<button type="button" class="cmd-chip" data-id="' + c.id + '">' + c.icon + ' ' + escapeHtml(c.label) + '</button>'
+  ).join('');
+  $('cmdChips').querySelectorAll('.cmd-chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const c = COMMANDS.find(x=>x.id===btn.dataset.id);
+      if(!c) return;
+      const cmdInputEl = $('cmdInput');
+      cmdInputEl.value = c.template;
+      cmdInputEl.dispatchEvent(new Event('input'));
+      closeToolbox();
+      cmdInputEl.focus();
+    });
+  });
+}
+// ---------------- hộp công cụ (toolbox): popover chứa các lệnh mẫu, mở/đóng bằng nút 🧰 ----------------
+// Định vị bằng toạ độ PIXEL thật (getBoundingClientRect), KHÔNG dùng % CSS (position:absolute + bottom:100%)
+// — vì % cho top/bottom của phần tử absolute chỉ đáng tin khi containing block có chiều cao CỐ ĐỊNH; ở đây
+// ".inner" cao theo nội dung (auto) nên cách tính % có thể lệch khác nhau giữa các trình duyệt/thiết bị,
+// gây ra hiện tượng hộp công cụ chồng lên hộp nhập lệnh. position:fixed + rect tính tay luôn chính xác.
+function positionToolbox(){
+  const anchor = $('cmdForm').querySelector('.inner');
+  const rect = anchor.getBoundingClientRect();
+  const pop = $('cmdChips');
+  pop.style.left = rect.left + 'px';
+  pop.style.width = rect.width + 'px';
+  pop.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+}
+function openToolbox(){ positionToolbox(); $('cmdChips').classList.add('show'); $('toolboxBtn').classList.add('active'); }
+function closeToolbox(){ $('cmdChips').classList.remove('show'); $('toolboxBtn').classList.remove('active'); }
+function toggleToolbox(){ $('cmdChips').classList.contains('show') ? closeToolbox() : openToolbox(); }
+$('toolboxBtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleToolbox(); });
+window.addEventListener('resize', ()=>{ if($('cmdChips').classList.contains('show')) positionToolbox(); });
+document.addEventListener('click', (e)=>{
+  if(!$('cmdChips').classList.contains('show')) return;
+  if($('cmdChips').contains(e.target) || $('toolboxBtn').contains(e.target)) return;
+  closeToolbox();
+});
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeToolbox(); });
+function populateAgentSelect(){
+  const sel = $('agentSelect');
+  AGENTS.forEach(a=>{
+    const opt = document.createElement('option');
+    opt.value = a.id; opt.textContent = a.icon + ' ' + a.name;
+    sel.appendChild(opt);
+  });
+}
+if(!settings.owner) $('settings').classList.add('show');
+
+// ---------------- thanh tiến độ trả lời của AI ----------------
+const progressWrap = $('progressWrap'), progressBar = $('progressBar');
+let progressHideTimer = null;
+function setProgress(pct){
+  clearTimeout(progressHideTimer);
+  progressWrap.style.display = 'block';
+  progressBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+}
+function hideProgress(){
+  clearTimeout(progressHideTimer);
+  progressHideTimer = setTimeout(()=>{ progressWrap.style.display = 'none'; progressBar.style.width = '0%'; }, 350);
+}
+
+// ---------------- logging ----------------
+// Hiệu năng: khi streaming, onDelta có thể bắn hàng trăm/nghìn lần mỗi câu trả lời.
+// Gọi window.scrollTo() đồng bộ mỗi lần như vậy ép trình duyệt reflow liên tục.
+// Gom các lần cuộn lại bằng requestAnimationFrame — tối đa 1 lần cuộn mỗi khung hình.
+let _scrollRAF = null;
+function scheduleScrollToBottom(){
+  if(_scrollRAF) return;
+  _scrollRAF = requestAnimationFrame(()=>{ _scrollRAF = null; window.scrollTo(0, document.body.scrollHeight); });
+}
+function log(text, cls){
+  const d = document.createElement('div');
+  d.className = 'line ' + (cls || 'l-info');
+  d.textContent = text;
+  $('log').appendChild(d);
+  scheduleScrollToBottom();
+  return d;
+}
+function renderTodos(){
+  const box = $('todoBox');
+  if(!state.todos.length){ box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = '<b>📋 Kế hoạch:</b><ul>' + state.todos.map(t=>{
+    const c = t.status==='completed'?'done':(t.status==='in_progress'?'doing':'');
+    return '<li class="'+c+'">' + escapeHtml(t.content) + '</li>';
+  }).join('') + '</ul>';
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// ---------------- line diff (LCS-based, capped for perf) ----------------
+function computeLineDiff(oldText, newText){
+  const a = (oldText||'').split('\n'), b = (newText||'').split('\n');
+  const n = a.length, m = b.length;
+  if((n+1)*(m+1) > 2000000) return null; // file quá lớn để diff chi tiết trong trình duyệt
+  const dp = new Array(n+1);
+  for(let i=0;i<=n;i++) dp[i] = new Int32Array(m+1);
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--)
+    dp[i][j] = a[i]===b[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  const out=[]; let i=0,j=0;
+  while(i<n && j<m){
+    if(a[i]===b[j]){ out.push({t:'=',l:a[i]}); i++; j++; }
+    else if(dp[i+1][j] >= dp[i][j+1]){ out.push({t:'-',l:a[i]}); i++; }
+    else { out.push({t:'+',l:b[j]}); j++; }
+  }
+  while(i<n){ out.push({t:'-',l:a[i]}); i++; }
+  while(j<m){ out.push({t:'+',l:b[j]}); j++; }
+  return out;
+}
+function diffLineHtml(t,l){
+  const cls = t==='+' ? 'add' : t==='-' ? 'del' : 'ctx';
+  const sign = t==='+'?'+':t==='-'?'-':' ';
+  return '<div class="diffline '+cls+'">'+sign+' '+escapeHtml(l)+'</div>';
+}
+function diffHtml(oldText, newText){
+  const d = computeLineDiff(oldText, newText);
+  if(!d) return '<div class="diffskip">File quá lớn để hiển thị diff chi tiết trong trình duyệt.</div>';
+  if(!d.length) return '<div class="diffskip">Không có khác biệt.</div>';
+  let html=''; let i=0;
+  while(i<d.length){
+    if(d[i].t==='='){
+      let j=i; while(j<d.length && d[j].t==='=') j++;
+      const runLen = j-i;
+      if(runLen>6){
+        for(let k=i;k<i+2;k++) html+=diffLineHtml('=',d[k].l);
+        html += '<div class="diffskip">⋯ '+(runLen-4)+' dòng không đổi ⋯</div>';
+        for(let k=j-2;k<j;k++) html+=diffLineHtml('=',d[k].l);
+      } else {
+        for(let k=i;k<j;k++) html+=diffLineHtml('=',d[k].l);
+      }
+      i=j;
+    } else { html += diffLineHtml(d[i].t, d[i].l); i++; }
+  }
+  return html;
+}
+
+// ---------------- GitHub helpers ----------------
+function ghHeaders(){
+  const h = { 'Accept': 'application/vnd.github+json' };
+  if(settings.ghToken) h['Authorization'] = 'Bearer ' + settings.ghToken;
+  return h;
+}
+function ghApi(path){ return 'https://api.github.com/repos/' + settings.owner + '/' + settings.repo + path; }
+function b64ToUtf8(b64){
+  const bin = atob(b64.replace(/\n/g,''));
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+function utf8ToB64(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+async function ghGetJson(path){
+  const r = await fetch(ghApi(path), { headers: ghHeaders() });
+  if(!r.ok) throw new Error('GitHub API lỗi (' + r.status + ') tại ' + path + ': ' + (await r.text()).slice(0,200));
+  return r.json();
+}
+async function loadTree(){
+  const ref = await ghGetJson('/git/ref/heads/' + settings.branch);
+  const commitSha = ref.object.sha;
+  const commit = await ghGetJson('/git/commits/' + commitSha);
+  const tree = await ghGetJson('/git/trees/' + commit.tree.sha + '?recursive=1');
+  state.tree = tree.tree.filter(t => t.type === 'blob');
+  state.baseCommitSha = commitSha;
+  return state.tree;
+}
+const BINARY_EXT = /\.(png|jpe?g|gif|webp|ico|zip|pdf|mp4|mp3|woff2?|ttf|eot)$/i;
+async function fetchFileText(path){
+  if(state.files.has(path)) return state.files.get(path).current;
+  const entry = state.tree.find(t=>t.path===path);
+  if(!entry) throw new Error('Không tìm thấy file "' + path + '" trong repo.');
+  if(BINARY_EXT.test(path)) throw new Error('File "' + path + '" là file nhị phân (ảnh/font/...), không đọc được dạng text.');
+  const blob = await ghGetJson('/git/blobs/' + entry.sha);
+  const text = b64ToUtf8(blob.content);
+  state.files.set(path, { original: text, current: text, sha: entry.sha, isNew: false });
+  return text;
+}
+
+// ---------------- glob matching ----------------
+function globToRegExp(glob){
+  let re = '';
+  for(let i=0;i<glob.length;i++){
+    const c = glob[i];
+    if(c==='*'){
+      if(glob[i+1]==='*'){ re+='.*'; i++; if(glob[i+1]==='/') i++; }
+      else re += '[^/]*';
+    } else if(c==='?'){ re+='[^/]'; }
+    else if('.+^$()|[]{}\\'.includes(c)){ re += '\\'+c; }
+    else re += c;
+  }
+  return new RegExp('^'+re+'$', 'i');
+}
+
+// ---------------- checkpoint / hoàn tác theo lượt (lấy cảm hứng từ checkpoint_manager của hermes-agent) ----------------
+// Trước mỗi lượt (turn) user gửi lệnh mới, chụp nhanh (snapshot) toàn bộ state.files + todos hiện tại.
+// Nếu agent làm hỏng việc trong lượt đó, người dùng bấm "Hoàn tác lượt cuối" để quay về đúng trạng thái
+// trước khi lượt đó bắt đầu — không cần Huỷ TOÀN BỘ (discardBtn quay về original) hay tải lại trang.
+const MAX_CHECKPOINTS = 12;
+function pushCheckpoint(label){
+  try{
+    const snap = { label: label||'', files: Array.from(state.files.entries()).map(([k,v])=>[k, {...v}]), todos: [...state.todos] };
+    state.checkpoints.push(snap);
+    if(state.checkpoints.length > MAX_CHECKPOINTS) state.checkpoints.shift();
+  }catch(e){ /* không chặn agent chạy nếu chụp checkpoint lỗi */ }
+}
+function undoLastCheckpoint(){
+  const snap = state.checkpoints.pop();
+  if(!snap){ log('Không còn checkpoint nào để hoàn tác (chỉ lưu tối đa ' + MAX_CHECKPOINTS + ' lượt gần nhất).', 'l-info'); return; }
+  state.files = new Map(snap.files.map(([k,v])=>[k, {...v}]));
+  state.todos = snap.todos;
+  expandedDiffs.clear();
+  try{ renderTodos(); }catch(e){}
+  try{ showPending(); }catch(e){}
+  scheduleSave();
+  log('↩️ Đã hoàn tác về trạng thái trước lượt "' + (snap.label||'gần nhất') + '".', 'l-info');
+}
+
+// ---------------- an toàn đường dẫn khi ghi/sửa file (lấy cảm hứng từ file_safety.py của hermes-agent) ----------------
+// Chặn agent tự ý sửa/ghi vào những đường dẫn nhạy cảm hoặc thoát ra ngoài repo, TRƯỚC khi chạm tới nội dung.
+const SENSITIVE_PATH_RE = /(^|\/)(\.env|id_rsa|id_ed25519|\.pem|credentials\.json|\.npmrc|\.netrc)$/i;
+function guardWritePath(path){
+  const p = String(path||'').trim();
+  if(!p) return 'LỖI: thiếu đường dẫn file.';
+  if(p.includes('..')) return 'LỖI AN TOÀN: đường dẫn "' + p + '" chứa ".." (cố thoát ra ngoài repo) — bị chặn.';
+  if(p.startsWith('/') || /^[a-zA-Z]:/.test(p)) return 'LỖI AN TOÀN: đường dẫn "' + p + '" là đường dẫn tuyệt đối — chỉ được dùng đường dẫn tương đối trong repo.';
+  if(/(^|\/)\.git(\/|$)/.test(p)) return 'LỖI AN TOÀN: không được sửa file bên trong thư mục ".git/" — bị chặn.';
+  if(SENSITIVE_PATH_RE.test(p)) return 'LỖI AN TOÀN: "' + p + '" trông giống file bí mật/khoá riêng tư (env, khoá SSH, credentials...) — bị chặn để tránh rò rỉ. Nếu thực sự cần, người dùng hãy tự sửa thủ công.';
+  return null; // hợp lệ
+}
+
+// ---------------- tự kiểm tra cú pháp sau khi sửa (lấy cảm hứng từ vòng lặp verify của hermes-agent) ----------------
+// Không chặn việc ghi (agent vẫn có thể đang sửa dở qua nhiều bước), chỉ CẢNH BÁO kèm theo kết quả tool
+// để agent tự phát hiện lỗi cú pháp ngay lập tức thay vì phải đợi tới lúc push lên GitHub mới biết.
+function verifySyntaxWarning(path, content){
+  try{
+    const p = (path||'').toLowerCase();
+    if(p.endsWith('.json')){
+      try{ JSON.parse(content); }catch(e){ return '⚠️ CẢNH BÁO CÚ PHÁP: "' + path + '" không phải JSON hợp lệ — ' + e.message; }
+      return null;
+    }
+    if(/\.(js|mjs|cjs)$/.test(p)){
+      // Function constructor không hiểu cú pháp module (import/export) — bỏ qua kiểm tra cho các file đó
+      // thay vì báo lỗi giả (false positive).
+      if(/^\s*(import|export)\s/m.test(content)) return null;
+      try{ new Function(content); }catch(e){ if(e instanceof SyntaxError) return '⚠️ CẢNH BÁO CÚ PHÁP: "' + path + '" có lỗi cú pháp JavaScript — ' + e.message; }
+      return null;
+    }
+    if(p.endsWith('.css')){
+      const open = (content.match(/\{/g)||[]).length, close = (content.match(/\}/g)||[]).length;
+      if(open !== close) return '⚠️ CẢNH BÁO CÚ PHÁP: "' + path + '" có dấu ngoặc { } không cân bằng (' + open + ' mở / ' + close + ' đóng) — có thể là CSS hỏng.';
+      return null;
+    }
+  }catch(e){ /* kiểm tra bị lỗi thì bỏ qua, không chặn agent */ }
+  return null;
+}
+
+// ---------------- khớp khoan dung (tolerant matching) cho edit_file/multi_edit/apply_patch ----------------
+// Lấy cảm hứng từ engine apply_patch của openclaw: thử khớp CHÍNH XÁC trước (giữ nguyên hành vi
+// cũ, nhanh và an toàn); nếu không thấy mới nới lỏng dần qua các "tầng" chuẩn hoá (bỏ khoảng trắng
+// cuối dòng, trim 2 đầu, rồi chuẩn hoá dấu nháy/gạch ngang kiểu Unicode "thông minh") — nhờ vậy
+// edit không vỡ oan chỉ vì model gõ lệch 1 khoảng trắng hay 1 dấu nháy cong. Ở mỗi tầng, nếu khớp
+// NHIỀU HƠN 1 vị trí thì coi là mơ hồ (ambiguous) ngay tại tầng đó, không rơi xuống tầng lỏng hơn.
+const DASH_PUNCT_RE = /[\u2010-\u2015\u2212]/g;
+const SQUOTE_PUNCT_RE = /[\u2018-\u201B]/g;
+const DQUOTE_PUNCT_RE = /[\u201C-\u201F]/g;
+const SPACE_PUNCT_RE = /[\u00A0\u2002-\u200A\u202F\u205F\u3000]/g;
+function normalizePunct(s){
+  return s.replace(DASH_PUNCT_RE,'-').replace(SQUOTE_PUNCT_RE,"'").replace(DQUOTE_PUNCT_RE,'"').replace(SPACE_PUNCT_RE,' ');
+}
+const MATCH_TIERS = [ v=>v, v=>v.replace(/[ \t]+$/,''), v=>v.trim(), v=>normalizePunct(v.trim()) ];
+// Tìm vị trí DÒNG duy nhất của mảng dòng `pattern` trong mảng dòng `lines`, từ chỉ số `start`.
+// `eof=true` (hunk "*** End of File"): neo việc tìm kiếm về gần cuối file thay vì từ `start`,
+// để tránh khớp nhầm một đoạn giống hệt xuất hiện sớm hơn trong file.
+function seekLines(lines, pattern, start, eof){
+  if(pattern.length === 0) return { kind:'found', index:start };
+  if(pattern.length > lines.length) return { kind:'missing' };
+  const maxStart = lines.length - pattern.length;
+  const searchStart = eof ? Math.max(start, maxStart) : start;
+  if(searchStart > maxStart) return { kind:'missing' };
+  for(const norm of MATCH_TIERS){
+    let idx = null, occ = 0;
+    for(let i=searchStart; i<=maxStart; i++){
+      let ok = true;
+      for(let k=0;k<pattern.length;k++){ if(norm(lines[i+k]) !== norm(pattern[k])){ ok=false; break; } }
+      if(ok){ if(idx===null) idx=i; occ++; }
+    }
+    if(idx!==null) return occ===1 ? { kind:'found', index:idx } : { kind:'ambiguous', occurrences:occ };
+  }
+  return { kind:'missing' };
+}
+// Tìm khối text `needle` (có thể nhiều dòng) trong `haystack`: thử EXACT substring trước
+// (hành vi cũ), rồi mới thử khớp khoan dung theo dòng. Trả về chỉ số KÝ TỰ để cắt/nối chuỗi.
+function findTolerant(haystack, needle){
+  if(needle === '') return { kind:'missing' };
+  const exactCount = haystack.split(needle).length - 1;
+  if(exactCount === 1){
+    const start = haystack.indexOf(needle);
+    return { kind:'found', start, end: start + needle.length, tier:'exact' };
+  }
+  if(exactCount > 1) return { kind:'ambiguous', occurrences: exactCount };
+  const hLines = haystack.split('\n');
+  const nLines = needle.split('\n');
+  const res = seekLines(hLines, nLines, 0);
+  if(res.kind !== 'found') return res;
+  const start = hLines.slice(0, res.index).join('\n').length + (res.index>0 ? 1 : 0);
+  const matchedLen = hLines.slice(res.index, res.index + nLines.length).join('\n').length;
+  return { kind:'found', start, end: start + matchedLen, tier:'fuzzy' };
+}
+
+// ---------------- apply_patch: patch đa file (thêm/sửa/xoá/đổi tên) nguyên tử ----------------
+// Lấy cảm hứng từ tool apply_patch (định dạng "*** Begin Patch") của openclaw — cho phép agent
+// gộp NHIỀU thay đổi trên NHIỀU FILE (kể cả thêm/xoá/đổi tên) vào 1 lần gọi tool duy nhất,
+// thay vì phải gọi edit_file/write_file lặp lại cho từng file. Toàn bộ patch có tính NGUYÊN TỬ.
+function parsePatchEnvelope(input){
+  const lines = input.trim().split(/\r?\n/);
+  if((lines[0]||'').trim() !== '*** Begin Patch') throw new Error('Dòng đầu tiên phải là "*** Begin Patch"');
+  if((lines[lines.length-1]||'').trim() !== '*** End Patch') throw new Error('Dòng cuối cùng phải là "*** End Patch"');
+  const body = lines.slice(1, -1);
+  const hunks = [];
+  let i = 0;
+  while(i < body.length){
+    const line = body[i];
+    if(line.trim() === ''){ i++; continue; }
+    if(line.startsWith('*** Add File: ')){
+      const p = line.slice('*** Add File: '.length).trim();
+      i++;
+      const contentLines = [];
+      while(i < body.length && body[i].startsWith('+')){ contentLines.push(body[i].slice(1)); i++; }
+      hunks.push({ kind:'add', path:p, contents: contentLines.join('\n') + (contentLines.length ? '\n' : '') });
+      continue;
+    }
+    if(line.startsWith('*** Delete File: ')){
+      hunks.push({ kind:'delete', path: line.slice('*** Delete File: '.length).trim() });
+      i++; continue;
+    }
+    if(line.startsWith('*** Update File: ')){
+      const p = line.slice('*** Update File: '.length).trim();
+      i++;
+      let movePath;
+      if(i < body.length && body[i].startsWith('*** Move to: ')){ movePath = body[i].slice('*** Move to: '.length).trim(); i++; }
+      const chunks = [];
+      while(i < body.length && body[i].trim() !== '' && !body[i].startsWith('***')){
+        let changeContext;
+        if(body[i] === '@@'){ i++; }
+        else if(body[i].startsWith('@@ ')){ changeContext = body[i].slice(3); i++; }
+        const oldLines=[], newLines=[], contextOldIndexes=[];
+        let isEndOfFile = false;
+        while(i < body.length){
+          const l = body[i];
+          if(l === '*** End of File'){
+            if(oldLines.length===0 && newLines.length===0) throw new Error('Hunk update rỗng cho file "' + p + '" (gặp "*** End of File" ngay từ đầu)');
+            isEndOfFile = true; i++; break;
+          }
+          if(l.startsWith('***') || l.startsWith('@@')) break;
+          if(l === ''){
+            // Dòng trống không có ký tự đánh dấu (" "/"+"/"-") -> coi là dòng NGỮ CẢNH rỗng,
+            // không phải dấu hiệu kết thúc hunk (một số công cụ sinh patch bỏ khoảng trắng cuối dòng trống).
+            contextOldIndexes.push(oldLines.length); oldLines.push(''); newLines.push('');
+            i++; continue;
+          }
+          const m = l[0];
+          if(m === ' '){ contextOldIndexes.push(oldLines.length); oldLines.push(l.slice(1)); newLines.push(l.slice(1)); }
+          else if(m === '+'){ contextOldIndexes.push(undefined); newLines.push(l.slice(1)); }
+          else if(m === '-'){ oldLines.push(l.slice(1)); }
+          else throw new Error('Dòng không hợp lệ trong hunk update "' + p + '": "' + l + '" (phải bắt đầu bằng " ", "+" hoặc "-")');
+          i++;
+        }
+        if(oldLines.length===0 && newLines.length===0) throw new Error('Hunk update rỗng cho file "' + p + '"');
+        chunks.push({ changeContext, oldLines, newLines, contextOldIndexes, isEndOfFile });
+      }
+      if(chunks.length===0) throw new Error('File "' + p + '" trong "*** Update File" không có hunk nào (thiếu dòng bắt đầu bằng " "/"+"/"-")');
+      hunks.push({ kind:'update', path:p, movePath, chunks });
+      continue;
+    }
+    throw new Error('Dòng không hợp lệ: "' + line + '" (mong đợi "*** Add File:", "*** Delete File:" hoặc "*** Update File:")');
+  }
+  return hunks;
+}
+// Dòng kết thúc file chỉ toàn CRLF? (nếu đúng, ta chuẩn hoá về LF để so khớp rồi phục hồi CRLF ở cuối,
+// tránh việc so khớp bị lệch chỉ vì khác kiểu xuống dòng)
+function hasOnlyCrlfEndings(text){
+  const withoutCrlf = text.split('\r\n').join('');
+  return withoutCrlf.length !== text.length && !/[\r\n]/.test(withoutCrlf);
+}
+function applyUpdateHunkLocal(content, chunks, filePath){
+  const original = content || '';
+  const preserveCrlf = hasOnlyCrlfEndings(original);
+  const matching = preserveCrlf ? original.replace(/\r\n/g,'\n').replace(/\r/g,'\n') : original;
+  let lines = matching.split('\n');
+  if(lines.length && lines[lines.length-1] === '') lines.pop();
+  const replacements = [];
+  let lineIndex = 0;
+  let skipped = 0; // số hunk bị bỏ qua vì nội dung đích đã tồn tại sẵn (patch có vẻ đã được áp dụng trước đó)
+  for(const chunk of chunks){
+    if(chunk.changeContext){
+      const cs = seekLines(lines, [chunk.changeContext], lineIndex, false);
+      if(cs.kind === 'ambiguous') throw new Error('Ngữ cảnh "' + chunk.changeContext + '" khớp ' + cs.occurrences + ' lần trong ' + filePath + ' — cần dòng @@ context DUY NHẤT.');
+      if(cs.kind === 'missing') throw new Error('Không tìm thấy ngữ cảnh "' + chunk.changeContext + '" trong ' + filePath + '.');
+      lineIndex = cs.index + 1;
+    }
+    if(chunk.oldLines.length === 0){
+      const insertAt = (chunk.changeContext && !chunk.isEndOfFile) ? lineIndex : lines.length;
+      replacements.push([insertAt, 0, chunk.newLines]);
+      lineIndex = insertAt;
+      continue;
+    }
+    let pattern = chunk.oldLines;
+    let newSlice = chunk.newLines;
+    let search = seekLines(lines, pattern, lineIndex, chunk.isEndOfFile);
+    if(search.kind === 'missing' && pattern[pattern.length-1] === ''){
+      // Một số hunk mang theo dòng trống thừa ngay trước "*** End of File" — thử lại không có nó
+      // để vẫn khớp được với nội dung file tương đương.
+      pattern = pattern.slice(0, -1);
+      if(newSlice.length && newSlice[newSlice.length-1] === '') newSlice = newSlice.slice(0, -1);
+      search = seekLines(lines, pattern, lineIndex, chunk.isEndOfFile);
+    }
+    if(search.kind === 'missing'){
+      // Trước khi báo lỗi cứng: có thể patch này ĐÃ được áp dụng trước đó rồi (vd model gọi lại
+      // apply_patch 2 lần, hoặc patch được sinh ra dựa trên bản đã lỗi thời). Kiểm tra xem nội dung
+      // ĐÍCH (newSlice) đã có sẵn đúng vị trí mong đợi chưa — nếu có, coi hunk này là "đã áp dụng",
+      // bỏ qua thay vì làm hỏng/hoàn tác toàn bộ patch nguyên tử vì 1 hunk vô hại.
+      if(newSlice.length > 0){
+        const already = seekLines(lines, newSlice, lineIndex, chunk.isEndOfFile);
+        if(already.kind === 'found'){
+          skipped++;
+          lineIndex = already.index + newSlice.length;
+          continue;
+        }
+      } else {
+        // Hunk xoá thuần (newSlice rỗng): nếu pattern không còn xuất hiện ở BẤT KỲ ĐÂU trong file
+        // (đã tìm từ đầu file, không chỉ từ lineIndex), coi như đoạn cần xoá đã bị xoá từ trước.
+        const anywhere = seekLines(lines, pattern, 0, false);
+        if(anywhere.kind === 'missing'){ skipped++; continue; }
+      }
+    }
+    if(search.kind === 'ambiguous') throw new Error('Khối dòng cần sửa khớp ' + search.occurrences + ' lần trong ' + filePath + ' — hãy thêm dòng @@ context hoặc nhiều dòng ngữ cảnh hơn:\n' + chunk.oldLines.join('\n'));
+    if(search.kind === 'missing') throw new Error('Không tìm thấy đoạn dòng cần sửa trong ' + filePath + ':\n' + chunk.oldLines.join('\n'));
+    const found = search.index;
+    // Giữ nguyên BYTE GỐC của các dòng ngữ cảnh (không đổi) khi ghi lại — nếu khớp bằng tầng
+    // khoan dung (bỏ qua khoảng trắng/dấu câu), ta vẫn không được vô tình "chuẩn hoá" các dòng
+    // không hề thay đổi trong patch.
+    const keptNewLines = newSlice.map((line, idx) => {
+      const oldIdx = chunk.contextOldIndexes ? chunk.contextOldIndexes[idx] : undefined;
+      if(oldIdx === undefined || oldIdx >= pattern.length) return line;
+      const orig = lines[found + oldIdx];
+      return orig === undefined ? line : orig;
+    });
+    replacements.push([found, pattern.length, keptNewLines]);
+    lineIndex = found + pattern.length;
+  }
+  replacements.sort((a,b)=>a[0]-b[0]);
+  for(const [start, delLen, newLines] of [...replacements].reverse()) lines.splice(start, delLen, ...newLines);
+  let out = lines.join('\n') + '\n';
+  return { content: preserveCrlf ? out.replace(/\n/g, '\r\n') : out, skipped };
+}
+
+// ---------------- tool implementations ----------------
+async function toolListFiles(){
+  if(!state.tree) await loadTree();
+  return state.tree.map(t => t.path + ' (' + t.size + ' bytes)').join('\n');
+}
+async function toolGlob(input){
+  if(!state.tree) await loadTree();
+  let re; try{ re = globToRegExp(input.pattern); } catch(e){ return 'Mẫu glob không hợp lệ: ' + e.message; }
+  const matches = state.tree.filter(t=>re.test(t.path)).map(t=>t.path).slice(0,200);
+  if(!matches.length) return 'Không có file nào khớp mẫu "' + input.pattern + '".';
+  return matches.join('\n');
+}
+async function toolReadFile(input){
+  if(!state.tree) await loadTree();
+  const text = await fetchFileText(input.path);
+  const lines = text.split('\n');
+  let s = input.start_line ? Math.max(1, input.start_line) : 1;
+  let e = input.end_line ? Math.min(lines.length, input.end_line) : lines.length;
+  const MAXLINES = 800;
+  if(e - s + 1 > MAXLINES) e = s + MAXLINES - 1;
+  const slice = lines.slice(s-1, e).map((l,i)=> (s+i) + '\t' + l).join('\n');
+  return 'Tổng ' + lines.length + ' dòng. Hiển thị dòng ' + s + '-' + e + ':\n' + slice;
+}
+async function toolGrep(input){
+  if(!state.tree) await loadTree();
+  let re;
+  try{ re = new RegExp(input.pattern, 'i'); } catch(e){ return 'Regex không hợp lệ: ' + e.message; }
+  const targets = input.path ? [input.path] : state.tree.filter(t=>!BINARY_EXT.test(t.path)).map(t=>t.path);
+  const max = input.max_matches || 60;
+  let out = [], scanned = 0, budget = 15 * 1024 * 1024;
+  for(const p of targets){
+    if(out.length >= max || budget <= 0) break;
+    let text;
+    try{ text = await fetchFileText(p); } catch(e){ continue; }
+    budget -= text.length;
+    const lines = text.split('\n');
+    for(let i=0;i<lines.length;i++){
+      if(re.test(lines[i])){
+        out.push(p + ':' + (i+1) + ':  ' + lines[i].trim().slice(0,200));
+        if(out.length >= max) break;
+      }
+    }
+    scanned++;
+  }
+  if(!out.length) return 'Không tìm thấy kết quả khớp với "' + input.pattern + '" (đã quét ' + scanned + ' file).';
+  return out.join('\n') + (out.length>=max ? '\n...(đã cắt bớt, thu hẹp pattern hoặc chỉ định path để xem thêm)' : '');
+}
+async function toolEditFile(input){
+  const guardErr = guardWritePath(input.path);
+  if(guardErr) return guardErr;
+  if(!state.files.has(input.path)) await fetchFileText(input.path);
+  const f = state.files.get(input.path);
+  if(f.deleted) return 'LỖI: file "' + input.path + '" đã bị đánh dấu XOÁ trong phiên này — dùng apply_patch hoặc write_file để tạo lại trước.';
+  const r = findTolerant(f.current, input.old_str);
+  if(r.kind === 'missing') return 'LỖI: không tìm thấy old_str trong file "' + input.path + '" (đã thử cả khớp khoan dung khoảng trắng/dấu câu). Hãy đọc lại file để lấy đúng đoạn text hiện tại.';
+  if(r.kind === 'ambiguous') return 'LỖI: old_str khớp ' + r.occurrences + ' lần trong "' + input.path + '" (phải khớp DUY NHẤT 1 lần). Hãy thêm ngữ cảnh xung quanh để old_str là duy nhất.';
+  f.current = f.current.slice(0, r.start) + input.new_str + f.current.slice(r.end);
+  const warn = verifySyntaxWarning(input.path, f.current);
+  return 'Đã sửa "' + input.path + '" thành công (1 chỗ' + (r.tier==='fuzzy' ? ', khớp KHOAN DUNG — old_str lệch nhẹ khoảng trắng/dấu câu so với file thật, agent nên đọc lại file để lấy text chính xác cho lần sau' : '') + ').' + (warn ? ('\n' + warn) : '');
+}
+async function toolMultiEdit(input){
+  const guardErr = guardWritePath(input.path);
+  if(guardErr) return guardErr;
+  if(!state.files.has(input.path)) await fetchFileText(input.path);
+  const f = state.files.get(input.path);
+  if(f.deleted) return 'LỖI: file "' + input.path + '" đã bị đánh dấu XOÁ trong phiên này — dùng apply_patch hoặc write_file để tạo lại trước.';
+  const backup = f.current;
+  const edits = input.edits || [];
+  for(let i=0;i<edits.length;i++){
+    const e = edits[i];
+    const r = findTolerant(f.current, e.old_str);
+    if(r.kind === 'missing'){ f.current = backup; return 'LỖI ở edit #' + (i+1) + ': không tìm thấy old_str trong "' + input.path + '" (đã thử cả khớp khoan dung). Đã hoàn tác TOÀN BỘ multi_edit này (atomic). Hãy đọc lại file.'; }
+    if(r.kind === 'ambiguous'){ f.current = backup; return 'LỖI ở edit #' + (i+1) + ': old_str khớp ' + r.occurrences + ' lần (cần duy nhất). Đã hoàn tác toàn bộ multi_edit.'; }
+    f.current = f.current.slice(0, r.start) + e.new_str + f.current.slice(r.end);
+  }
+  const warn = verifySyntaxWarning(input.path, f.current);
+  return 'Đã áp dụng ' + edits.length + ' chỉnh sửa nguyên tử (atomic) vào "' + input.path + '".' + (warn ? ('\n' + warn) : '');
+}
+async function toolApplyPatch(input){
+  const text = String((input && input.input) || '');
+  if(!text.trim()) return 'LỖI: thiếu nội dung patch (tham số "input" rỗng).';
+  let hunks;
+  try{ hunks = parsePatchEnvelope(text); }
+  catch(e){ return 'LỖI cú pháp patch: ' + e.message; }
+  if(!hunks.length) return 'LỖI: patch không chứa thay đổi nào.';
+  const touched = new Set();
+  for(const h of hunks){ touched.add(h.path); if(h.movePath) touched.add(h.movePath); }
+  for(const p of touched){ const guardErr = guardWritePath(p); if(guardErr) return guardErr; }
+  const backups = new Map();
+  for(const p of touched) if(state.files.has(p)) backups.set(p, {...state.files.get(p)});
+  const added=[], modified=[], deleted=[];
+  let totalSkipped = 0; // tổng số hunk bị bỏ qua vì có vẻ ĐÃ được áp dụng từ trước (idempotent)
+  try{
+    for(const h of hunks){
+      if(h.kind === 'add'){
+        const already = state.tree && state.tree.find(t=>t.path===h.path);
+        const cur = state.files.get(h.path);
+        if((already && !(cur && cur.deleted)) || (cur && !cur.deleted && cur.isNew)){
+          throw new Error('File "' + h.path + '" đã tồn tại — dùng "*** Update File" để sửa, hoặc "*** Delete File" trước trong cùng patch.');
+        }
+        state.files.set(h.path, { original: null, current: h.contents, sha: null, isNew: true, deleted:false });
+        added.push(h.path);
+      } else if(h.kind === 'delete'){
+        if(!state.files.has(h.path)) await fetchFileText(h.path).catch(()=>{});
+        const existing = state.files.get(h.path);
+        const inRepo = state.tree && state.tree.find(t=>t.path===h.path);
+        if(!existing && !inRepo) throw new Error('Không tìm thấy file "' + h.path + '" để xoá.');
+        if(existing && existing.isNew){ state.files.delete(h.path); }
+        else{
+          state.files.set(h.path, { original: existing ? existing.original : null, current: null,
+            sha: inRepo ? inRepo.sha : (existing ? existing.sha : null), isNew:false, deleted:true });
+        }
+        deleted.push(h.path);
+      } else {
+        if(!state.files.has(h.path)) await fetchFileText(h.path);
+        const f = state.files.get(h.path);
+        if(f.deleted) throw new Error('File "' + h.path + '" đã bị đánh dấu xoá trong chính patch/phiên này — không thể update.');
+        const { content: newContent, skipped } = applyUpdateHunkLocal(f.current, h.chunks, h.path);
+        totalSkipped += skipped;
+        if(h.movePath && h.movePath !== h.path){
+          const destExists = (state.tree && state.tree.find(t=>t.path===h.movePath)) ||
+            (state.files.has(h.movePath) && !state.files.get(h.movePath).deleted);
+          if(destExists) throw new Error('Không thể move sang "' + h.movePath + '" vì file đích đã tồn tại.');
+          if(f.isNew) state.files.delete(h.path);
+          else state.files.set(h.path, { original: f.original, current: null, sha: f.sha, isNew:false, deleted:true });
+          state.files.set(h.movePath, { original: null, current: newContent, sha:null, isNew:true, deleted:false });
+          modified.push(h.path + ' → ' + h.movePath);
+        } else {
+          f.current = newContent;
+          modified.push(h.path);
+        }
+      }
+    }
+  } catch(e){
+    for(const p of touched){ if(backups.has(p)) state.files.set(p, backups.get(p)); else state.files.delete(p); }
+    return 'LỖI khi áp dụng patch: ' + (e.message || String(e)) + '\nĐã hoàn tác TOÀN BỘ patch (atomic) — không file nào bị thay đổi.';
+  }
+  try{ showPending(); }catch(err){}
+  scheduleSave();
+  const parts = [];
+  if(added.length) parts.push('Thêm mới: ' + added.join(', '));
+  if(modified.length) parts.push('Sửa: ' + modified.join(', '));
+  if(deleted.length) parts.push('Xoá: ' + deleted.join(', '));
+  const warnings = [];
+  for(const p of [...added, ...modified.map(s=>s.split(' → ').pop())]){
+    const f = state.files.get(p);
+    if(f && !f.deleted){ const w = verifySyntaxWarning(p, f.current); if(w) warnings.push(w); }
+  }
+  const skipNote = totalSkipped ? ('\nℹ️ ' + totalSkipped + ' hunk bị bỏ qua vì nội dung đích có vẻ ĐÃ tồn tại sẵn trong file (patch dường như đã được áp dụng trước đó) — không phải lỗi, không cần thử lại các hunk đó.') : '';
+  return '✅ Đã áp dụng patch (' + hunks.length + ' hunk). ' + parts.join(' | ') + (warnings.length ? ('\n' + warnings.join('\n')) : '') + skipNote;
+}
+async function toolWriteFile(input){
+  const guardErr = guardWritePath(input.path);
+  if(guardErr) return guardErr;
+  const existing = state.tree && state.tree.find(t=>t.path===input.path);
+  const cur = state.files.get(input.path);
+  if(!cur){
+    state.files.set(input.path, { original: existing ? null : null, current: input.content, sha: existing ? existing.sha : null, isNew: !existing, deleted:false });
+  } else {
+    cur.current = input.content;
+    cur.deleted = false; // ghi lại nội dung "hồi sinh" file trước đó từng bị đánh dấu xoá trong phiên này
+  }
+  const warn = verifySyntaxWarning(input.path, input.content);
+  return 'Đã ghi toàn bộ nội dung file "' + input.path + '" (' + input.content.length + ' ký tự).' + (warn ? ('\n' + warn) : '');
+}
+async function toolTodoWrite(input){
+  state.todos = input.todos || [];
+  renderTodos();
+  scheduleSave();
+  return 'Đã cập nhật kế hoạch (' + state.todos.length + ' việc).';
+}
+async function toolWebFetch(input){
+  let r;
+  try{ r = await fetch(input.url); }
+  catch(e){ return 'LỖI: không tải được URL (rất có thể do trang không cho phép CORS từ trình duyệt — đây là giới hạn của trình duyệt, không sửa được). Chi tiết: ' + e.message; }
+  if(!r.ok) return 'LỖI HTTP ' + r.status + ' khi tải ' + input.url;
+  const raw = await r.text();
+  const text = raw.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ')
+    .replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  return text.slice(0, 6000) || '(trang không có nội dung text đọc được)';
+}
+// ---------------- run_javascript: sandbox chạy code THẬT để kiểm chứng (lấy cảm hứng từ ----------------
+// "code_execution_tool" của hermes-agent, phiên bản rút gọn phù hợp trình duyệt): chạy trong 1 Web
+// Worker RIÊNG (không truy cập được DOM/localStorage/state của app, không mạng ngoài trừ fetch), có
+// TIMEOUT cứng, và bị huỷ (terminate) ngay khi xong hoặc hết giờ. Dùng để agent tự kiểm chứng thuật
+// toán/logic/regex/parse JSON... TRƯỚC khi ghi vào file, thay vì đoán mò kết quả.
+const RUN_JS_TIMEOUT_MS = 5000;
+function runJavaScriptSandboxed(code){
+  return new Promise((resolve)=>{
+    const workerSrc = "self.onmessage=function(e){\n" +
+      "  var logs=[];\n" +
+      "  var origLog=console.log;\n" +
+      "  console.log=function(){ try{ logs.push(Array.prototype.slice.call(arguments).map(function(a){ try{ return typeof a==='string'?a:JSON.stringify(a); }catch(err){ return String(a); } }).join(' ')); }catch(err){} };\n" +
+      "  try{\n" +
+      "    var result = (0,eval)(e.data);\n" +
+      "    var resStr; try{ resStr = result===undefined ? undefined : JSON.stringify(result, null, 2); }catch(err){ resStr = String(result); }\n" +
+      "    self.postMessage({ ok:true, result: resStr, logs: logs });\n" +
+      "  }catch(err){\n" +
+      "    self.postMessage({ ok:false, error: (err && err.message) || String(err), logs: logs });\n" +
+      "  }\n" +
+      "};";
+    let worker;
+    try{ worker = new Worker(URL.createObjectURL(new Blob([workerSrc], {type:'application/javascript'}))); }
+    catch(e){ resolve({ ok:false, error: 'Không khởi tạo được sandbox Worker: ' + e.message }); return; }
+    let done = false;
+    const finish = (out) => { if(done) return; done = true; try{ worker.terminate(); }catch(e){} resolve(out); };
+    const timer = setTimeout(()=> finish({ ok:false, error: 'Hết thời gian (' + (RUN_JS_TIMEOUT_MS/1000) + 's) — code chạy quá lâu hoặc bị treo (vòng lặp vô hạn?).' }), RUN_JS_TIMEOUT_MS);
+    worker.onmessage = (ev) => { clearTimeout(timer); finish(ev.data); };
+    worker.onerror = (ev) => { clearTimeout(timer); finish({ ok:false, error: 'Lỗi Worker: ' + (ev.message||'không rõ') }); };
+    worker.postMessage(code);
+  });
+}
+async function toolRunJavaScript(input){
+  const code = String((input && input.code) || '');
+  if(!code.trim()) return 'LỖI: thiếu tham số "code".';
+  const out = await runJavaScriptSandboxed(code);
+  const logPart = (out.logs && out.logs.length) ? ('console.log:\n' + out.logs.join('\n') + '\n') : '';
+  if(!out.ok) return logPart + '❌ Lỗi khi chạy: ' + out.error;
+  return logPart + '✅ Kết quả (giá trị biểu thức/statement cuối cùng):\n' + (out.result===undefined ? '(undefined — không có giá trị trả về, dùng console.log để in nếu cần xem output)' : out.result);
+}
+// "Task" — subagent: chạy 1 vòng lặp agent con độc lập (không dùng chung lịch sử hội thoại
+// với agent chính), để đào sâu/khám phá 1 việc cụ thể mà không làm phình context của agent chính.
+async function toolTask(input){
+  const agent = input.agent_type ? findAgentById(input.agent_type) : null;
+  log('🧩 Subagent bắt đầu' + (agent ? ' [' + agent.icon + ' ' + agent.name + ']' : '') + ': ' + (input.description||''), 'l-tool');
+  const subTools = TOOLS.filter(t => t.name !== 'task');
+  const subSystem = (agent ? agent.system : (
+      'Bạn là 1 subagent chuyên biệt được agent chính giao 1 việc CỤ THỂ, KHÉP KÍN. ' +
+      'Dùng tool để hoàn thành đúng việc được giao.'
+    )) +
+    '\n\nSau khi xong, trả lời bằng 1 đoạn TÓM TẮT kết quả súc tích (không tool call) để kết thúc — agent chính chỉ nhìn thấy đúng đoạn tóm tắt này, không thấy các bước chi tiết. Kỹ năng khả dụng (dùng tool skill_use để tải chi tiết khi cần):\n' + skillCatalogText();
+  let messages = [{ role:'user', content: input.prompt }];
+  for(let i=0;i<8;i++){
+    let data;
+    try{ data = await callModel(messages, aborter ? aborter.signal : undefined, { tools: subTools, system: subSystem }); }
+    catch(e){ return 'LỖI subagent: ' + e.message; }
+    const content = data.content || [];
+    const text = content.filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    const toolCalls = content.filter(b=>b.type==='tool_use');
+    messages.push({ role:'assistant', content });
+    if(!toolCalls.length){ log('🧩 Subagent xong: ' + text.slice(0,200), 'l-tool'); return text || '(subagent không trả về nội dung gì)'; }
+    const resultBlocks = [];
+    for(const tc of toolCalls){
+      const r = await executeTool(tc.name, tc.input);
+      resultBlocks.push({ type:'tool_result', tool_use_id: tc.id, content: String(r) });
+    }
+    messages.push({ role:'user', content: resultBlocks });
+  }
+  return '(subagent đạt giới hạn 8 bước, dừng lại)';
+}
+async function toolSkillUse(input){
+  const s = findSkillById(input.id);
+  if(!s) return 'LỖI: không tìm thấy kỹ năng "' + input.id + '". Danh sách kỹ năng khả dụng:\n' + skillCatalogText();
+  return '--- Kỹ năng "' + s.id + '" (' + s.description + ') ---\n' + s.content;
+}
+async function toolMemoryWrite(input){
+  const text = (input && input.text || '').trim();
+  if(!text) return 'LỖI: thiếu "text" cho memory_write.';
+  addMemoryNote(text);
+  try{ renderMemoryList(); }catch(e){}
+  return '✅ Đã lưu vào bộ nhớ dài hạn của dự án (sẽ tự động có mặt ở các phiên làm việc sau).';
+}
+async function toolSkillWrite(input){
+  const id = ((input && input.id) || '').trim().toLowerCase().replace(/\s+/g,'-');
+  if(!id) return 'LỖI: thiếu "id" cho skill_write.';
+  if(BUILTIN_SKILLS.some(s=>s.id===id)) return 'LỖI: id "' + id + '" trùng với 1 skill built-in có sẵn — hãy chọn id khác cho skill tự tạo (vd thêm hậu tố "-custom" hoặc tên gợi nhớ khác).';
+  const content = ((input && input.content) || '').trim();
+  if(!content) return 'LỖI: thiếu "content" cho skill_write.';
+  const list = loadCustomSkills();
+  const idx = list.findIndex(s=>s.id===id);
+  const description = ((input && input.description) || '').trim() || (idx>=0 ? list[idx].description : 'Skill agent tự tạo trong quá trình làm việc.');
+  if(idx>=0){
+    list[idx] = { ...list[idx], description, content, updatedAt: Date.now() };
+  } else {
+    if(list.length>=60) return 'LỖI: đã đạt giới hạn 60 skill tự tạo trên máy này — hãy xoá bớt skill cũ trong phần Cấu hình trước khi thêm mới.';
+    list.push({ id, icon:'✨', keywords:[], description, content, createdAt: Date.now() });
+  }
+  saveCustomSkillsList(list);
+  try{ renderSkillAgentTags(); }catch(e){}
+  return (idx>=0 ? '✅ Đã CẬP NHẬT' : '✅ Đã TẠO MỚI') + ' skill tự tạo "' + id + '". Từ giờ (kể cả các phiên sau) có thể gọi skill_use với id="' + id + '" để tải lại.';
+}
+async function loadClaudeMd(){
+  if(state.claudeMdTried) return;
+  state.claudeMdTried = true;
+  try{
+    if(!state.tree) await loadTree();
+    if(state.tree.find(t=>t.path==='CLAUDE.md')) state.claudeMd = await fetchFileText('CLAUDE.md');
+  }catch(e){ /* không có CLAUDE.md — bỏ qua */ }
+}
+
+// ==================== SKILLS / AGENTS / COMMANDS (mở rộng năng lực agent) ====================
+// Lấy cảm hứng từ mô hình "Skills + Subagents + Slash Commands" của Claude Code / hệ sinh thái ECC:
+// - Skill: 1 gói kiến thức/quy trình chuyên biệt, agent chỉ tải nội dung đầy đủ khi thật sự cần (đỡ tốn ngữ cảnh).
+// - Agent (subagent): 1 "nhân cách" chuyên biệt (system prompt riêng) mà tool "task" có thể giao việc.
+// - Command: mẫu lệnh soạn sẵn, bấm 1 phát điền vào ô chat cho nhanh.
+const CUSTOM_SKILLS_KEY = 'ccc_v3_custom_skills';
+function loadCustomSkills(){ try{ return JSON.parse(localStorage.getItem(CUSTOM_SKILLS_KEY) || '[]'); }catch(e){ return []; } }
+function saveCustomSkillsList(list){ try{ localStorage.setItem(CUSTOM_SKILLS_KEY, JSON.stringify(list)); }catch(e){ log('Không lưu được skill riêng (bộ nhớ trình duyệt đầy).', 'l-error'); } }
+
+// ==================== BỘ NHỚ DÀI HẠN CỦA DỰ ÁN (xuyên phiên, per owner/repo) ====================
+// Lấy cảm hứng từ "closed learning loop" của hermes-agent: agent tự ghi chú (memory_write) những
+// điều đáng nhớ lâu dài, và các ghi chú này tự động được đưa vào system prompt ở MỌI phiên sau,
+// khác với CLAUDE.md (file trong repo, agent không tự sửa) hay session (chỉ 1 phiên gần nhất).
+function memoryKey(){ return 'ccc_v4_memory::' + (settings.owner||'') + '/' + (settings.repo||''); }
+function loadMemoryNotes(){ try{ return JSON.parse(localStorage.getItem(memoryKey()) || '[]'); }catch(e){ return []; } }
+function saveMemoryNotes(list){ try{ localStorage.setItem(memoryKey(), JSON.stringify(list)); }catch(e){ log('Không lưu được bộ nhớ dự án (bộ nhớ trình duyệt đầy).', 'l-error'); } }
+function addMemoryNote(text){
+  const list = loadMemoryNotes();
+  list.push({ id:'m'+Date.now()+Math.random().toString(36).slice(2,7), text:String(text).slice(0,600), ts:Date.now() });
+  while(list.length>150) list.shift(); // giữ tối đa 150 ghi chú gần nhất/repo, tránh phình vô hạn
+  saveMemoryNotes(list);
+}
+function memoryText(){
+  const list = loadMemoryNotes();
+  if(!list.length) return '';
+  // đưa các ghi chú GẦN ĐÂY NHẤT vào system prompt trước, giới hạn tổng ~5000 ký tự
+  const out = []; let total = 0;
+  for(let i=list.length-1; i>=0; i--){
+    const line = '- ' + list[i].text;
+    if(total + line.length > 5000) break;
+    out.unshift(line); total += line.length;
+  }
+  return out.join('\n');
+}
+function renderMemoryList(){
+  const el = $('memoryList'); if(!el) return;
+  const list = loadMemoryNotes();
+  el.innerHTML = list.length ? list.slice().reverse().map(n =>
+    '<div class="custom-skill-row"><span>📌 ' + escapeHtml(n.text) + '</span><button type="button" class="rmBtn" data-id="' + n.id + '" title="Xoá" aria-label="Xoá ghi chú bộ nhớ">✕</button></div>'
+  ).join('') : '<p class="hint" style="margin:0 0 8px;">Chưa có ghi chú nào — agent sẽ tự ghi qua memory_write khi phát hiện điều gì đáng nhớ lâu dài.</p>';
+  el.querySelectorAll('.rmBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      saveMemoryNotes(loadMemoryNotes().filter(n=>n.id!==btn.dataset.id));
+      renderMemoryList();
+    });
+  });
+}
+const addMemoryBtnEl = document.getElementById('addMemoryBtn');
+if(addMemoryBtnEl) addMemoryBtnEl.addEventListener('click', ()=>{
+  const t = $('mem_text').value.trim();
+  if(!t){ log('Nhập nội dung ghi chú trước.', 'l-error'); return; }
+  addMemoryNote(t);
+  $('mem_text').value = '';
+  renderMemoryList();
+  log('Đã thêm ghi chú vào bộ nhớ dự án.', 'l-success');
+});
+
+const BUILTIN_SKILLS = [
+  { id:'coding-standards', icon:'🧱', keywords:['coding','style','convention','clean code','đặt tên','format'],
+    description:'Chuẩn code sạch: đặt tên, tách hàm, tránh trùng lặp.',
+    content:'- Đặt tên biến/hàm rõ nghĩa, nhất quán 1 ngôn ngữ (ưu tiên tiếng Anh cho code, tiếng Việt cho nội dung hiển thị).\n- Hàm nên làm 1 việc, ngắn gọn; tách hàm khi logic quá dài hoặc lặp lại >2 lần (DRY).\n- Tránh "magic number/string" — đặt thành hằng số có tên.\n- Xử lý lỗi tường minh (try/catch có thông báo rõ), không nuốt lỗi âm thầm.\n- Giữ format nhất quán với phần code xung quanh trong cùng file (thụt lề, dấu chấm phẩy, quote).\n- Comment giải thích "TẠI SAO" chứ không lặp lại "làm gì" (code đã tự nói lên điều đó).' },
+
+  { id:'api-design', icon:'🔌', keywords:['api','endpoint','rest','fetch','json'],
+    description:'Thiết kế API/tích hợp dữ liệu rõ ràng, dễ mở rộng.',
+    content:'- Đặt tên endpoint/hàm theo danh từ số nhiều cho tài nguyên, động từ cho hành động.\n- Luôn xử lý trạng thái lỗi (HTTP không phải 2xx) và trạng thái rỗng/loading riêng biệt.\n- Chuẩn hoá format dữ liệu (JSON) nhất quán giữa các phần của trang.\n- Ẩn khoá bí mật khỏi code phía client khi có thể; nếu bắt buộc lộ ra client, cảnh báo rõ cho người dùng.\n- Thêm timeout/giới hạn để tránh treo UI khi API chậm hoặc lỗi.' },
+
+  { id:'security-scan', icon:'🔒', keywords:['security','bảo mật','xss','injection','secret','lỗ hổng','an toàn'],
+    description:'Rà soát bảo mật cơ bản cho web: XSS, rò rỉ khoá, input không kiểm soát.',
+    content:'- Luôn escape dữ liệu người dùng trước khi chèn vào HTML (tránh XSS) — không dùng innerHTML với dữ liệu chưa lọc.\n- Không hardcode API key/secret trong code commit lên repo công khai.\n- Validate & giới hạn input (độ dài, kiểu dữ liệu) ở cả client lẫn nơi xử lý dữ liệu.\n- Với link/form gửi đi nơi khác, dùng rel="noopener noreferrer" cho target=_blank.\n- Với nội dung y tế: không được nhúng script từ nguồn không tin cậy, cẩn trọng với plugin/widget bên thứ 3.\n- Kiểm tra CORS/HTTPS khi fetch tài nguyên ngoài.' },
+
+  { id:'testing-e2e', icon:'🧪', keywords:['test','testing','kiểm thử','qa','e2e','tdd'],
+    description:'Kiểm chứng logic TRƯỚC khi ghi file (kiểu TDD) + checklist QA trước khi coi là xong.',
+    content:'- Nguyên tắc: "chưa thấy nó SAI thì chưa chắc bạn đang kiểm tra đúng thứ". Với logic/hàm/regex/thuật toán không chắc 100%, viết trước 1 đoạn run_javascript gọi hàm đó với vài input biên (rỗng, null/undefined, số âm, mảng rỗng) và console.log kết quả — chạy thử, quan sát nó có sai như dự đoán không, rồi mới sửa code thật và chạy lại đoạn đó để xác nhận đã đúng. Đây là bản rút gọn của TDD (đỏ→xanh) áp dụng được trong trình duyệt.\n- Sau khi sửa file thật, đọc lại đúng đoạn vừa sửa để tự kiểm tra logic & không phá vỡ phần khác dùng chung biến/hàm.\n- Với UI, kiểm tra responsive (mobile/desktop) và cả 3 trạng thái loading/error/empty, không chỉ trạng thái "happy path".\n- Trong tóm tắt cuối câu trả lời, nói rõ: đã kiểm chứng bằng cách nào (vd "đã chạy run_javascript với input rỗng"), và rủi ro nào CHƯA kiểm chứng được (vì agent không chạy được trình duyệt thật) — đừng nói "đã hoàn tất, không còn lỗi" nếu chưa thực sự kiểm chứng.' },
+
+  { id:'code-review', icon:'🔍', keywords:['review','rà soát','đánh giá code','pull request','pre-commit'],
+    description:'Checklist rà soát trước khi push — nguyên tắc: không tự chấm điểm bài của chính mình.',
+    content:'- Nguyên tắc gốc: agent tự sửa code thì không nên tự đánh giá code đó là "ổn" mà không soát lại 1 lượt riêng, tách rời với lúc đang viết — vì góc nhìn lúc vừa viết xong dễ bỏ sót đúng chỗ mình vừa quyết định. Nếu việc đủ lớn/quan trọng, cân nhắc giao lại cho subagent "code-reviewer" (tool task) soát độc lập trước khi coi là xong, thay vì tự soát bằng chính luồng vừa sửa.\n- Đúng yêu cầu chưa? Có sót trường hợp nào người dùng mô tả không?\n- Có đoạn code trùng lặp/copy-paste có thể gộp lại không (DRY)?\n- Đặt tên có rõ ràng, dễ hiểu cho người đọc sau này không?\n- Có side-effect ngoài ý muốn (ảnh hưởng phần khác của trang, biến/hàm dùng chung) không?\n- Hiệu năng: có vòng lặp/DOM query thừa, không tối ưu không?\n- Bảo mật: có input người dùng chưa được lọc/escape (nguy cơ XSS), khoá/secret hardcode không?\n- Chỉ coi là "xong" khi cả 6 mục trên đã được rà, không phải khi code chạy không báo lỗi.' },
+
+  { id:'accessibility', icon:'♿', keywords:['accessibility','a11y','khiếm thị','wcag','đọc màn hình'],
+    description:'Đảm bảo trang dùng được cho người khuyết tật, chuẩn WCAG cơ bản.',
+    content:'- Ảnh phải có alt mô tả nội dung (alt="" nếu chỉ trang trí).\n- Độ tương phản chữ/nền đủ rõ (đặc biệt chữ nhỏ, chữ trên nền màu).\n- Các phần tử tương tác (nút, link) phải dùng đúng thẻ (button/a), có thể focus bằng bàn phím.\n- Form phải có <label> gắn với input tương ứng.\n- Heading (h1-h6) phải theo đúng thứ bậc, không nhảy cấp hoặc dùng để tạo hiệu ứng chữ to.\n- Với nội dung y khoa, ưu tiên câu ngắn, thuật ngữ khó nên có giải thích kèm theo.' },
+
+  { id:'performance', icon:'⚡', keywords:['performance','hiệu năng','tối ưu tốc độ','chậm','load'],
+    description:'Tối ưu tốc độ tải & mượt của trang.',
+    content:'- Ảnh: dùng kích thước phù hợp, thêm loading="lazy" cho ảnh dưới màn hình đầu.\n- Tránh chèn nhiều script/CSS chặn render ở đầu <head> nếu không cần thiết ngay.\n- Gộp/giảm số lần thao tác DOM lặp lại trong vòng lặp.\n- Debounce/throttle cho sự kiện bắn liên tục (scroll, resize, input tìm kiếm).\n- Kiểm tra CSS animation không gây "layout thrashing" (đổi kích thước liên tục).' },
+
+  { id:'database-patterns', icon:'🗄️', keywords:['database','sql','postgres','json data','dữ liệu'],
+    description:'Quy tắc khi làm việc với dữ liệu dạng file JSON/cấu trúc trong repo.',
+    content:'- Trước khi sửa schema dữ liệu (thêm/xoá field), kiểm tra toàn bộ nơi đang đọc field đó (grep) để tránh gãy chỗ khác.\n- Giữ khoá (key) nhất quán về kiểu dữ liệu và định dạng (vd ngày tháng luôn 1 format).\n- Khi thêm dữ liệu mới, đối chiếu với cấu trúc bản ghi hiện có để không lệch format.\n- Sao lưu ý tưởng: ưu tiên thêm field mới thay vì đổi tên field cũ (đỡ phải sửa nhiều nơi).' },
+
+  { id:'refactor', icon:'🧹', keywords:['refactor','tái cấu trúc','dọn code','clean up'],
+    description:'Tái cấu trúc code an toàn, không đổi hành vi.',
+    content:'- Refactor và thêm tính năng mới nên tách thành các bước riêng, không trộn lẫn trong 1 lần sửa nếu việc lớn.\n- Sau mỗi bước refactor nhỏ, đọc lại để đảm bảo hành vi không đổi.\n- Ưu tiên multi_edit khi tái cấu trúc nhiều chỗ trong cùng 1 file để có tính nguyên tử (atomic).\n- Xoá code chết (không còn dùng) thay vì comment lại "để đó".' },
+
+  { id:'simplify-code', icon:'🧽', keywords:['simplify','đơn giản hoá','dọn dẹp','cleanup','tối giản'],
+    description:'Dọn code vừa sửa xong theo 4 góc nhìn: trùng lặp, chất lượng, hiệu năng, độ phức tạp thừa.',
+    content:'- Đây là bước DỌN sau khi code đã CHẠY ĐÚNG, không phải lúc đi tìm bug — nếu nghi có bug thật, chuyển sang skill "debugging" trước.\n- Soát lại đoạn vừa sửa/thêm theo 4 góc nhìn tách biệt (làm tuần tự trong đầu, đừng gộp lẫn):\n  1) Trùng lặp: có đoạn code lặp lại ≥2 lần có thể gộp thành 1 hàm/biến dùng chung không?\n  2) Chất lượng: tên biến/hàm có còn phản ánh đúng vai trò sau khi sửa không, comment có bị lạc hậu so với code mới không?\n  3) Hiệu năng: có phép tính/DOM query lặp lại không cần thiết mới thêm vào không?\n  4) Độ phức tạp thừa (altitude): có logic/điều kiện/tham số nào thêm vào "phòng khi cần" nhưng thực ra chưa ai dùng tới — nên bỏ bớt cho gọn?\n- CHỈ sửa những gì thấy rõ đáng sửa; không đổi hành vi đang chạy đúng chỉ để "cho đẹp". Không refactor lan sang phần code không liên quan tới thay đổi vừa làm.' },
+
+  { id:'spike', icon:'🧪', keywords:['spike','thử nghiệm','prototype','proof of concept','thăm dò'],
+    description:'Thử nhanh 1 ý tưởng/so sánh cách làm trước khi bắt tay code chính thức, kết quả có thể vứt bỏ.',
+    content:'- Dùng khi người dùng muốn "thử xem A có chạy được không", "so sánh cách A và B trước khi chọn", hoặc bản thân agent chưa chắc 1 cách tiếp cận có khả thi không — TRƯỚC khi sửa file chính thức của repo.\n- Không dùng cho việc đã rõ cách làm (làm luôn) hoặc việc chạm vào code production quan trọng (nên lập kế hoạch cẩn thận thay vì thử nhanh).\n- Cách làm: viết đoạn logic cần thử bằng run_javascript (sandbox, không đụng file thật) để kiểm chứng nhanh — KHÔNG cần viết vào file repo ở bước này.\n- Sau khi có kết quả, báo lại ngắn gọn: thử được gì, kết luận (khả thi/không khả thi/nên chọn cách nào), rồi mới hỏi hoặc bắt tay sửa file thật theo skill phù hợp (vd "coding-standards", "refactor").' },
+
+  { id:'docs-writing', icon:'📝', keywords:['docs','tài liệu','readme','hướng dẫn'],
+    description:'Viết tài liệu/README rõ ràng, đúng trọng tâm.',
+    content:'- Mở đầu bằng 1-2 câu nói trang/tính năng này LÀM GÌ, cho AI.\n- Ưu tiên gạch đầu dòng, ví dụ cụ thể hơn đoạn văn dài.\n- Ghi rõ các bước cài đặt/cấu hình cần thiết, theo đúng thứ tự thực hiện.\n- Cập nhật tài liệu ngay khi thay đổi hành vi liên quan, tránh để tài liệu lạc hậu.' },
+
+  { id:'git-commit', icon:'📦', keywords:['commit','git','push','changelog'],
+    description:'Viết message commit/push rõ ràng theo chuẩn Conventional Commits.',
+    content:'- Format gợi ý: "loại: mô tả ngắn gọn" — loại gồm feat/fix/refactor/docs/style/perf/chore.\n- Mô tả ở dạng mệnh lệnh, thì hiện tại: "feat: thêm mục FAQ" thay vì "đã thêm mục FAQ".\n- 1 commit nên gói gọn 1 thay đổi có ý nghĩa, tránh gộp nhiều việc không liên quan.\n- Nếu sửa nhiều file cho cùng 1 tính năng, mô tả tổng quan tính năng đó trong message.' },
+
+  { id:'seo-content', icon:'🌐', keywords:['seo','tìm kiếm','meta','google'],
+    description:'Tối ưu SEO on-page cho nội dung tiếng Việt.',
+    content:'- Mỗi trang nên có <title> và <meta name="description"> riêng, chứa từ khoá chính, không trùng lặp giữa các trang.\n- Heading h1 duy nhất mỗi trang, chứa từ khoá chính của trang đó.\n- Ảnh cần alt text có ý nghĩa, không nhồi nhét từ khoá.\n- URL/slug nên ngắn gọn, có dấu gạch ngang, không dấu tiếng Việt.\n- Nội dung y khoa nên trích nguồn tham khảo uy tín khi nêu số liệu/khuyến cáo cụ thể.' },
+
+  { id:'vi-content-style', icon:'🇻🇳', keywords:['tiếng việt','văn phong','chính tả','dấu'],
+    description:'Chuẩn văn phong & chính tả tiếng Việt cho nội dung hiển thị.',
+    content:'- Giữ nhất quán cách gõ dấu (kiểu cũ/mới, vd "hòa" vs "hoà") theo văn phong sẵn có của trang.\n- Dùng dấu câu tiếng Việt chuẩn, khoảng trắng đúng sau dấu chấm/phẩy.\n- Số/ngày tháng theo định dạng Việt Nam (dd/mm/yyyy) trừ khi trang đang dùng chuẩn khác.\n- Thuật ngữ y khoa nên có phần giải thích dễ hiểu đi kèm cho người đọc phổ thông.' },
+
+  { id:'healthcare-content-accuracy', icon:'🩺', keywords:['y khoa','y tế','sức khoẻ','bệnh','thuốc','điều trị','chẩn đoán'],
+    description:'Nguyên tắc an toàn khi biên tập nội dung y khoa/sức khoẻ.',
+    content:'- KHÔNG khẳng định chẩn đoán/kết luận y khoa tuyệt đối — dùng ngôn ngữ thận trọng ("có thể", "nên tham khảo bác sĩ").\n- Số liệu, liều lượng thuốc, phác đồ điều trị cần trích nguồn hoặc để nguyên như nội dung gốc đã có sẵn trong repo, không tự bịa thêm chi tiết y khoa mới.\n- Luôn cân nhắc thêm/giữ khuyến cáo "tham khảo ý kiến bác sĩ/chuyên gia y tế trước khi áp dụng" ở nội dung liên quan điều trị.\n- Tránh ngôn ngữ gây hoang mang hoặc quảng cáo quá mức về hiệu quả điều trị.\n- Với thay đổi nội dung y khoa quan trọng, nên nêu rõ trong tóm tắt cuối câu trả lời để người quản trị tự kiểm tra lại trước khi push.' },
+
+  { id:'design-system', icon:'🎨', keywords:['design','giao diện','ui','màu sắc','css'],
+    description:'Giữ giao diện nhất quán khi thêm/sửa UI.',
+    content:'- Ưu tiên tái sử dụng biến CSS (--accent, --panel, v.v.) đã có thay vì tạo màu mới tuỳ tiện.\n- Giữ khoảng cách (spacing), bo góc (border-radius), cỡ chữ nhất quán với các phần tử tương tự đã có.\n- Component mới nên theo đúng "ngôn ngữ thiết kế" hiện tại của trang (font, shadow, hover effect).\n- Kiểm tra tương phản & trạng thái hover/focus cho phần tử tương tác mới.' },
+
+  { id:'responsive-design', icon:'📱', keywords:['responsive','mobile','di động','màn hình nhỏ'],
+    description:'Đảm bảo giao diện hoạt động tốt trên di động.',
+    content:'- Ưu tiên đơn vị linh hoạt (%, rem, flex/grid) thay vì px cố định cho layout chính.\n- Kiểm tra phần tử mới có bị tràn/che khuất trên màn hình hẹp (dùng flex-wrap, overflow phù hợp).\n- Cỡ chữ tối thiểu đủ đọc trên mobile (thường ≥14px cho nội dung chính).\n- Vùng bấm (nút/link) đủ lớn để bấm bằng ngón tay (tối thiểu ~40px).' },
+
+  { id:'debugging', icon:'🐞', keywords:['debug','lỗi','bug','fix','error'],
+    description:'Quy trình 4 pha tìm nguyên nhân gốc trước khi sửa — không vá mò.',
+    content:'- LUẬT SẮT: KHÔNG đề xuất cách sửa nào trước khi xác định xong nguyên nhân gốc. Vá triệu chứng (symptom fix) mà chưa hiểu gốc rễ = coi như thất bại.\n- Pha 1 — Hiểu triệu chứng: đọc kỹ nguyên văn thông báo lỗi/mô tả người dùng, xác định file/dòng liên quan bằng grep/read_file. Nếu mô tả còn mơ hồ (thiếu thông báo lỗi console cụ thể), hỏi lại thay vì đoán.\n- Pha 2 — Tạo "vòng lặp kiểm chứng": tìm hoặc dựng 1 cách tái hiện lỗi nhanh, xác định (vd 1 đoạn run_javascript in ra giá trị sai, hoặc 1 chuỗi thao tác cụ thể) — có cái này thì mới biết sửa xong là ĐÚNG hay chỉ là hết run may.\n- Pha 3 — Truy nguyên nhân gốc: trace luồng dữ liệu/logic (biến này tới từ đâu, hàm nào gọi hàm nào) tới khi chỉ ra được ĐÚNG dòng/điều kiện gây lỗi, không chỉ là nơi lỗi "phát nổ" ra.\n- Pha 4 — Sửa & xác nhận: sửa đúng nguyên nhân gốc bằng edit_file/multi_edit, dùng lại vòng lặp kiểm chứng ở Pha 2 để xác nhận hết lỗi, rồi đọc lại đoạn code xung quanh để chắc không phá vỡ chỗ khác dùng chung biến/hàm đó.\n- Nếu lỗi có thể lặp lại (dạng bug hay gặp trong repo này), cân nhắc memory_write ghi lại nguyên nhân + cách nhận diện để lần sau chẩn đoán nhanh hơn.' },
+
+  { id:'deep-research', icon:'🔬', keywords:['research','tìm hiểu','khảo sát','phân tích kỹ'],
+    description:'Quy trình khám phá repo kỹ trước khi thực hiện việc lớn/phức tạp.',
+    content:'- Với yêu cầu chạm nhiều file, list_files/glob trước để nắm cấu trúc tổng thể.\n- grep các từ khoá liên quan để tìm hết những nơi cần sửa, tránh sửa sót.\n- Với việc thăm dò tốn nhiều bước đọc file, cân nhắc giao cho subagent (tool task) để không làm phình hội thoại chính.\n- Lập todo_write trước khi bắt tay vào việc nhiều bước, để người dùng theo dõi tiến độ.' },
+
+  { id:'build-fix', icon:'🛠️', keywords:['build','deploy','lỗi build','ci'],
+    description:'Xử lý lỗi build/hiển thị của trang tĩnh HTML/JS/CSS.',
+    content:'- Kiểm tra lỗi cú pháp (thẻ HTML chưa đóng, dấu ngoặc JS/CSS lệch) bằng grep hoặc đọc kỹ đoạn liên quan.\n- Với lỗi JS runtime, xác định đúng biến/hàm bị undefined hoặc gọi sai thứ tự (script load trước khi DOM sẵn sàng...).\n- Sửa xong, đọc lại toàn bộ đoạn đã sửa 1 lượt để chắc chắn không còn lỗi cú pháp.\n- Nếu lỗi mơ hồ, yêu cầu người dùng cung cấp thông báo lỗi cụ thể (console) thay vì đoán.' },
+
+  { id:'dashboard-builder', icon:'📊', keywords:['dashboard','biểu đồ','thống kê','bảng dữ liệu'],
+    description:'Xây bảng/biểu đồ hiển thị dữ liệu rõ ràng, dễ đọc.',
+    content:'- Ưu tiên bảng (table) cho dữ liệu dạng danh sách nhiều thuộc tính, biểu đồ cho xu hướng/so sánh số lượng.\n- Luôn có tiêu đề trục/cột rõ ràng, đơn vị đo cụ thể.\n- Xử lý trường hợp dữ liệu rỗng (hiển thị thông báo thay vì bảng trống khó hiểu).\n- Giữ màu sắc nhất quán với design system hiện có của trang.' },
+
+  { id:'deep-research-citation', icon:'🔎', keywords:['research','nguồn','trích dẫn','tra cứu','citation','tài liệu tham khảo'],
+    description:'Nghiên cứu ngoài (web_fetch) có kiểm chứng nguồn & trích dẫn rõ ràng — lấy cảm hứng từ các extension tìm kiếm/nghiên cứu sâu.',
+    content:'- Trước khi khẳng định 1 số liệu/thông tin y khoa lấy từ nguồn ngoài, dùng web_fetch để đọc trực tiếp trang nguồn, không suy đoán.\n- Ưu tiên nguồn uy tín (cơ quan y tế, tạp chí khoa học, tổ chức chính thống) hơn blog/diễn đàn.\n- Khi trích dẫn vào nội dung trang, ghi rõ nguồn (tên + link) để người quản trị tự kiểm chứng lại, không bịa nguồn.\n- Nếu web_fetch lỗi (CORS/timeout) với nguồn quan trọng, báo rõ cho người dùng thay vì tự bịa nội dung thay thế.\n- Với việc cần tra nhiều nguồn, cân nhắc giao cho subagent "researcher" qua tool task để không phình hội thoại chính.' },
+
+  { id:'structured-data-seo', icon:'🏷️', keywords:['schema','json-ld','structured data','rich snippet','seo nâng cao'],
+    description:'Thêm dữ liệu có cấu trúc (schema.org/JSON-LD) để tăng khả năng hiển thị rich snippet trên Google.',
+    content:'- Với bài viết y khoa, cân nhắc thêm JSON-LD kiểu Article/MedicalWebPage (nếu phù hợp) trong thẻ script type="application/ld+json".\n- Chỉ điền dữ liệu (tên, ngày, tác giả...) khớp đúng nội dung thật đang có trên trang, không bịa thông tin.\n- Kiểm tra JSON hợp lệ về cú pháp (đóng mở ngoặc, dấu phẩy) trước khi ghi file.\n- Không lặp lại nhiều schema mâu thuẫn nhau trên cùng 1 trang.' },
+
+  { id:'content-freshness', icon:'🗓️', keywords:['cập nhật','ngày đăng','review lại','nội dung cũ','freshness'],
+    description:'Theo dõi & gắn nhãn độ mới của nội dung y khoa — nhắc rà soát định kỳ, lấy cảm hứng từ cơ chế "nhắc tự ghi nhớ" của agent tự học.',
+    content:'- Khi sửa nội dung y khoa quan trọng, kiểm tra trang có hiển thị ngày cập nhật/ngày review không; nếu có, cập nhật ngày đó.\n- Nếu phát hiện nội dung có vẻ đã cũ (số liệu/khuyến cáo lỗi thời) nhưng không được yêu cầu sửa nội dung đó, dùng memory_write để ghi chú lại cho lần làm việc sau, đừng tự ý sửa nội dung y khoa ngoài phạm vi được giao.\n- Ưu tiên giữ nguyên văn phong/số liệu gốc nếu không có nguồn mới đáng tin để thay thế.' },
+
+  { id:'error-monitoring', icon:'🩻', keywords:['console','lỗi runtime','debug nâng cao','monitoring','log lỗi'],
+    description:'Chẩn đoán lỗi JS/console một cách có hệ thống trước khi sửa, tránh vá mò.',
+    content:'- Yêu cầu người dùng dán nguyên văn thông báo lỗi console (tên lỗi, file:dòng) nếu chưa có, thay vì đoán.\n- Từ thông báo lỗi, xác định đúng file/hàm bằng grep tên biến/hàm liên quan trước khi sửa.\n- Phân biệt lỗi cú pháp (SyntaxError — thường do thiếu đóng ngoặc/thẻ) với lỗi runtime (TypeError/ReferenceError — thường do gọi trước khi định nghĩa, hoặc DOM chưa sẵn sàng).\n- Sau khi sửa, dùng memory_write ghi lại nguyên nhân gốc nếu đây là dạng lỗi có thể lặp lại, để lần sau chẩn đoán nhanh hơn.' }
+];
+function getAllSkills(){ return [...BUILTIN_SKILLS, ...loadCustomSkills()]; }
+function findSkillById(id){ return getAllSkills().find(s=>s.id===id); }
+function skillCatalogText(){
+  return getAllSkills().map(s=> '- ' + s.id + ': ' + s.description).join('\n');
+}
+
+// ---- Agents (subagent chuyên biệt cho tool "task") ----
+const AGENTS = [
+  { id:'code-reviewer', icon:'🔍', name:'Rà soát code (code-reviewer)',
+    description:'Chuyên rà soát chất lượng code, tìm bug/rủi ro, KHÔNG tự sửa trừ khi được yêu cầu.',
+    system:'Bạn là subagent "code-reviewer" — chuyên gia rà soát code. Nhiệm vụ: đọc kỹ các file được giao, đánh giá theo checklist: đúng yêu cầu, trùng lặp code, đặt tên, side-effect, hiệu năng, bảo mật (input chưa lọc, XSS, lộ khoá). Liệt kê vấn đề tìm được kèm vị trí (file:dòng) và mức độ nghiêm trọng. CHỈ đề xuất sửa, KHÔNG tự ý edit_file/write_file trừ khi prompt yêu cầu rõ ràng "sửa luôn".' },
+  { id:'architect', icon:'🏗️', name:'Kiến trúc sư (architect)',
+    description:'Lập kế hoạch cấu trúc file/tính năng lớn trước khi bắt tay code.',
+    system:'Bạn là subagent "architect" — chuyên lập kế hoạch kỹ thuật. Nhiệm vụ: khám phá repo (list_files/glob/read_file các phần liên quan), rồi đề xuất kế hoạch từng bước cụ thể (file nào cần tạo/sửa, thứ tự thực hiện, rủi ro cần lưu ý) để agent chính hoặc người dùng làm theo. KHÔNG cần tự thực thi việc sửa file trừ khi được yêu cầu rõ.' },
+  { id:'build-fixer', icon:'🛠️', name:'Sửa lỗi build (build-fixer)',
+    description:'Tập trung tìm & sửa dứt điểm 1 lỗi build/runtime cụ thể.',
+    system:'Bạn là subagent "build-fixer" — chuyên sửa lỗi build/runtime. Đọc kỹ mô tả lỗi, xác định đúng vị trí gây lỗi bằng grep/read_file, sửa bằng edit_file/multi_edit, rồi đọc lại đoạn vừa sửa để tự kiểm chứng cú pháp/logic không còn lỗi. Tóm tắt rõ nguyên nhân gốc và cách đã sửa.' },
+  { id:'security-auditor', icon:'🔒', name:'Kiểm toán bảo mật (security-auditor)',
+    description:'Quét lỗ hổng bảo mật cơ bản trong code/nội dung được giao.',
+    system:'Bạn là subagent "security-auditor". Rà soát các file được giao để tìm: input người dùng chưa escape (nguy cơ XSS), khoá/secret bị hardcode, link ra ngoài thiếu rel="noopener", dùng innerHTML với dữ liệu không tin cậy, thiếu validate input. Liệt kê từng vấn đề kèm vị trí và mức rủi ro, đề xuất cách khắc phục. Chỉ tự sửa nếu prompt yêu cầu rõ.' },
+  { id:'healthcare-reviewer', icon:'🩺', name:'Rà soát nội dung y khoa (healthcare-reviewer)',
+    description:'Kiểm tra nội dung y tế/sức khoẻ có an toàn, thận trọng, đúng chuẩn không.',
+    system:'Bạn là subagent "healthcare-reviewer" — chuyên rà soát nội dung y khoa cho 1 trang web y học. Kiểm tra: có khẳng định chẩn đoán/điều trị tuyệt đối không (cần ngôn ngữ thận trọng), có khuyến cáo tham khảo bác sĩ ở chỗ cần thiết không, số liệu/liều lượng có được nêu quá chắc chắn dù không có nguồn không, ngôn từ có gây hoang mang hoặc quảng cáo quá mức không. Liệt kê vấn đề kèm vị trí, đề xuất cách diễn đạt an toàn hơn. KHÔNG tự bịa thêm thông tin y khoa mới.' },
+  { id:'a11y-architect', icon:'♿', name:'Chuyên gia accessibility (a11y-architect)',
+    description:'Kiểm tra & đề xuất sửa khả năng tiếp cận (WCAG) cho phần giao diện.',
+    system:'Bạn là subagent "a11y-architect". Rà soát phần HTML/CSS được giao theo tiêu chí: alt cho ảnh, tương phản màu, thứ bậc heading, label cho form, khả năng điều hướng bằng bàn phím, kích thước vùng bấm. Liệt kê vấn đề kèm vị trí, đề xuất sửa cụ thể (có thể tự sửa bằng edit_file nếu prompt yêu cầu).' },
+  { id:'performance-optimizer', icon:'⚡', name:'Tối ưu hiệu năng (performance-optimizer)',
+    description:'Tìm điểm nghẽn hiệu năng và đề xuất/áp dụng tối ưu.',
+    system:'Bạn là subagent "performance-optimizer". Rà soát các file được giao để tìm: ảnh không lazy-load/kích thước quá lớn, script chặn render không cần thiết, DOM query/loop lặp lại thừa, animation gây giật. Đề xuất tối ưu cụ thể kèm vị trí; tự sửa bằng edit_file/multi_edit nếu prompt yêu cầu.' },
+  { id:'doc-writer', icon:'📝', name:'Viết tài liệu (doc-writer)',
+    description:'Viết/cập nhật tài liệu, mô tả, README theo đúng nội dung code hiện có.',
+    system:'Bạn là subagent "doc-writer". Đọc kỹ code/nội dung được giao rồi viết tài liệu ngắn gọn, đúng trọng tâm, gạch đầu dòng rõ ràng, khớp với hành vi thực tế của code (không bịa tính năng chưa có). Nếu được giao ghi vào file, dùng write_file/edit_file.' },
+  { id:'test-writer', icon:'🧪', name:'Viết test (test-writer)',
+    description:'Đề xuất/viết các trường hợp kiểm thử cho tính năng vừa thêm/sửa.',
+    system:'Bạn là subagent "test-writer". Với tính năng/đoạn code được giao, liệt kê các trường hợp kiểm thử cần có (bình thường, biên, lỗi, rỗng/null). Nếu repo có framework test, viết test case theo đúng khuôn mẫu hiện có (đọc file test tương tự trước bằng glob/read_file). Nếu không có framework test, mô tả rõ các bước kiểm thử thủ công cần thực hiện.' },
+  { id:'seo-specialist', icon:'🌐', name:'Chuyên gia SEO (seo-specialist)',
+    description:'Tối ưu SEO on-page cho trang/nội dung được giao.',
+    system:'Bạn là subagent "seo-specialist". Kiểm tra & đề xuất/tự sửa: title, meta description, heading h1 duy nhất, alt ảnh, cấu trúc URL, mật độ từ khoá tự nhiên (không nhồi nhét) cho phần nội dung tiếng Việt được giao. Tự sửa bằng edit_file nếu prompt yêu cầu.' },
+  { id:'researcher', icon:'🔎', name:'Nghiên cứu viên (researcher)',
+    description:'Tra cứu thông tin/nguồn bên ngoài (web_fetch) cho 1 chủ đề cụ thể, tổng hợp kèm trích nguồn rõ ràng.',
+    system:'Bạn là subagent "researcher" — chuyên tra cứu thông tin ngoài repo. Dùng web_fetch để đọc trực tiếp các nguồn liên quan tới chủ đề được giao (ưu tiên nguồn uy tín: cơ quan y tế, tạp chí khoa học, tổ chức chính thống). KHÔNG tự bịa số liệu/thông tin y khoa nếu không đọc được nguồn. Tổng hợp kết quả súc tích, MỖI thông tin quan trọng kèm nguồn (tên + link) để người dùng tự kiểm chứng. Nếu không tìm/tải được nguồn đáng tin, nói rõ điều đó thay vì đoán. KHÔNG tự ý edit_file/write_file trừ khi prompt yêu cầu rõ.' },
+  { id:'release-manager', icon:'📦', name:'Quản lý phát hành (release-manager)',
+    description:'Tổng hợp các thay đổi đang chờ (pending) thành tóm tắt/commit message/changelog rõ ràng trước khi push.',
+    system:'Bạn là subagent "release-manager". Nhiệm vụ: đọc danh sách file đã thay đổi trong phiên làm việc (agent chính cung cấp trong prompt), tóm tắt thành: (1) 1 commit message ngắn gọn theo chuẩn Conventional Commits, (2) danh sách gạch đầu dòng các thay đổi chính theo dạng changelog dễ hiểu cho người không rành kỹ thuật. KHÔNG tự ý sửa file, chỉ tổng hợp text.' },
+  { id:'memory-curator', icon:'🧠', name:'Người dọn bộ nhớ dự án (memory-curator)',
+    description:'Rà soát hội thoại + bộ nhớ dự án hiện có, dọn/gộp ghi chú trùng lặp hoặc lỗi thời, lưu lại điều quan trọng còn thiếu.',
+    system:'Bạn là subagent "memory-curator". Nhiệm vụ: đọc phần "Bộ nhớ dài hạn của dự án" trong system prompt và diễn biến gần đây của hội thoại (agent chính cung cấp), rồi: (1) dùng memory_write để lưu THÊM những quyết định/quy ước quan trọng vừa phát sinh mà bộ nhớ hiện chưa có (viết súc tích, mỗi ghi chú 1 ý), (2) nếu phát hiện 1 quy trình đáng tái sử dụng, cân nhắc dùng skill_write để lưu thành skill riêng. KHÔNG lưu thông tin nhạy cảm (khoá API, mật khẩu). Trả lời cuối cùng bằng bản tóm tắt ngắn đã lưu những gì.' }
+];
+function findAgentById(id){ return AGENTS.find(a=>a.id===id); }
+function agentCatalogText(){
+  return AGENTS.map(a=> '- ' + a.id + ': ' + a.description).join('\n');
+}
+
+// ---- Commands (mẫu lệnh soạn sẵn, hiện dạng chip trên ô nhập) ----
+const COMMANDS = [
+  { id:'code-review', icon:'🔍', label:'Review code',
+    template:'Hãy rà soát (code review) các phần code liên quan gần đây nhất trong repo: kiểm tra chất lượng, khả năng bảo trì, lỗi tiềm ẩn, bảo mật. Nếu việc rà soát cần đọc nhiều file, hãy giao cho subagent qua tool "task" với agent_type="code-reviewer".' },
+  { id:'fix-build', icon:'🛠️', label:'Sửa lỗi build',
+    template:'Trang đang bị lỗi hiển thị/chạy sai. Mô tả lỗi cụ thể (hoặc thông báo lỗi console):\n[dán lỗi/mô tả vào đây]\nHãy tìm nguyên nhân gốc và sửa. Có thể giao cho subagent "build-fixer" nếu cần đào sâu.' },
+  { id:'add-tests', icon:'🧪', label:'Viết test',
+    template:'Hãy đề xuất/viết các trường hợp kiểm thử cho tính năng vừa thêm gần đây nhất, bao gồm cả trường hợp biên. Có thể giao cho subagent "test-writer".' },
+  { id:'security-scan', icon:'🔒', label:'Rà soát bảo mật',
+    template:'Hãy rà soát bảo mật cho toàn bộ trang (hoặc file: [điền tên file nếu muốn]): tìm input chưa lọc, nguy cơ XSS, khoá bị lộ, link thiếu rel="noopener". Có thể dùng kỹ năng "security-scan" và subagent "security-auditor".' },
+  { id:'a11y-audit', icon:'♿', label:'Kiểm tra a11y',
+    template:'Hãy kiểm tra khả năng tiếp cận (accessibility) của trang: alt ảnh, tương phản, thứ bậc heading, label form, điều hướng bàn phím. Đề xuất và sửa các vấn đề tìm được. Có thể giao cho subagent "a11y-architect".' },
+  { id:'perf-audit', icon:'⚡', label:'Tối ưu hiệu năng',
+    template:'Hãy rà soát hiệu năng tải trang: ảnh chưa lazy-load, script chặn render, DOM thao tác thừa. Đề xuất và áp dụng tối ưu phù hợp. Có thể giao cho subagent "performance-optimizer".' },
+  { id:'seo-audit', icon:'🌐', label:'Tối ưu SEO',
+    template:'Hãy rà soát & tối ưu SEO on-page (title, meta description, heading, alt ảnh) cho trang: [điền tên file/trang]. Có thể giao cho subagent "seo-specialist".' },
+  { id:'refactor', icon:'🧹', label:'Refactor',
+    template:'Hãy tái cấu trúc (refactor) đoạn code sau mà KHÔNG đổi hành vi hiển thị: [mô tả file/đoạn code cần refactor]. Tách nhỏ, đặt tên rõ hơn, loại bỏ trùng lặp.' },
+  { id:'docs', icon:'📝', label:'Viết docs',
+    template:'Hãy viết/cập nhật tài liệu mô tả cho: [tên tính năng/file]. Ngắn gọn, đúng với hành vi thực tế của code hiện có. Có thể giao cho subagent "doc-writer".' },
+  { id:'commit-msg', icon:'📦', label:'Commit message',
+    template:'Hãy tóm tắt các thay đổi đang chờ (pending) thành 1 message commit ngắn gọn theo chuẩn Conventional Commits (feat/fix/refactor/docs/...), không cần gọi tool, chỉ trả lời text.' },
+  { id:'healthcare-check', icon:'🩺', label:'Kiểm tra nội dung y khoa',
+    template:'Hãy rà soát nội dung y khoa của trang [điền tên file/mục] xem có ngôn ngữ khẳng định quá mức, thiếu khuyến cáo tham khảo bác sĩ, hoặc số liệu chưa rõ nguồn không. Có thể giao cho subagent "healthcare-reviewer".' },
+  { id:'explain', icon:'💡', label:'Giải thích code',
+    template:'Hãy đọc và giải thích ngắn gọn, dễ hiểu (không cần chỉnh sửa gì) cách hoạt động của: [tên file/đoạn code].' },
+  { id:'deep-research', icon:'🔎', label:'Nghiên cứu chuyên sâu',
+    template:'Hãy nghiên cứu chuyên sâu về chủ đề sau, dùng web_fetch để đọc nguồn thật và trích dẫn rõ ràng (tên nguồn + link) cho từng thông tin quan trọng, có thể giao cho subagent "researcher": [điền chủ đề cần tra cứu]' },
+  { id:'release-notes', icon:'📦', label:'Tổng hợp phát hành',
+    template:'Hãy tổng hợp toàn bộ thay đổi đang chờ (pending) trong phiên này thành: (1) 1 commit message chuẩn Conventional Commits, (2) changelog dạng gạch đầu dòng dễ hiểu. Có thể giao cho subagent "release-manager".' },
+  { id:'memory-cleanup', icon:'🧠', label:'Dọn bộ nhớ dự án',
+    template:'Hãy rà soát lại hội thoại phiên này và bộ nhớ dài hạn của dự án hiện có: lưu thêm (qua memory_write) các quyết định/quy ước quan trọng vừa phát sinh mà bộ nhớ chưa có, và nếu có quy trình đáng tái sử dụng thì lưu thành skill (qua skill_write). Có thể giao cho subagent "memory-curator".' }
+];
+
+// Các hàm này cần BUILTIN_SKILLS / AGENTS / COMMANDS đã được khai báo ở trên
+// (khai báo const bằng "hoisting" nhưng nằm trong temporal dead zone tới khi
+// dòng khai báo thực sự chạy) -> gọi render/populate SAU khi cả 3 mảng này
+// đã tồn tại, tránh lỗi "Cannot access before initialization".
+renderSkillAgentTags();
+renderCommandChips();
+populateAgentSelect();
+
+const TOOLS = [
+  { name:'list_files', description:'Liệt kê toàn bộ đường dẫn file trong repo. Luôn gọi cái này đầu tiên nếu chưa biết cấu trúc repo.',
+    input_schema:{type:'object', properties:{}, required:[]} },
+  { name:'glob', description:'Tìm đường dẫn file khớp mẫu glob (hỗ trợ *, **, ?), vd "src/**/*.css" hoặc "*.json". Nhanh hơn grep khi chỉ cần lọc theo tên/đường dẫn.',
+    input_schema:{type:'object', properties:{ pattern:{type:'string'} }, required:['pattern']} },
+  { name:'read_file', description:'Đọc nội dung 1 file. Với file lớn, dùng start_line/end_line để đọc từng đoạn (tối đa ~800 dòng/lần).',
+    input_schema:{type:'object', properties:{ path:{type:'string'}, start_line:{type:'integer'}, end_line:{type:'integer'} }, required:['path']} },
+  { name:'grep', description:'Tìm kiếm regex (không phân biệt hoa/thường) trong 1 file hoặc toàn repo (bỏ qua file nhị phân). Trả về dòng khớp kèm số dòng.',
+    input_schema:{type:'object', properties:{ pattern:{type:'string'}, path:{type:'string'}, max_matches:{type:'integer'} }, required:['pattern']} },
+  { name:'edit_file', description:'Thay CHÍNH XÁC 1 đoạn text duy nhất (old_str) bằng đoạn mới (new_str) trong 1 file. old_str phải khớp DUY NHẤT 1 lần, kể cả khoảng trắng/xuống dòng. LUÔN read_file trước khi edit để lấy đúng text hiện tại.',
+    input_schema:{type:'object', properties:{ path:{type:'string'}, old_str:{type:'string'}, new_str:{type:'string'} }, required:['path','old_str','new_str']} },
+  { name:'multi_edit', description:'Áp dụng NHIỀU chỉnh sửa old_str→new_str vào CÙNG 1 file trong 1 lần gọi duy nhất, theo thứ tự, có tính NGUYÊN TỬ (nếu 1 edit lỗi thì hoàn tác toàn bộ). Ưu tiên dùng cái này thay vì gọi edit_file nhiều lần liên tiếp trên cùng 1 file — tiết kiệm số lượt gọi model.',
+    input_schema:{type:'object', properties:{ path:{type:'string'}, edits:{type:'array', items:{type:'object', properties:{old_str:{type:'string'}, new_str:{type:'string'}}, required:['old_str','new_str']}} }, required:['path','edits']} },
+  { name:'write_file', description:'Tạo file mới hoặc GHI ĐÈ TOÀN BỘ nội dung 1 file. Ưu tiên edit_file/multi_edit cho sửa nhỏ; chỉ dùng write_file cho file mới hoặc viết lại toàn bộ.',
+    input_schema:{type:'object', properties:{ path:{type:'string'}, content:{type:'string'} }, required:['path','content']} },
+  { name:'apply_patch', description:'Áp dụng 1 patch trên NHIỀU FILE (thêm/sửa/xoá/đổi tên) trong 1 lần gọi tool DUY NHẤT — có tính NGUYÊN TỬ (patch lỗi ở bất kỳ đâu thì KHÔNG file nào bị thay đổi). '
+      + 'Cú pháp input:\n*** Begin Patch\n*** Add File: đường/dẫn/moi.js\n+dòng 1\n+dòng 2\n*** Update File: đường/dẫn/cu.js\n@@ dòng ngữ cảnh DUY NHẤT trong file, vd tên hàm (tuỳ chọn)\n dòng giữ nguyên (context)\n-dòng bị xoá\n+dòng mới thay vào\n dòng giữ nguyên\n*** Delete File: đường/dẫn/khong-can-nua.js\n*** End Patch\n'
+      + 'Mỗi dòng trong khối "*** Update File" PHẢI bắt đầu bằng ĐÚNG 1 trong 3 ký tự: " " (giữ nguyên/context), "+" (thêm), "-" (xoá) — không được để dòng trống trần trụi. '
+      + 'Có thể có NHIỀU hunk "@@" cho cùng 1 file và NHIỀU khối Add/Update/Delete cho NHIỀU file khác nhau trong CÙNG 1 patch. Để đổi tên/di chuyển file, thêm dòng "*** Move to: đường/dẫn/moi.js" ngay sau dòng "*** Update File:". '
+      + 'ƯU TIÊN dùng apply_patch (thay vì gọi edit_file/multi_edit/write_file nhiều lần) khi: thay đổi trải rộng NHIỀU FILE cùng lúc, hoặc cần XOÁ/ĐỔI TÊN file (2 việc mà edit_file/multi_edit KHÔNG làm được). Với 1 chỉnh sửa nhỏ chỉ trong đúng 1 file, edit_file/multi_edit vẫn gọn và rõ ràng hơn.',
+    input_schema:{type:'object', properties:{ input:{type:'string', description:'toàn bộ nội dung patch, bắt đầu bằng dòng "*** Begin Patch" và kết thúc bằng dòng "*** End Patch"'} }, required:['input']} },
+  { name:'todo_write', description:'Ghi/cập nhật danh sách việc cần làm theo từng bước, để người dùng theo dõi tiến độ. Gọi mỗi khi kế hoạch thay đổi. Chỉ cần dùng cho việc nhiều bước.',
+    input_schema:{type:'object', properties:{ todos:{type:'array', items:{type:'object', properties:{content:{type:'string'}, status:{type:'string', enum:['pending','in_progress','completed']}}, required:['content','status']}} }, required:['todos']} },
+  { name:'web_fetch', description:'Tải và đọc nội dung text của 1 URL bên ngoài (vd để tra cứu thông tin y khoa, tham khảo cách trang khác trình bày...). Chỉ hoạt động với trang cho phép CORS từ trình duyệt.',
+    input_schema:{type:'object', properties:{ url:{type:'string'} }, required:['url']} },
+  { name:'run_javascript', description:'Chạy THẬT 1 đoạn JavaScript trong sandbox (Web Worker riêng, không đụng được tới file/localStorage/trang web, timeout ' + (RUN_JS_TIMEOUT_MS/1000) + 's) để KIỂM CHỨNG logic/thuật toán/regex/parse JSON... trước khi viết vào file, thay vì đoán mò kết quả bằng tay. Dùng console.log() để in giá trị trung gian; giá trị của statement/biểu thức CUỐI CÙNG cũng được trả về tự động. Không truy cập được DOM, file trong repo, hay biến của app — chỉ để tính toán/thử nghiệm code thuần JS thuần tuý. Ưu tiên dùng tool này để tự kiểm tra 1 hàm phức tạp (vd thuật toán, regex khó, transform dữ liệu) TRƯỚC khi ghi bằng edit_file/write_file, thay vì viết 1 lần rồi hy vọng đúng.',
+    input_schema:{type:'object', properties:{ code:{type:'string', description:'mã JavaScript thuần (ES2020+), có thể nhiều dòng, không có import/export'} }, required:['code']} },
+  { name:'task', description:'Giao 1 việc con cụ thể, khép kín cho 1 subagent độc lập chạy riêng (có đủ các tool trừ task) rồi CHỈ trả về bản tóm tắt kết quả. Dùng khi cần khám phá/đọc nhiều file để tìm hiểu 1 việc mà không muốn làm phình lịch sử hội thoại chính. Nếu việc phù hợp với 1 agent chuyên biệt (xem danh sách agent trong system prompt), TRUYỀN agent_type để subagent có "nhân cách"/checklist chuyên biệt đó thay vì subagent tổng quát.',
+    input_schema:{type:'object', properties:{ description:{type:'string', description:'mô tả ngắn việc giao'}, prompt:{type:'string', description:'chỉ dẫn đầy đủ cho subagent'}, agent_type:{type:'string', description:'id của agent chuyên biệt (xem danh sách agent khả dụng), để trống nếu dùng subagent tổng quát'} }, required:['description','prompt']} },
+  { name:'skill_use', description:'Tải nội dung ĐẦY ĐỦ của 1 kỹ năng (skill) chuyên biệt theo id (xem danh sách kỹ năng khả dụng trong system prompt) để áp dụng đúng checklist/quy trình chuyên môn cho việc đang làm (vd: security-scan, accessibility, healthcare-content-accuracy...). Gọi tool này TRƯỚC khi làm việc liên quan tới chủ đề của kỹ năng đó, đừng tự đoán nội dung.',
+    input_schema:{type:'object', properties:{ id:{type:'string', description:'id của kỹ năng, vd "security-scan"'} }, required:['id']} },
+  { name:'memory_write', description:'Ghi 1 GHI CHÚ NGẮN, súc tích vào bộ nhớ DÀI HẠN của dự án (khác CLAUDE.md — bộ nhớ này do CHÍNH agent tự cập nhật, tồn tại xuyên suốt mọi phiên làm việc sau này, kể cả sau khi tải lại trang). Dùng để lưu: quyết định/quy ước quan trọng vừa thống nhất với người dùng, đặc điểm riêng của repo vừa phát hiện, việc còn dang dở cần nhớ ở phiên sau. KHÔNG lưu khoá API/mật khẩu/thông tin nhạy cảm. Đừng lạm dụng cho chi tiết vụn vặt chỉ có ý nghĩa trong phiên hiện tại.',
+    input_schema:{type:'object', properties:{ text:{type:'string', description:'nội dung ghi chú, càng súc tích càng tốt'} }, required:['text']} },
+  { name:'skill_write', description:'Tạo MỚI hoặc CẬP NHẬT 1 kỹ năng (skill) TỰ TẠO (không phải built-in) để lưu lại 1 quy trình/checklist vừa khám phá/tinh chỉnh được, dùng lại ở lần sau qua skill_use — đây là cách agent "tự học" theo thời gian. CHỈ dùng khi thực sự học được điều gì tái sử dụng được (quy ước riêng của repo này, cách xử lý 1 loại lỗi hay gặp...), đừng lạm dụng cho việc chỉ làm 1 lần duy nhất. Nếu id đã tồn tại trong danh sách skill tự tạo, nội dung sẽ được CẬP NHẬT (ghi đè) — hãy gửi full nội dung mới đã gộp cả phần cũ còn hữu ích.',
+    input_schema:{type:'object', properties:{ id:{type:'string', description:'id skill, chữ thường, gạch ngang, không trùng skill built-in'}, description:{type:'string'}, content:{type:'string', description:'nội dung checklist/quy trình đầy đủ, dạng gạch đầu dòng'} }, required:['id','content']} }
+];
+const READ_ONLY_TOOLS = new Set(['list_files','glob','read_file','grep','web_fetch','run_javascript']);
+const TOOLS_BY_NAME = new Map(TOOLS.map(t=>[t.name, t]));
+
+// Kiểm tra `input` model gửi lên có khớp `input_schema` (kiểu JSON-Schema con: object/array/string/
+// integer/number/boolean/enum + required) HAY KHÔNG, trả về danh sách lỗi dạng chuỗi dễ hiểu.
+// Lấy cảm hứng từ cách openclaw validate tham số tool bằng schema (typebox) NGAY TRƯỚC khi chạy,
+// thay vì để tool tự crash giữa chừng với lỗi khó hiểu (vd "Cannot read properties of undefined").
+function validateToolInput(schema, value, path){
+  const errors = [];
+  if(!schema) return errors;
+  const label = path || 'input';
+  if(schema.type === 'object'){
+    if(value === undefined || value === null || typeof value !== 'object' || Array.isArray(value)){
+      errors.push(label + ': phải là object, nhận được ' + describeType(value));
+      return errors;
+    }
+    for(const key of (schema.required || [])){
+      if(value[key] === undefined || value[key] === null){
+        errors.push((path ? path + '.' : '') + key + ': thiếu tham số bắt buộc');
+      }
+    }
+    const props = schema.properties || {};
+    for(const key of Object.keys(props)){
+      if(value[key] !== undefined) errors.push(...validateToolInput(props[key], value[key], (path ? path + '.' : '') + key));
+    }
+    return errors;
+  }
+  if(schema.type === 'array'){
+    if(!Array.isArray(value)){ errors.push(label + ': phải là mảng (array), nhận được ' + describeType(value)); return errors; }
+    if(schema.items){ value.forEach((item, idx) => errors.push(...validateToolInput(schema.items, item, label + '[' + idx + ']'))); }
+    return errors;
+  }
+  if(schema.type === 'string'){
+    if(typeof value !== 'string'){ errors.push(label + ': phải là chuỗi (string), nhận được ' + describeType(value)); return errors; }
+    if(schema.enum && !schema.enum.includes(value)) errors.push(label + ': phải là một trong [' + schema.enum.join(', ') + '], nhận được "' + value + '"');
+    return errors;
+  }
+  if(schema.type === 'integer' || schema.type === 'number'){
+    if(typeof value !== 'number' || Number.isNaN(value)){ errors.push(label + ': phải là số, nhận được ' + describeType(value)); return errors; }
+    if(schema.type === 'integer' && !Number.isInteger(value)) errors.push(label + ': phải là số nguyên, nhận được ' + value);
+    return errors;
+  }
+  if(schema.type === 'boolean' && typeof value !== 'boolean') errors.push(label + ': phải là boolean, nhận được ' + describeType(value));
+  return errors;
+}
+function describeType(v){ return v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v; }
+
+async function executeTool(name, input){
+  const def = TOOLS_BY_NAME.get(name);
+  if(!def) return 'LỖI: tool không tồn tại: ' + name;
+  const errors = validateToolInput(def.input_schema, input || {}, '');
+  if(errors.length){
+    return 'LỖI đầu vào tool "' + name + '" — sửa lại tham số cho đúng rồi GỌI LẠI tool này (không phải tool khác):\n- ' + errors.join('\n- ');
+  }
+  try{
+    switch(name){
+      case 'list_files': return await toolListFiles();
+      case 'glob': return await toolGlob(input);
+      case 'read_file': return await toolReadFile(input);
+      case 'grep': return await toolGrep(input);
+      case 'edit_file': return await toolEditFile(input);
+      case 'multi_edit': return await toolMultiEdit(input);
+      case 'write_file': return await toolWriteFile(input);
+      case 'apply_patch': return await toolApplyPatch(input);
+      case 'todo_write': return await toolTodoWrite(input);
+      case 'web_fetch': return await toolWebFetch(input);
+      case 'run_javascript': return await toolRunJavaScript(input);
+      case 'task': return await toolTask(input);
+      case 'skill_use': return await toolSkillUse(input);
+      case 'memory_write': return await toolMemoryWrite(input);
+      case 'skill_write': return await toolSkillWrite(input);
+      default: return 'LỖI: tool không tồn tại: ' + name;
+    }
+  }catch(e){ return 'LỖI khi chạy tool ' + name + ': ' + (e.message || String(e)); }
+}
+
+// ---------------- networking: retry/backoff + SSE reader ----------------
+function sleep(ms, signal){
+  return new Promise((resolve, reject)=>{
+    const t = setTimeout(resolve, ms);
+    if(signal) signal.addEventListener('abort', ()=>{ clearTimeout(t); reject(Object.assign(new Error('aborted'),{name:'AbortError'})); }, {once:true});
+  });
+}
+function backoffMs(attempt){ return Math.min(20000, 800 * Math.pow(2, attempt)) + Math.random()*400; }
+async function fetchWithRetry(url, options, signal, maxRetries){
+  maxRetries = maxRetries==null ? 4 : maxRetries;
+  let attempt = 0;
+  while(true){
+    let res;
+    try{ res = await fetch(url, { ...options, signal }); }
+    catch(e){
+      if(e.name==='AbortError') throw e;
+      if(attempt>=maxRetries) throw e;
+      log('⚠️ Lỗi mạng, thử lại... (lần ' + (attempt+1) + '/' + maxRetries + ')', 'l-info');
+      await sleep(backoffMs(attempt), signal); attempt++; continue;
+    }
+    if(res.status===429 || res.status>=500){
+      if(attempt>=maxRetries) return res;
+      const retryAfter = res.headers.get('retry-after');
+      const wait = retryAfter ? parseFloat(retryAfter)*1000 : backoffMs(attempt);
+      log('⚠️ Model đang quá tải/giới hạn (' + res.status + '), thử lại sau ~' + Math.round(wait/1000) + 's... (lần ' + (attempt+1) + '/' + maxRetries + ')', 'l-info');
+      await sleep(wait, signal); attempt++; continue;
+    }
+    return res;
+  }
+}
+async function readSSE(res, handleEvent, signal){
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  while(true){
+    if(signal && signal.aborted) throw Object.assign(new Error('aborted'),{name:'AbortError'});
+    const { value, done } = await reader.read();
+    if(done) break;
+    buf += decoder.decode(value, { stream:true });
+    let idx;
+    while((idx = buf.indexOf('\n\n')) >= 0){
+      const rawEvent = buf.slice(0, idx); buf = buf.slice(idx+2);
+      const dataLines = rawEvent.split('\n').filter(l=>l.startsWith('data:')).map(l=>l.slice(5).trim());
+      if(!dataLines.length) continue;
+      const dataStr = dataLines.join('\n');
+      if(dataStr==='[DONE]'){ continue; }
+      try{ handleEvent(JSON.parse(dataStr)); }catch(e){ /* dòng không phải JSON hợp lệ — bỏ qua */ }
+    }
+  }
+}
+
+// ---------------- Anthropic-style provider (api + fcc) ----------------
+function normalizeAnthropic(j){ return { content: j.content || [], stop_reason: j.stop_reason, usage: j.usage || {} }; }
+async function streamAnthropic(res, signal, onDelta){
+  const blocks = []; let usage = {}; let stop_reason = null;
+  await readSSE(res, (evt)=>{
+    switch(evt.type){
+      case 'message_start': usage = { ...(evt.message.usage||{}) }; break;
+      case 'content_block_start':
+        blocks[evt.index] = evt.content_block.type==='tool_use'
+          ? { type:'tool_use', id:evt.content_block.id, name:evt.content_block.name, _raw:'', input:{} }
+          : { type:'text', text:'' };
+        break;
+      case 'content_block_delta':
+        if(evt.delta.type==='text_delta'){ blocks[evt.index].text += evt.delta.text; if(onDelta) onDelta('text', blocks[evt.index].text); }
+        else if(evt.delta.type==='input_json_delta'){ blocks[evt.index]._raw += evt.delta.partial_json; }
+        break;
+      case 'content_block_stop':
+        if(blocks[evt.index] && blocks[evt.index].type==='tool_use'){
+          try{ blocks[evt.index].input = JSON.parse(blocks[evt.index]._raw || '{}'); }catch(e){ blocks[evt.index].input = {}; }
+        }
+        break;
+      case 'message_delta':
+        if(evt.delta && evt.delta.stop_reason) stop_reason = evt.delta.stop_reason;
+        if(evt.usage) usage = { ...usage, ...evt.usage };
+        break;
+    }
+  }, signal);
+  return {
+    content: blocks.filter(Boolean).map(b => b.type==='tool_use' ? { type:'tool_use', id:b.id, name:b.name, input:b.input } : { type:'text', text:b.text }),
+    stop_reason, usage
+  };
+}
+async function callAnthropicLike(messages, signal, opts){
+  const useStream = settings.streaming !== false;
+  let url, headers;
+  if(settings.mode==='fcc'){
+    url = (settings.fccUrl||'http://localhost:8082').replace(/\/+$/,'') + '/v1/messages';
+    headers = {'Content-Type':'application/json'};
+    if(settings.fccToken) headers['Authorization'] = 'Bearer ' + settings.fccToken;
+  } else {
+    url = 'https://api.anthropic.com/v1/messages';
+    headers = {'Content-Type':'application/json','x-api-key':settings.anthropicKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+  }
+  const useCache = settings.caching !== false;
+  const systemBlocks = [{ type:'text', text: opts.system, ...(useCache ? { cache_control:{type:'ephemeral'} } : {}) }];
+  const tools = opts.tools.map((t, idx) => idx===opts.tools.length-1 && useCache ? { ...t, cache_control:{type:'ephemeral'} } : t);
+  const body = { model: settings.model || 'claude-sonnet-5', max_tokens: 4096, system: systemBlocks, messages, tools, stream: useStream };
+  const res = await fetchWithRetry(url, { method:'POST', headers, body: JSON.stringify(body) }, signal);
+  if(!res.ok) await throwProviderError('model', res);
+  return useStream ? streamAnthropic(res, signal, opts.onDelta) : normalizeAnthropic(await res.json());
+}
+
+// ---------------- OpenAI-compatible provider (DeepSeek) ----------------
+function toOpenAITools(tools){ return tools.map(t=>({ type:'function', function:{ name:t.name, description:t.description, parameters:t.input_schema } })); }
+function toOpenAIMessages(system, messages){
+  const out = [{ role:'system', content: system }];
+  for(const m of messages){
+    if(m.role==='user'){
+      if(typeof m.content === 'string'){ out.push({ role:'user', content:m.content }); continue; }
+      const toolResults = m.content.filter(b=>b.type==='tool_result');
+      const others = m.content.filter(b=>b.type!=='tool_result');
+      for(const tr of toolResults) out.push({ role:'tool', tool_call_id: tr.tool_use_id, content: String(tr.content) });
+      const images = others.filter(b=>b.type==='image');
+      const docs = others.filter(b=>b.type==='document');
+      let text = others.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+      if(docs.length) text += (text?'\n':'') + docs.map(d=>'[Đã đính kèm file "' + (d.title||'tài liệu') + '" — provider hiện tại không đọc trực tiếp được nội dung file này, chỉ nhìn thấy tên file.]').join('\n');
+      if(!text && !images.length) continue;
+      if(images.length){
+        const parts = [];
+        if(text) parts.push({ type:'text', text });
+        for(const im of images) parts.push({ type:'image_url', image_url:{ url:'data:' + im.source.media_type + ';base64,' + im.source.data } });
+        out.push({ role:'user', content: parts });
+      } else if(text){
+        out.push({ role:'user', content:text });
+      }
+    } else if(m.role==='assistant'){
+      const arr = Array.isArray(m.content) ? m.content : [{ type:'text', text:m.content }];
+      const text = arr.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+      const toolUses = arr.filter(b=>b.type==='tool_use');
+      const msg = { role:'assistant', content: text || null };
+      if(toolUses.length) msg.tool_calls = toolUses.map(tu=>({ id: tu.id, type:'function', function:{ name: tu.name, arguments: JSON.stringify(tu.input||{}) } }));
+      out.push(msg);
+    }
+  }
+  return out;
+}
+function normalizeOpenAI(j){
+  const choice = j.choices[0]; const msg = choice.message; const content = [];
+  if(msg.content) content.push({ type:'text', text: msg.content });
+  for(const tc of (msg.tool_calls||[])){
+    let input = {}; try{ input = JSON.parse(tc.function.arguments || '{}'); }catch(e){}
+    content.push({ type:'tool_use', id: tc.id, name: tc.function.name, input });
+  }
+  return { content, stop_reason: choice.finish_reason,
+    usage: j.usage ? { input_tokens:j.usage.prompt_tokens, output_tokens:j.usage.completion_tokens, cache_read_input_tokens:j.usage.prompt_cache_hit_tokens } : {} };
+}
+async function streamOpenAI(res, signal, onDelta){
+  let textAcc = ''; const toolCalls = {}; let finish = null; let usage = {};
+  await readSSE(res, (evt)=>{
+    if(evt.usage) usage = { input_tokens:evt.usage.prompt_tokens, output_tokens:evt.usage.completion_tokens, cache_read_input_tokens:evt.usage.prompt_cache_hit_tokens };
+    const choice = evt.choices && evt.choices[0]; if(!choice) return;
+    if(choice.finish_reason) finish = choice.finish_reason;
+    const delta = choice.delta || {};
+    if(delta.content){ textAcc += delta.content; if(onDelta) onDelta('text', textAcc); }
+    if(delta.tool_calls){
+      for(const tc of delta.tool_calls){
+        const i = tc.index;
+        if(!toolCalls[i]) toolCalls[i] = { id: tc.id || ('call_'+i), name:'', args:'' };
+        if(tc.id) toolCalls[i].id = tc.id;
+        if(tc.function){ if(tc.function.name) toolCalls[i].name += tc.function.name; if(tc.function.arguments) toolCalls[i].args += tc.function.arguments; }
+      }
+    }
+  }, signal);
+  const content = [];
+  if(textAcc) content.push({ type:'text', text:textAcc });
+  for(const i of Object.keys(toolCalls)){
+    const tc = toolCalls[i]; let input = {}; try{ input = JSON.parse(tc.args || '{}'); }catch(e){}
+    content.push({ type:'tool_use', id: tc.id, name: tc.name, input });
+  }
+  return { content, stop_reason: finish, usage };
+}
+async function callDeepSeek(messages, signal, opts){
+  const useStream = settings.streaming !== false;
+  const url = (settings.deepseekUrl || 'https://api.deepseek.com').replace(/\/+$/,'') + '/chat/completions';
+  const headers = {'Content-Type':'application/json','Authorization':'Bearer ' + settings.deepseekKey};
+  const body = { model: settings.model || 'deepseek-chat', messages: toOpenAIMessages(opts.system, messages), tools: toOpenAITools(opts.tools), stream: useStream, max_tokens: 4096 };
+  const res = await fetchWithRetry(url, { method:'POST', headers, body: JSON.stringify(body) }, signal);
+  if(!res.ok) await throwProviderError('DeepSeek', res);
+  return useStream ? streamOpenAI(res, signal, opts.onDelta) : normalizeOpenAI(await res.json());
+}
+
+// ---------------- Gemini provider (trực tiếp hoặc qua proxy trên máy tôi) ----------------
+// Chuyển lịch sử hội thoại từ định dạng block kiểu Anthropic (canonical trong state.messages)
+// sang định dạng "contents" của Gemini (role user/model, parts text/functionCall/functionResponse).
+function toGeminiContents(messages){
+  const idToName = {}; // tool_use.id -> tên tool, để khớp functionResponse theo TÊN (Gemini không dùng id để khớp)
+  const contents = [];
+  for(const m of messages){
+    if(m.role==='user'){
+      if(typeof m.content === 'string'){ contents.push({ role:'user', parts:[{ text:m.content }] }); continue; }
+      const toolResults = (m.content||[]).filter(b=>b.type==='tool_result');
+      const others = (m.content||[]).filter(b=>b.type!=='tool_result');
+      const parts = [];
+      for(const tr of toolResults){
+        const name = idToName[tr.tool_use_id] || 'unknown_tool';
+        parts.push({ functionResponse: { name, response: { result: String(tr.content) } } });
+      }
+      const text = others.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+      if(text) parts.push({ text });
+      for(const b of others){
+        if(b.type==='image' || b.type==='document') parts.push({ inlineData:{ mimeType: b.source.media_type, data: b.source.data } });
+      }
+      if(parts.length) contents.push({ role:'user', parts });
+    } else if(m.role==='assistant'){
+      const arr = Array.isArray(m.content) ? m.content : [{ type:'text', text:m.content }];
+      const parts = [];
+      for(const b of arr){
+        if(b.type==='text' && b.text) parts.push({ text:b.text });
+        else if(b.type==='tool_use'){ idToName[b.id] = b.name; parts.push({ functionCall:{ name:b.name, args:b.input||{} } }); }
+      }
+      if(parts.length) contents.push({ role:'model', parts });
+    }
+  }
+  return contents;
+}
+// Gemini chỉ hiểu 1 tập con của JSON Schema (kiểu OpenAPI) — lọc bớt field lạ để tránh lỗi 400.
+function toGeminiSchema(schema){
+  if(!schema || typeof schema !== 'object') return schema;
+  const out = {};
+  if(schema.type) out.type = schema.type; else out.type = 'object';
+  if(schema.description) out.description = schema.description;
+  if(schema.enum) out.enum = schema.enum;
+  if(schema.properties){
+    out.properties = {};
+    for(const k in schema.properties) out.properties[k] = toGeminiSchema(schema.properties[k]);
+  }
+  if(schema.items) out.items = toGeminiSchema(schema.items);
+  if(schema.required) out.required = schema.required;
+  return out;
+}
+function toGeminiTools(tools){
+  return [{ functionDeclarations: tools.map(t=>({ name:t.name, description:t.description, parameters: toGeminiSchema(t.input_schema) })) }];
+}
+function normalizeGemini(j){
+  const cand = (j.candidates && j.candidates[0]) || {};
+  const parts = (cand.content && cand.content.parts) || [];
+  const content = [];
+  for(const p of parts){
+    if(p.text) content.push({ type:'text', text:p.text });
+    else if(p.functionCall) content.push({ type:'tool_use', id:'call_'+Math.random().toString(36).slice(2,10), name:p.functionCall.name, input:p.functionCall.args||{} });
+  }
+  const um = j.usageMetadata || {};
+  return { content, stop_reason: cand.finishReason,
+    usage: { input_tokens:um.promptTokenCount, output_tokens:um.candidatesTokenCount, cache_read_input_tokens:um.cachedContentTokenCount } };
+}
+async function streamGemini(res, signal, onDelta){
+  let textAcc = ''; const toolBlocks = []; let finish = null; let usage = {};
+  await readSSE(res, (evt)=>{
+    const cand = evt.candidates && evt.candidates[0]; if(!cand) return;
+    if(cand.finishReason) finish = cand.finishReason;
+    if(evt.usageMetadata) usage = { input_tokens:evt.usageMetadata.promptTokenCount, output_tokens:evt.usageMetadata.candidatesTokenCount, cache_read_input_tokens:evt.usageMetadata.cachedContentTokenCount };
+    const parts = (cand.content && cand.content.parts) || [];
+    for(const p of parts){
+      if(p.text){ textAcc += p.text; if(onDelta) onDelta('text', textAcc); }
+      else if(p.functionCall){ toolBlocks.push({ type:'tool_use', id:'call_'+Math.random().toString(36).slice(2,10), name:p.functionCall.name, input:p.functionCall.args||{} }); }
+    }
+  }, signal);
+  const content = [];
+  if(textAcc) content.push({ type:'text', text:textAcc });
+  content.push(...toolBlocks);
+  return { content, stop_reason:finish, usage };
+}
+// callGeminiWith: lõi dùng chung, nhận cfg riêng (model/khoá/URL) để 2 agent Gemini-trực-tiếp và Proxy-trên-máy
+// hoàn toàn tách biệt nhau — không còn chia sẻ 1 ô "Model" hay 1 dropdown chuyển đổi như trước.
+async function callGeminiWith(messages, signal, opts, cfg){
+  const useStream = settings.streaming !== false;
+  const model = cfg.model;
+  const headers = {'Content-Type':'application/json'};
+  let base;
+  if(cfg.useProxy){
+    base = (cfg.proxyUrl || 'http://localhost:8081').replace(/\/+$/,'');
+    if(cfg.proxyToken) headers['Authorization'] = 'Bearer ' + cfg.proxyToken;
+    if(cfg.key) headers['x-goog-api-key'] = cfg.key; // gửi kèm phòng khi proxy không tự quản lý khoá
+  } else {
+    base = 'https://generativelanguage.googleapis.com';
+    headers['x-goog-api-key'] = cfg.key;
+  }
+  const path = '/v1beta/models/' + encodeURIComponent(model) + ':' + (useStream ? 'streamGenerateContent?alt=sse' : 'generateContent');
+  const body = {
+    systemInstruction: { parts:[{ text: opts.system }] },
+    contents: toGeminiContents(messages),
+    tools: toGeminiTools(opts.tools),
+    generationConfig: { maxOutputTokens: 4096 }
+  };
+  const res = await fetchWithRetry(base + path, { method:'POST', headers, body: JSON.stringify(body) }, signal);
+  if(!res.ok){
+    const bodyText = (await res.text()).slice(0,300);
+    let hint = '';
+    if(cfg.useProxy && res.status===404){
+      hint = ' — Proxy trả 404 "Not Found" cho đường dẫn "/v1beta/models/...": nhiều khả năng proxy này KHÔNG nói đúng giao thức gốc của Gemini (proxy chỉ hỗ trợ định dạng kiểu OpenAI "/chat/completions", ví dụ LiteLLM/router đa provider — tên model dạng "provider/model" như bạn đang dùng là dấu hiệu điển hình). Cách sửa: chuyển "Chế độ AI" sang "DeepSeek API (khoá riêng)", điền "DeepSeek Base URL" = địa chỉ proxy của bạn (vd: ' + base + '), "DeepSeek API Key" = token/khoá của proxy, giữ nguyên tên model — vì chế độ đó nói đúng giao thức OpenAI-compatible mà proxy dạng này thường hỗ trợ.';
+    }
+    throw new Error('Lỗi gọi ' + (cfg.useProxy ? 'Proxy Gemini' : 'Gemini') + ' (' + res.status + '): ' + bodyText + hint);
+  }
+  return useStream ? streamGemini(res, signal, opts.onDelta) : normalizeGemini(await res.json());
+}
+// Agent 1: Gemini API gọi thẳng, dùng model + khoá riêng của nó.
+async function callGeminiDirect(messages, signal, opts){
+  return callGeminiWith(messages, signal, opts, {
+    model: settings.geminiModel || 'gemini-2.5-pro', useProxy:false, key: settings.geminiKey
+  });
+}
+// Agent 2: Proxy chạy trên máy người dùng, dùng model + URL/token riêng của nó (độc lập với agent trên).
+async function callGeminiProxy(messages, signal, opts){
+  return callGeminiWith(messages, signal, opts, {
+    model: settings.proxyModel || settings.geminiModel || 'gemini-2.5-pro', useProxy:true,
+    proxyUrl: settings.geminiProxyUrl, proxyToken: settings.geminiProxyToken, key: settings.geminiKey
+  });
+}
+// Chế độ "kết hợp": gọi song song cả 2 agent (Gemini trực tiếp + Proxy trên máy) cho CÙNG 1 lượt hội thoại,
+// rồi gộp: text của cả 2 được ghép có nhãn, tool_use của cả 2 được hợp nhất (loại trùng name+input y hệt nhau).
+async function callGeminiCombined(messages, signal, opts){
+  const childOpts = { ...opts, onDelta: null }; // tắt streaming trực tiếp lên UI khi chạy song song để tránh chữ chồng lẫn nhau
+  const [r1, r2] = await Promise.allSettled([
+    callGeminiDirect(messages, signal, childOpts),
+    callGeminiProxy(messages, signal, childOpts)
+  ]);
+  const results = [];
+  if(r1.status==='fulfilled') results.push({ label:'Gemini (trực tiếp)', data:r1.value });
+  else log('⚠️ Agent Gemini trực tiếp lỗi: ' + r1.reason.message, 'l-error');
+  if(r2.status==='fulfilled') results.push({ label:'Proxy (trên máy)', data:r2.value });
+  else log('⚠️ Agent Proxy trên máy lỗi: ' + r2.reason.message, 'l-error');
+  if(!results.length) throw new Error('Cả agent Gemini trực tiếp và Proxy trên máy đều lỗi.');
+  if(results.length === 1) return results[0].data;
+
+  const seenTools = new Set();
+  const mergedToolCalls = [];
+  const textPieces = [];
+  for(const r of results){
+    const text = (r.data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    if(text) textPieces.push('**[' + r.label + ']**\n' + text);
+    for(const b of (r.data.content||[])){
+      if(b.type==='tool_use'){
+        const key = b.name + '::' + JSON.stringify(b.input);
+        if(seenTools.has(key)) continue;
+        seenTools.add(key);
+        mergedToolCalls.push(b);
+      }
+    }
+  }
+  const content = [];
+  if(textPieces.length) content.push({ type:'text', text: textPieces.join('\n\n---\n\n') });
+  content.push(...mergedToolCalls);
+  const usage = {};
+  for(const r of results){
+    const u = r.data.usage || {};
+    for(const k in u) if(u[k]!=null) usage[k] = (usage[k]||0) + u[k];
+  }
+  return { content, stop_reason: results[0].data.stop_reason, usage };
+}
+
+// Đọc thân lỗi HTTP (cắt bớt) và ném Error đồng nhất — dùng chung cho các provider có xử lý lỗi đơn giản.
+async function throwProviderError(label, res){
+  const bodyText = (await res.text()).slice(0, 300);
+  throw new Error('Lỗi gọi ' + label + ' (' + res.status + '): ' + bodyText);
+}
+
+// ---------------- model dispatcher ----------------
+function defaultSystem(){
+  let system = 'Bạn là 1 coding agent tự động, có quyền dùng tool để đọc/tìm/sửa file trong 1 repo GitHub thật (chủ đề: trang web y học). ' +
+    'Quy trình bắt buộc: (1) list_files hoặc glob nếu chưa rõ cấu trúc, (2) read_file các phần liên quan TRƯỚC khi sửa, (3) với việc nhiều bước, gọi todo_write để lập kế hoạch và cập nhật trạng thái khi xong từng bước, (4) chọn ĐÚNG tool sửa file: edit_file cho 1 chỗ sửa nhỏ trong 1 file, multi_edit khi cần NHIỀU chỗ sửa trong CÙNG 1 file, apply_patch khi thay đổi trải rộng NHIỀU FILE cùng lúc hoặc cần XOÁ/ĐỔI TÊN file (edit_file/multi_edit KHÔNG xoá/đổi tên được file), write_file chỉ cho file mới hoặc viết lại toàn bộ 1 file — tất cả đều nguyên tử (atomic) và đỡ tốn lượt gọi model hơn là sửa từng file 1 lượt riêng lẻ, (5) SAU KHI sửa xong, có thể read_file lại đoạn vừa sửa để tự kiểm tra, (6) nếu có việc con cần khám phá sâu/tốn nhiều bước đọc file mà không muốn làm phình hội thoại chính, giao cho tool "task" (subagent), (7) nếu học được 1 điều đáng nhớ LÂU DÀI (quyết định quan trọng, quy ước riêng của repo, việc còn dang dở), dùng memory_write để lưu lại cho các phiên sau, (8) nếu khám phá/tinh chỉnh được 1 quy trình đáng TÁI SỬ DỤNG, dùng skill_write để lưu thành skill riêng — đây là cách bạn "tự học" qua thời gian, đừng lạm dụng cho việc chỉ làm 1 lần. ' +
+    'File có thể rất lớn (hàng MB) — chỉ đọc phần cần thiết bằng start_line/end_line, đừng cố đọc hết 1 file khổng lồ. ' +
+    'Với logic/thuật toán/regex phức tạp mà không chắc chắn 100%, hãy dùng tool run_javascript để CHẠY THẬT và kiểm chứng kết quả trước khi ghi vào file, thay vì đoán. ' +
+    'Khi sửa lỗi (bug): tìm ĐÚNG nguyên nhân gốc trước khi đề xuất cách sửa (xem skill "debugging"), không vá tạm để làm hết thông báo lỗi mà chưa hiểu vì sao nó xảy ra. Đừng tuyên bố "đã xong/hết lỗi" nếu chưa thực sự kiểm chứng lại — nếu không kiểm chứng được, nói rõ rủi ro còn tồn đọng trong tóm tắt. ' +
+    'Sau mỗi lần sửa file .json/.js/.css, hệ thống tự kiểm tra cú pháp cơ bản và sẽ kèm dòng "⚠️ CẢNH BÁO CÚ PHÁP" vào kết quả tool nếu phát hiện lỗi — nếu thấy cảnh báo đó, PHẢI sửa lại ngay, đừng bỏ qua. ' +
+    'Một số đường dẫn nhạy cảm (file .env, khoá SSH, .git/...) bị chặn ghi vì lý do an toàn — nếu tool báo "LỖI AN TOÀN", đừng cố lách, hãy giải thích cho người dùng. ' +
+    'KHÔNG tự push — mọi thay đổi chỉ nằm trong bộ nhớ tạm, người dùng sẽ tự bấm nút push sau khi xem lại. ' +
+    'Khi đã hoàn tất toàn bộ yêu cầu, trả lời bằng 1 đoạn văn bản tóm tắt (không gọi thêm tool) để kết thúc lượt làm việc.';
+  system += '\n\n--- Kỹ năng chuyên biệt khả dụng (gọi tool skill_use với id để tải chi tiết TRƯỚC khi làm việc liên quan) ---\n' + skillCatalogText();
+  system += '\n\n--- Subagent chuyên biệt khả dụng (truyền agent_type khi gọi tool task để dùng "nhân cách"/checklist chuyên biệt đó) ---\n' + agentCatalogText();
+  const mem = memoryText();
+  system += '\n\n--- Bộ nhớ dài hạn của dự án (do CHÍNH agent tự ghi qua memory_write ở các phiên trước; khác CLAUDE.md) ---\n' + (mem || '(chưa có ghi chú nào)');
+  if(state.claudeMd) system += '\n\n--- Hướng dẫn riêng của dự án (từ CLAUDE.md trong repo) ---\n' + state.claudeMd.slice(0, 4000);
+  return system;
+}
+async function callModel(messages, signal, opts){
+  opts = opts || {};
+  const callOpts = { system: opts.system || defaultSystem(), tools: opts.tools || TOOLS, onDelta: opts.onDelta };
+  if(settings.mode==='deepseek') return callDeepSeek(messages, signal, callOpts);
+  if(settings.mode==='gemini'){
+    if(settings.combineGeminiProxy) return callGeminiCombined(messages, signal, callOpts);
+    if(settings.geminiRunMode==='proxy') return callGeminiProxy(messages, signal, callOpts);
+    return callGeminiDirect(messages, signal, callOpts);
+  }
+  return callAnthropicLike(messages, signal, callOpts);
+}
+
+// ---------------- context compaction ----------------
+async function maybeCompact(){
+  const approxChars = JSON.stringify(state.messages).length;
+  if(approxChars < 220000) return;
+  log('🧵 Lịch sử hội thoại khá dài, đang tự nén ngữ cảnh để tránh vượt giới hạn...', 'l-info');
+  const summarizePrompt = 'Tóm tắt CỰC KỲ súc tích (dạng gạch đầu dòng) những gì đã làm, các quyết định quan trọng, và các việc CÒN DANG DỞ trong phiên làm việc này, để 1 agent khác đọc tóm tắt này và tiếp tục công việc mà không cần xem lại toàn bộ lịch sử chi tiết.';
+  try{
+    const data = await callModel([...state.messages, { role:'user', content: summarizePrompt }], aborter.signal, {});
+    const summaryText = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim() || '(không có tóm tắt)';
+    state.messages = [{ role:'user', content: '[Ngữ cảnh phiên trước đã được tự động nén]\n' + summaryText }];
+    log('✅ Đã nén ngữ cảnh xong, tiếp tục làm việc (file đang sửa dở không bị ảnh hưởng).', 'l-success');
+  }catch(e){ log('⚠️ Nén ngữ cảnh thất bại, tiếp tục với lịch sử đầy đủ: ' + e.message, 'l-info'); }
+}
+
+// ---------------- agent loop ----------------
+async function runAgent(userContent){
+  await loadClaudeMd();
+  const checkpointLabel = (typeof userContent==='string' ? userContent : (Array.isArray(userContent) ? ((userContent.find(b=>b.type==='text')||{}).text||'') : '')).slice(0,80);
+  pushCheckpoint(checkpointLabel);
+  state.messages.push({ role:'user', content: userContent });
+  scheduleSave();
+  setProgress(6);
+  const MAX_TURNS = 25;
+  let lastAiEl = null;
+  let mutatingToolCount = 0; // đếm số tool "có sửa đổi" đã chạy trong lượt này, dùng để gợi ý lưu skill khi xong
+  for(let turn=0; turn<MAX_TURNS; turn++){
+    await maybeCompact();
+    setProgress(Math.min(45, 10 + turn*3));
+    let liveEl = null;
+    const onDelta = (kind, textSoFar) => {
+      if(kind==='text'){
+        if(!liveEl) liveEl = log('', 'l-ai');
+        liveEl.textContent = textSoFar; scheduleScrollToBottom();
+        setProgress(Math.min(72, 45 + Math.floor(textSoFar.length/60)));
+      }
+    };
+    const t0 = performance.now();
+    let data;
+    try{ data = await callModel(state.messages, aborter.signal, { onDelta }); }
+    catch(e){
+      if(e.name==='AbortError'){ log('Đã dừng theo yêu cầu.', 'l-info'); hideProgress(); return; }
+      log('Lỗi: ' + e.message, 'l-error'); hideProgress(); return;
+    }
+    setProgress(78);
+    const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+    const content = data.content || [];
+    const textParts = content.filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    const toolCalls = content.filter(b=>b.type==='tool_use');
+    if(textParts && !liveEl) liveEl = log(textParts, 'l-ai'); // dự phòng khi streaming tắt hoặc lỗi
+    if(liveEl) lastAiEl = liveEl;
+    if(data.usage && Object.keys(data.usage).length){
+      const u = data.usage, parts = [];
+      if(u.input_tokens!=null) parts.push(u.input_tokens + ' in');
+      if(u.output_tokens!=null) parts.push(u.output_tokens + ' out');
+      if(u.cache_read_input_tokens) parts.push(u.cache_read_input_tokens + ' cache-hit');
+      if(u.cache_creation_input_tokens) parts.push(u.cache_creation_input_tokens + ' cache-write');
+      log('⏱ ' + elapsed + 's · ' + (parts.join(' / ') || 'token n/a'), 'l-stat');
+    }
+    state.messages.push({ role:'assistant', content });
+    scheduleSave();
+
+    if(!toolCalls.length){
+      setProgress(100); hideProgress(); showPending(); addResponseActions(lastAiEl);
+      if(mutatingToolCount>=2) offerSkillSuggestion(lastAiEl); // việc đủ phức tạp (>=2 tool sửa đổi) -> gợi ý lưu thành skill
+      return;
+    }
+
+    // các tool chỉ-đọc liền kề chạy song song (giống Claude Code thật); tool có thể đổi trạng thái chạy tuần tự
+    const results = new Array(toolCalls.length);
+    let toolsDone = 0;
+    const runOne = async (tc, i) => {
+      log('🔧 ' + tc.name + '(' + JSON.stringify(tc.input).slice(0,160) + ')', 'l-tool');
+      if(!READ_ONLY_TOOLS.has(tc.name) && tc.name!=='memory_write' && tc.name!=='skill_write' && tc.name!=='todo_write') mutatingToolCount++;
+      const r = await executeTool(tc.name, tc.input);
+      log(String(r).slice(0,300), 'l-tool');
+      results[i] = { type:'tool_result', tool_use_id: tc.id, content: String(r) };
+      toolsDone++;
+      setProgress(80 + Math.round((toolsDone/toolCalls.length)*15));
+    };
+    let i = 0;
+    while(i < toolCalls.length){
+      if(READ_ONLY_TOOLS.has(toolCalls[i].name)){
+        let j = i; const batch = [];
+        while(j < toolCalls.length && READ_ONLY_TOOLS.has(toolCalls[j].name)){ batch.push(j); j++; }
+        await Promise.all(batch.map(idx => runOne(toolCalls[idx], idx)));
+        i = j;
+      } else { await runOne(toolCalls[i], i); i++; }
+    }
+    state.messages.push({ role:'user', content: results });
+    scheduleSave();
+  }
+  setProgress(100); hideProgress();
+  log('Đã đạt giới hạn số bước (an toàn), dừng lại. Bạn có thể ra lệnh tiếp để agent làm tiếp.', 'l-info');
+  showPending();
+  addResponseActions(lastAiEl);
+}
+
+// ---------------- pending changes / diff / push ----------------
+function dirtyFiles(){
+  const out = [];
+  for(const [path, f] of state.files.entries()){
+    if(f.deleted || f.isNew || f.current !== f.original) out.push({ path, ...f });
+  }
+  return out;
+}
+function showPending(){
+  const dirty = dirtyFiles();
+  const box = $('pending'), list = $('pendingList');
+  if(!dirty.length){ box.classList.remove('show'); return; }
+  list.innerHTML = dirty.map(f=>{
+    const expanded = expandedDiffs.has(f.path);
+    const tagCls = f.deleted ? 'del' : (f.isNew?'new':'mod');
+    const tagLabel = f.deleted ? 'XOÁ' : (f.isNew?'MỚI':'SỬA');
+    const diffSection = expanded ? '<div class="diffbody">' + diffHtml(f.deleted ? (f.original||'') : (f.isNew ? '' : (f.original||'')), f.deleted ? '' : f.current) + '</div>' : '';
+    return '<div class="file" data-path="' + escapeHtml(f.path) + '"><div class="filehead">' +
+      '<span>' + (expanded?'▾':'▸') + ' ' + escapeHtml(f.path) + '</span>' +
+      '<span class="tag ' + tagCls + '">' + tagLabel + '</span></div>' + diffSection + '</div>';
+  }).join('');
+  list.querySelectorAll('.filehead').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const path = el.parentElement.getAttribute('data-path');
+      if(expandedDiffs.has(path)) expandedDiffs.delete(path); else expandedDiffs.add(path);
+      showPending();
+    });
+  });
+  box.classList.add('show');
+}
+$('undoBtn').addEventListener('click', ()=>{ undoLastCheckpoint(); });
+$('discardBtn').addEventListener('click', ()=>{
+  for(const f of dirtyFiles()){
+    if(f.isNew){ state.files.delete(f.path); }
+    else { const ff = state.files.get(f.path); ff.current = ff.original ?? ''; ff.deleted = false; }
+  }
+  expandedDiffs.clear();
+  showPending();
+  scheduleSave();
+  log('Đã huỷ toàn bộ thay đổi đang chờ.', 'l-info');
+});
+// Gộp toàn bộ logic push thành 1 hàm dùng chung — cho nút push chính lẫn nút "Đẩy lên GitHub" dưới mỗi câu trả lời.
+async function pushChangesToGithub(){
+  const dirty = dirtyFiles();
+  if(!dirty.length){ log('Không có thay đổi nào đang chờ để push.', 'l-info'); return false; }
+  if(!settings.ghToken){ log('Cần nhập GitHub PAT trong Cấu hình để push.', 'l-error'); return false; }
+  try{
+    const toWrite = dirty.filter(f=>!f.deleted);
+    const toDelete = dirty.filter(f=>f.deleted);
+    log('Đang tạo blob cho ' + toWrite.length + ' file' + (toDelete.length ? (', xoá ' + toDelete.length + ' file') : '') + '...', 'l-info');
+    const blobs = [];
+    for(const f of toWrite){
+      const r = await fetch(ghApi('/git/blobs'), { method:'POST', headers:{...ghHeaders(),'Content-Type':'application/json'},
+        body: JSON.stringify({ content: utf8ToB64(f.current), encoding:'base64' }) });
+      if(!r.ok) throw new Error('Tạo blob lỗi cho ' + f.path + ': ' + (await r.text()).slice(0,200));
+      const j = await r.json();
+      blobs.push({ path: f.path, mode:'100644', type:'blob', sha: j.sha });
+    }
+    for(const f of toDelete){
+      blobs.push({ path: f.path, mode:'100644', type:'blob', sha: null }); // sha:null => GitHub xoá path này khỏi tree
+    }
+    const ref = await ghGetJson('/git/ref/heads/' + settings.branch);
+    const baseCommit = await ghGetJson('/git/commits/' + ref.object.sha);
+    log('Đang tạo tree mới...', 'l-info');
+    const treeRes = await fetch(ghApi('/git/trees'), { method:'POST', headers:{...ghHeaders(),'Content-Type':'application/json'},
+      body: JSON.stringify({ base_tree: baseCommit.tree.sha, tree: blobs }) });
+    if(!treeRes.ok) throw new Error('Tạo tree lỗi: ' + (await treeRes.text()).slice(0,200));
+    const tree = await treeRes.json();
+    log('Đang tạo commit...', 'l-info');
+    const commitRes = await fetch(ghApi('/git/commits'), { method:'POST', headers:{...ghHeaders(),'Content-Type':'application/json'},
+      body: JSON.stringify({ message: 'Agent update: ' + dirty.map(f=>f.path).join(', ').slice(0,200), tree: tree.sha, parents: [ref.object.sha] }) });
+    if(!commitRes.ok) throw new Error('Tạo commit lỗi: ' + (await commitRes.text()).slice(0,200));
+    const commit = await commitRes.json();
+    const patchRes = await fetch(ghApi('/git/refs/heads/' + settings.branch), { method:'PATCH', headers:{...ghHeaders(),'Content-Type':'application/json'},
+      body: JSON.stringify({ sha: commit.sha }) });
+    if(!patchRes.ok) throw new Error('Cập nhật branch lỗi: ' + (await patchRes.text()).slice(0,200));
+    for(const f of toWrite){ const ff = state.files.get(f.path); ff.original = ff.current; ff.isNew = false; ff.sha = null; }
+    for(const f of toDelete){ state.files.delete(f.path); }
+    state.tree = null; // buộc load lại tree ở lần dùng tool tiếp theo
+    expandedDiffs.clear();
+    showPending();
+    scheduleSave();
+    log('✅ Đã push thành công lên nhánh "' + settings.branch + '". Commit: ' + commit.sha.slice(0,7), 'l-success');
+    return true;
+  }catch(e){
+    log('Lỗi khi push: ' + e.message, 'l-error');
+    return false;
+  }
+}
+$('pushBtn').addEventListener('click', async ()=>{
+  $('pushBtn').disabled = true;
+  try{ await pushChangesToGithub(); } finally { $('pushBtn').disabled = false; }
+});
+
+// ---------------- nút nhanh dưới mỗi câu trả lời: Tải HTML / Xem trước / Đẩy lên GitHub ----------------
+async function getIndexFileContent(){
+  const path = settings.indexPath || 'index.html';
+  if(state.files.has(path)) return { path, content: state.files.get(path).current };
+  if(!settings.owner || !settings.repo) throw new Error('Chưa cấu hình owner/repo GitHub.');
+  if(!state.tree) await loadTree();
+  const content = await fetchFileText(path);
+  return { path, content };
+}
+async function downloadIndexHtml(){
+  try{
+    const { path, content } = await getIndexFileContent();
+    const blob = new Blob([content], { type:'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = path.split('/').pop() || 'index.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    log('⬇️ Đã tải "' + path + '".', 'l-success');
+  }catch(e){ log('Lỗi tải file: ' + e.message, 'l-error'); }
+}
+async function previewIndexHtml(){
+  try{
+    const { path, content } = await getIndexFileContent();
+    // chèn <base> để các đường dẫn tương đối (css/js/ảnh) tự tải từ GitHub raw của đúng repo/branch,
+    // giúp xem trước đúng như thật kể cả khi các file đó chưa được sửa/push.
+    const base = 'https://raw.githubusercontent.com/' + settings.owner + '/' + settings.repo + '/' + (settings.branch||'main') + '/' +
+      path.split('/').slice(0,-1).concat('').join('/');
+    const html = /<head[\s>]/i.test(content)
+      ? content.replace(/<head([^>]*)>/i, '<head$1><base href="' + base + '">')
+      : '<base href="' + base + '">' + content;
+    const blob = new Blob([html], { type:'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(e){ log('Lỗi xem trước: ' + e.message, 'l-error'); }
+}
+function addResponseActions(afterEl){
+  if(!afterEl || !afterEl.parentNode) return;
+  const bar = document.createElement('div');
+  bar.className = 'resp-actions';
+  bar.innerHTML =
+    '<button type="button" class="raBtn" data-act="download">⬇️ Tải HTML</button>' +
+    '<button type="button" class="raBtn" data-act="preview">👁️ Xem trước trang web</button>' +
+    '<button type="button" class="raBtn primary" data-act="push">🚀 Đẩy lên GitHub</button>';
+  afterEl.insertAdjacentElement('afterend', bar);
+  bar.querySelector('[data-act="download"]').addEventListener('click', downloadIndexHtml);
+  bar.querySelector('[data-act="preview"]').addEventListener('click', previewIndexHtml);
+  bar.querySelector('[data-act="push"]').addEventListener('click', async (e)=>{
+    const btn = e.currentTarget; btn.disabled = true;
+    try{ await pushChangesToGithub(); } finally { btn.disabled = false; }
+  });
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+// ---------------- gợi ý lưu skill mới sau khi agent hoàn thành việc đủ phức tạp ----------------
+// (lấy cảm hứng từ khả năng "tự tạo skill sau khi hoàn thành việc phức tạp" của hermes-agent —
+// nhưng ở đây LUÔN cần người dùng bấm xác nhận cuối cùng ở "➕ Thêm skill", agent không tự lưu ngầm qua đường này;
+// agent vẫn có thể tự lưu trực tiếp qua tool skill_write nếu chủ động thấy cần trong lúc làm việc.)
+function lastUserRequestText(){
+  for(let i=state.messages.length-1; i>=0; i--){
+    const m = state.messages[i];
+    if(m.role!=='user') continue;
+    if(typeof m.content==='string') return m.content;
+    if(Array.isArray(m.content)){
+      const t = m.content.find(b=>b.type==='text');
+      if(t) return t.text;
+    }
+  }
+  return '';
+}
+function offerSkillSuggestion(afterEl){
+  if(!afterEl || !afterEl.parentNode) return;
+  const bar = document.createElement('div');
+  bar.className = 'skill-suggest-bar';
+  bar.innerHTML =
+    '<span>💡 Việc vừa rồi khá nhiều bước — lưu lại thành skill để dùng lại lần sau?</span>' +
+    '<button type="button" class="draftBtn">✍️ Soạn nháp bằng AI</button>' +
+    '<button type="button" class="ghost dismissBtn">✕ Bỏ qua</button>';
+  afterEl.parentNode.insertBefore(bar, afterEl.nextSibling);
+  bar.querySelector('.dismissBtn').addEventListener('click', ()=> bar.remove());
+  bar.querySelector('.draftBtn').addEventListener('click', async ()=>{
+    const btn = bar.querySelector('.draftBtn'); btn.disabled = true; btn.textContent = '⏳ Đang soạn...';
+    try{
+      const reqText = lastUserRequestText().slice(0,1500);
+      const aiText = (afterEl.textContent || '').slice(0,1500);
+      const draftSystem = 'Bạn giúp đúc kết 1 skill (checklist/quy trình tái sử dụng) từ 1 công việc vừa hoàn thành. ' +
+        'CHỈ trả lời bằng JSON THUẦN (không markdown, không giải thích thêm) đúng dạng: {"id":"...", "description":"...", "content":"..."}. ' +
+        'id: chữ thường, gạch ngang, ngắn gọn, không trùng các id có sẵn: ' + getAllSkills().map(s=>s.id).join(', ') + '. ' +
+        'description: 1 câu ngắn. content: checklist/quy trình dạng gạch đầu dòng ("- ..."), súc tích, TỔNG QUÁT HOÁ được cho việc tương tự sau này (đừng chỉ chép lại đúng nội dung việc lần này).';
+      const draftUser = 'Yêu cầu ban đầu: ' + (reqText || '(không rõ)') + '\n\nTóm tắt kết quả agent đã làm: ' + (aiText || '(không có)');
+      const data = await callModel([{ role:'user', content: draftUser }], aborter ? aborter.signal : undefined, { system: draftSystem, tools: [] });
+      const raw = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+      const jsonStr = raw.replace(/^```json\s*|^```\s*|```\s*$/gi, '').trim();
+      const draft = JSON.parse(jsonStr);
+      $('settings').classList.add('show');
+      $('cs_id').value = (draft.id||'').toString().trim().toLowerCase().replace(/\s+/g,'-');
+      $('cs_desc').value = (draft.description||'').toString().trim();
+      $('cs_content').value = (draft.content||'').toString().trim();
+      $('cs_id').scrollIntoView({ behavior:'smooth', block:'center' });
+      log('✍️ Đã soạn nháp skill vào phần Cấu hình → Thêm kỹ năng riêng. Xem lại rồi bấm "➕ Thêm skill" nếu đồng ý.', 'l-info');
+      bar.remove();
+    }catch(e){
+      log('Không soạn được nháp skill tự động (' + (e.message||e) + '). Bạn có thể tự điền ở phần Cấu hình.', 'l-error');
+      btn.disabled = false; btn.textContent = '✍️ Soạn nháp bằng AI';
+    }
+  });
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+// ---------------- session persistence (autosave theo owner/repo/branch) ----------------
+function sessionKey(){ return 'ccc_v3_session::' + (settings.owner||'') + '/' + (settings.repo||'') + '@' + (settings.branch||'main'); }
+let saveTimer = null;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveSession, 400); }
+function saveSession(){
+  if(!settings.owner || !settings.repo) return;
+  try{
+    localStorage.setItem(sessionKey(), JSON.stringify({ messages: state.messages, files: [...state.files.entries()], todos: state.todos, ts: Date.now() }));
+  }catch(e){ /* quota hoặc lỗi serialize — bỏ qua, không chặn agent */ }
+}
+function renderMessagesIntoLog(){
+  $('log').innerHTML = '';
+  for(const m of state.messages){
+    if(m.role==='user' && typeof m.content==='string') log(m.content, 'l-user');
+    else if(m.role==='assistant'){
+      const text = (Array.isArray(m.content)?m.content:[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+      if(text) log(text, 'l-ai');
+    }
+  }
+}
+function tryRestoreSession(){
+  if(!settings.owner || !settings.repo) return false;
+  try{
+    const raw = localStorage.getItem(sessionKey());
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    state.messages = data.messages || [];
+    state.files = new Map(data.files || []);
+    state.todos = data.todos || [];
+    renderTodos();
+    renderMessagesIntoLog();
+    showPending();
+    log('🔄 Đã khôi phục phiên làm việc trước cho repo này (' + new Date(data.ts).toLocaleString('vi-VN') + ').', 'l-info');
+    const ageMs = Date.now() - (data.ts || 0);
+    const STALE_MS = 2 * 60 * 60 * 1000; // 2 giờ — ngưỡng cảnh báo, không chặn gì cả
+    if(ageMs > STALE_MS){
+      log('⚠️ Phiên này được lưu cách đây khá lâu — nội dung file đang cache trong trình duyệt CÓ THỂ đã cũ hơn bản mới nhất trên GitHub (vd nếu bạn hoặc người khác đã push thay đổi ở nơi khác từ lúc đó). Nếu định sửa tiếp file quan trọng, nên yêu cầu agent đọc lại (read_file) trước khi sửa để chắc chắn dựa trên bản mới nhất.', 'l-error');
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+// ---------------- lịch sử nhiều phiên làm việc (per owner/repo) + tìm kiếm ----------------
+// Lấy cảm hứng từ khả năng "tìm lại phiên làm việc cũ" (FTS session search) của hermes-agent.
+// Mỗi khi bắt đầu phiên mới (hoặc khôi phục 1 phiên cũ khác), phiên hiện tại (nếu có nội dung)
+// được lưu (archive) toàn bộ vào localStorage, và ghi 1 dòng chỉ mục (title/ngày/số tin nhắn)
+// để hiển thị + tìm kiếm nhanh trong modal "🕘 Lịch sử" mà không cần tải hết mọi phiên.
+function histKey(){ return 'ccc_v4_history::' + (settings.owner||'') + '/' + (settings.repo||''); }
+function archKey(id){ return 'ccc_v4_archive::' + id; }
+function loadHistoryIndex(){ try{ return JSON.parse(localStorage.getItem(histKey()) || '[]'); }catch(e){ return []; } }
+function saveHistoryIndex(list){ try{ localStorage.setItem(histKey(), JSON.stringify(list)); }catch(e){ /* bỏ qua nếu đầy */ } }
+function archiveCurrentSession(){
+  if(!settings.owner || !settings.repo) return;
+  if(!state.messages || !state.messages.length) return;
+  const id = 'h' + Date.now() + Math.random().toString(36).slice(2,7);
+  const firstUserMsg = state.messages.find(m=>m.role==='user');
+  let title = '(trống)';
+  if(firstUserMsg){
+    if(typeof firstUserMsg.content==='string') title = firstUserMsg.content;
+    else if(Array.isArray(firstUserMsg.content)){ const t = firstUserMsg.content.find(b=>b.type==='text'); title = t ? t.text : '(đính kèm file)'; }
+  }
+  title = (title||'(trống)').slice(0,140);
+  try{
+    localStorage.setItem(archKey(id), JSON.stringify({ messages: state.messages, files: [...state.files.entries()], todos: state.todos, branch: settings.branch||'main', ts: Date.now() }));
+  }catch(e){ return; } // hết dung lượng localStorage — bỏ qua việc lưu trữ, không chặn luồng chính
+  const idx = loadHistoryIndex();
+  idx.unshift({ id, title, branch: settings.branch||'main', ts: Date.now(), msgCount: state.messages.length });
+  while(idx.length>40){ const old = idx.pop(); try{ localStorage.removeItem(archKey(old.id)); }catch(e){} } // chỉ giữ 40 phiên gần nhất/repo
+  saveHistoryIndex(idx);
+}
+function searchHistory(filter){
+  const idx = loadHistoryIndex();
+  if(!filter) return idx;
+  const f = filter.toLowerCase();
+  return idx.filter(item=>{
+    if(item.title.toLowerCase().includes(f)) return true;
+    try{
+      const raw = localStorage.getItem(archKey(item.id));
+      return !!raw && raw.toLowerCase().includes(f);
+    }catch(e){ return false; }
+  });
+}
+function renderHistoryList(){
+  const filter = $('histSearch').value.trim();
+  const items = searchHistory(filter);
+  $('histList').innerHTML = items.length ? items.map(item =>
+    '<div class="hist-row" data-id="' + item.id + '"><div class="ht">' + escapeHtml(item.title||'(trống)') + '</div>' +
+    '<div class="hm"><span>🌿 ' + escapeHtml(item.branch) + ' · ' + item.msgCount + ' tin nhắn</span><span>' + new Date(item.ts).toLocaleString('vi-VN') + '</span></div></div>'
+  ).join('') : '<div class="hist-empty">' + (filter ? 'Không tìm thấy phiên nào khớp.' : 'Chưa có phiên nào được lưu trữ (phiên hiện tại sẽ tự lưu khi bạn bấm "🆕 Phiên mới" hoặc khôi phục 1 phiên khác).') + '</div>';
+  $('histList').querySelectorAll('.hist-row').forEach(row=>{
+    row.addEventListener('click', ()=> restoreFromHistory(row.dataset.id));
+  });
+}
+function openHistModal(){ renderHistoryList(); $('histOverlay').classList.add('show'); }
+function closeHistModal(){ $('histOverlay').classList.remove('show'); }
+function restoreFromHistory(id){
+  if(dirtyFiles().length && !confirm('Có thay đổi chưa push ở phiên hiện tại. Khôi phục phiên cũ sẽ thay thế phiên hiện tại (phiên hiện tại sẽ tự lưu vào lịch sử trước). Tiếp tục?')) return;
+  const raw = localStorage.getItem(archKey(id));
+  if(!raw){ log('Không tìm thấy dữ liệu phiên này (có thể đã bị dọn do đầy bộ nhớ trình duyệt).', 'l-error'); closeHistModal(); return; }
+  let data;
+  try{ data = JSON.parse(raw); }catch(e){ log('Lỗi đọc dữ liệu phiên: ' + e.message, 'l-error'); return; }
+  archiveCurrentSession();
+  state = { tree:null, files:new Map(data.files||[]), todos:data.todos||[], messages:data.messages||[], claudeMd:null, claudeMdTried:false };
+  expandedDiffs.clear();
+  renderTodos();
+  renderMessagesIntoLog();
+  showPending();
+  scheduleSave();
+  closeHistModal();
+  log('🔁 Đã khôi phục phiên làm việc cũ (' + new Date(data.ts).toLocaleString('vi-VN') + ').', 'l-info');
+  const ageMs = Date.now() - (data.ts || 0);
+  if(ageMs > 2 * 60 * 60 * 1000){
+    log('⚠️ Phiên lưu trữ này đã cũ — nội dung file trong đó có thể KHÔNG còn khớp với bản mới nhất trên GitHub (repo có thể đã bị sửa/push từ lúc lưu tới nay). Nên yêu cầu agent read_file lại trước khi sửa tiếp bất kỳ file quan trọng nào từ phiên này.', 'l-error');
+  }
+}
+$('histBtn').addEventListener('click', openHistModal);
+$('histCloseBtn').addEventListener('click', closeHistModal);
+$('histOverlay').addEventListener('click', (e)=>{ if(e.target.id==='histOverlay') closeHistModal(); });
+$('histSearch').addEventListener('input', renderHistoryList);
+
+function newSession(){
+  archiveCurrentSession(); // lưu phiên vừa rồi vào lịch sử trước khi xoá (nếu có nội dung)
+  try{ localStorage.removeItem(sessionKey()); }catch(e){}
+  state = { tree:null, files:new Map(), todos:[], messages:[], claudeMd:null, claudeMdTried:false };
+  expandedDiffs.clear();
+  $('log').innerHTML = '';
+  renderTodos(); showPending();
+  log('🆕 Đã bắt đầu phiên mới (lịch sử hội thoại &amp; thay đổi tạm đã xoá — repo GitHub không bị ảnh hưởng, phiên cũ đã lưu vào "🕘 Lịch sử").'.replace('&amp;','&'), 'l-info');
+}
+$('newSessionBtn').addEventListener('click', ()=>{
+  if(dirtyFiles().length && !confirm('Có thay đổi chưa push. Bắt đầu phiên mới sẽ xoá các thay đổi tạm này. Tiếp tục?')) return;
+  newSession();
+});
+
+// ---------------- đính kèm file / hình ảnh ----------------
+const IMAGE_MAX_BYTES = 20 * 1024 * 1024;  // 20MB / ảnh (mức tối đa còn an toàn để mã hoá base64 & gửi qua API)
+const DOC_MAX_BYTES = 32 * 1024 * 1024;    // 32MB / tài liệu (pdf...) — mức tối đa mà Anthropic API chấp nhận cho 1 file PDF
+const TEXT_MAX_CHARS = 300000;             // cắt bớt file text quá dài khi nhúng vào lệnh
+const MAX_ATTACHMENTS = 20;
+const TEXT_EXT_RE = /\.(txt|md|markdown|json|csv|js|mjs|ts|jsx|tsx|html?|css|py|java|c|cpp|h|hpp|go|rs|yml|yaml|xml|log|sh|sql)$/i;
+let pendingAttachments = []; // {id, kind:'image'|'document'|'text', name, mediaType, data(base64, image/document), text(text), sizeKB}
+let attachSeq = 0;
+
+function fileIconFor(kind, mediaType){
+  if(kind==='image') return '🖼️';
+  if(mediaType==='application/pdf') return '📕';
+  if(kind==='text') return '📄';
+  return '📎';
+}
+function renderAttachList(){
+  const box = $('attachList');
+  if(!pendingAttachments.length){ box.classList.remove('show'); box.innerHTML=''; return; }
+  box.classList.add('show');
+  box.innerHTML = pendingAttachments.map(a=>{
+    const thumb = a.kind==='image' ? '<img src="data:' + a.mediaType + ';base64,' + a.data + '" alt="">'
+      : '<span class="ficon">' + fileIconFor(a.kind, a.mediaType) + '</span>';
+    return '<span class="attach-chip" data-id="' + a.id + '">' + thumb +
+      '<span class="fname" title="' + escapeHtml(a.name) + '">' + escapeHtml(a.name) + '</span>' +
+      '<button type="button" class="rmBtn" data-id="' + a.id + '" title="Bỏ đính kèm" aria-label="Bỏ đính kèm ' + escapeHtml(a.name) + '">✕</button></span>';
+  }).join('');
+  box.querySelectorAll('.rmBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      pendingAttachments = pendingAttachments.filter(a => a.id !== btn.getAttribute('data-id'));
+      renderAttachList();
+    });
+  });
+}
+function readAsDataURL(file){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = ()=> reject(new Error('Không đọc được file "' + file.name + '"'));
+    r.readAsDataURL(file);
+  });
+}
+function readAsText(file){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = ()=> reject(new Error('Không đọc được file "' + file.name + '"'));
+    r.readAsText(file);
+  });
+}
+async function addAttachmentFile(file){
+  if(pendingAttachments.length >= MAX_ATTACHMENTS){ log('Chỉ đính kèm tối đa ' + MAX_ATTACHMENTS + ' file mỗi lệnh.', 'l-error'); return; }
+  const isImage = file.type.startsWith('image/');
+  const isPdf = file.type === 'application/pdf';
+  const isTexty = file.type.startsWith('text/') || TEXT_EXT_RE.test(file.name) || (!file.type && file.size < 2 * 1024 * 1024);
+  try{
+    if(isImage){
+      if(file.size > IMAGE_MAX_BYTES){ log('Ảnh "' + file.name + '" quá lớn (>20MB), bỏ qua.', 'l-error'); return; }
+      const dataUrl = await readAsDataURL(file);
+      const base64 = dataUrl.split(',')[1] || '';
+      pendingAttachments.push({ id:'a'+(++attachSeq), kind:'image', name:file.name, mediaType:file.type||'image/png', data:base64, sizeKB:Math.round(file.size/1024) });
+    } else if(isPdf){
+      if(file.size > DOC_MAX_BYTES){ log('File "' + file.name + '" quá lớn (>32MB), bỏ qua.', 'l-error'); return; }
+      const dataUrl = await readAsDataURL(file);
+      const base64 = dataUrl.split(',')[1] || '';
+      pendingAttachments.push({ id:'a'+(++attachSeq), kind:'document', name:file.name, mediaType:'application/pdf', data:base64, sizeKB:Math.round(file.size/1024) });
+    } else if(isTexty){
+      let text = await readAsText(file);
+      let truncated = false;
+      if(text.length > TEXT_MAX_CHARS){ text = text.slice(0, TEXT_MAX_CHARS); truncated = true; }
+      pendingAttachments.push({ id:'a'+(++attachSeq), kind:'text', name:file.name, text, truncated, sizeKB:Math.round(file.size/1024) });
+    } else {
+      log('Không hỗ trợ định dạng file "' + file.name + '" (' + (file.type||'không rõ') + ') — chỉ nhận ảnh, PDF, hoặc file text/code.', 'l-error');
+      return;
+    }
+    renderAttachList();
+  }catch(e){ log(e.message || String(e), 'l-error'); }
+}
+$('attachBtn').addEventListener('click', ()=> $('fileInput').click());
+$('fileInput').addEventListener('change', async ()=>{
+  const files = Array.from($('fileInput').files || []);
+  for(const f of files) await addAttachmentFile(f);
+  $('fileInput').value = '';
+});
+// cho phép kéo-thả file/ảnh thẳng vào ô nhập lệnh
+$('cmdInput').addEventListener('dragover', e=> e.preventDefault());
+$('cmdInput').addEventListener('drop', async e=>{
+  e.preventDefault();
+  const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
+  for(const f of files) await addAttachmentFile(f);
+});
+// dán ảnh trực tiếp (Ctrl+V) vào ô nhập lệnh
+$('cmdInput').addEventListener('paste', async e=>{
+  const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
+  const imgItems = items.filter(it=>it.type && it.type.startsWith('image/'));
+  for(const it of imgItems){ const f = it.getAsFile(); if(f) await addAttachmentFile(f); }
+});
+// Ghép attachment hiện tại thành content blocks (định dạng Anthropic — canonical) cho 1 lượt gửi lệnh
+function buildUserContent(text){
+  const blocks = [];
+  for(const a of pendingAttachments){
+    if(a.kind==='image') blocks.push({ type:'image', source:{ type:'base64', media_type:a.mediaType, data:a.data } });
+    else if(a.kind==='document') blocks.push({ type:'document', source:{ type:'base64', media_type:a.mediaType, data:a.data }, title:a.name });
+  }
+  let finalText = text;
+  const textAttachments = pendingAttachments.filter(a=>a.kind==='text');
+  if(textAttachments.length){
+    finalText += (finalText?'\n\n':'') + textAttachments.map(a =>
+      '--- Nội dung file đính kèm "' + a.name + '"' + (a.truncated ? ' (đã cắt bớt, chỉ hiển thị phần đầu)' : '') + ' ---\n' + a.text
+    ).join('\n\n');
+  }
+  if(!blocks.length) return finalText; // không có ảnh/tài liệu -> gửi dạng chuỗi như cũ cho gọn
+  blocks.push({ type:'text', text: finalText || '(xem file đính kèm)' });
+  return blocks;
+}
+
+// ---------------- form ----------------
+const form = $('cmdForm'), input = $('cmdInput'), sendBtn = $('sendBtn'), stopBtn = $('stopBtn');
+input.addEventListener('input', ()=>{ input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,160)+'px'; });
+input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); form.requestSubmit(); } });
+form.addEventListener('submit', async e=>{
+  e.preventDefault();
+  const text = input.value.trim();
+  if(!text && !pendingAttachments.length) return;
+  if(!settings.owner || !settings.repo){ log('Hãy cấu hình owner/repo GitHub trước.', 'l-error'); $('settings').classList.add('show'); return; }
+  if(settings.mode==='api' && !settings.anthropicKey){ log('Hãy nhập Anthropic API key trong Cấu hình.', 'l-error'); return; }
+  if(settings.mode==='deepseek' && !settings.deepseekKey){ log('Hãy nhập DeepSeek API key trong Cấu hình.', 'l-error'); return; }
+  if(settings.mode==='gemini'){
+    const needsDirect = settings.combineGeminiProxy || settings.geminiRunMode!=='proxy';
+    const needsProxy = settings.combineGeminiProxy || settings.geminiRunMode==='proxy';
+    if(needsDirect && !settings.geminiKey){ log('Hãy nhập Gemini API key (agent trực tiếp) trong Cấu hình.', 'l-error'); return; }
+    if(needsProxy && !settings.geminiProxyUrl){ log('Hãy nhập Proxy URL (agent proxy trên máy) trong Cấu hình.', 'l-error'); return; }
+  }
+  const attachNote = pendingAttachments.length ? ('\n📎 ' + pendingAttachments.map(a=>a.name).join(', ')) : '';
+  const chosenAgentId = $('agentSelect').value;
+  const chosenAgent = chosenAgentId ? findAgentById(chosenAgentId) : null;
+  let finalText = text;
+  if(chosenAgent){
+    finalText = '[Ưu tiên giao việc này cho subagent chuyên biệt qua tool "task" với agent_type="' + chosenAgent.id + '" (' + chosenAgent.name + ') nếu phù hợp]\n' + text;
+    log('🤖 Ép agent: ' + chosenAgent.icon + ' ' + chosenAgent.name, 'l-info');
+  }
+  log((text || '(chỉ gửi file đính kèm)') + attachNote, 'l-user');
+  const userContent = buildUserContent(finalText);
+  pendingAttachments = []; renderAttachList();
+  input.value=''; input.style.height='auto';
+  sendBtn.disabled = true; stopBtn.disabled = false;
+  aborter = new AbortController();
+  try{ await runAgent(userContent); } finally { sendBtn.disabled = false; stopBtn.disabled = true; hideProgress(); }
+});
+stopBtn.addEventListener('click', ()=>{ if(aborter) aborter.abort(); hideProgress(); });
+
+try{ renderMemoryList(); }catch(e){}
+if(!tryRestoreSession()){
+  log('Sẵn sàng. Tool: list_files / glob / read_file / grep / edit_file / multi_edit / write_file / todo_write / web_fetch / task (subagent, có thể chỉ định agent_type) / skill_use / skill_write (tự tạo skill) / memory_write (bộ nhớ dài hạn) — ' + getAllSkills().length + ' kỹ năng trên repo "' + (settings.owner||'?') + '/' + (settings.repo||'?') + '". Streaming + prompt caching + chạy song song tool chỉ-đọc + tự nén ngữ cảnh khi hội thoại dài + tự lưu phiên làm việc theo repo (xem lại qua nút "🕘 Lịch sử"). Nếu repo có file CLAUDE.md, agent sẽ tự đọc làm hướng dẫn riêng. Dùng chip lệnh nhanh phía trên ô nhập, hoặc dropdown 🤖 để ép giao việc cho 1 trong ' + AGENTS.length + ' agent chuyên biệt. Thay đổi chỉ được push sau khi bạn xác nhận. Có thể đính kèm ảnh/PDF/file text (nút 📎, kéo-thả, hoặc dán trực tiếp).', 'l-info');
+}
+</script>
+</body>
+</html>

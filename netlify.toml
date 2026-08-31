@@ -1,1 +1,3 @@
-[[edge_functions]] path = "/api/llm-proxy" function = "llm-proxy"
+[[edge_functions]]
+  path = "/api/llm-proxy"
+  function = "llm-proxy"

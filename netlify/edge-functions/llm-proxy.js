@@ -1,95 +1,90 @@
 // netlify/edge-functions/llm-proxy.js
 //
-// Proxy cùng-origin cho các lệnh gọi chat-completions tới GLM/TokenRouter (và các
-// endpoint OpenAI-compatible khác) — chạy ở server (Deno, trong hạ tầng Netlify Edge)
-// nên KHÔNG bị trình duyệt áp CORS. Client (claude-code-controller.html, hàm callGLM)
-// gọi cùng-origin tới "/api/llm-proxy" kèm header "X-Proxy-Target" chứa URL thật cần gọi;
-// function này đọc header đó, forward request sang đích thật, rồi trả nguyên response
-// (kể cả stream SSE) về lại cho trình duyệt.
+// Đây là backend mà claude-code-controller.html cần ở đường dẫn "/api/llm-proxy".
+// App gọi tới đây (cùng-origin, nên không dính CORS) kèm header "X-Proxy-Target"
+// chứa URL thật (vd TokenRouter/GLM) — function này chuyển tiếp (proxy) request
+// sang đó và trả kết quả về, kèm header CORS để trình duyệt chấp nhận.
 //
-// Route "/api/llm-proxy" -> function "llm-proxy" đã được khai báo sẵn trong netlify.toml
-// ([[edge_functions]]) — chỉ cần file này tồn tại đúng đường dẫn là route sẽ hoạt động.
-
-// Chỉ cho phép proxy tới các host đã biết, tránh biến function thành "open proxy" ai cũng
-// gọi được đi bất kỳ đâu (SSRF). Thêm host mới vào đây nếu bạn đổi Base URL trong Cấu hình.
-const ALLOWED_HOSTS = new Set([
-  "www.tokenrouter.com",
-  "tokenrouter.com",
-  "api.deepseek.com",
-  "generativelanguage.googleapis.com",
-]);
+// Vì sao cần: TokenRouter (và nhiều API tương tự) không trả header CORS, nên
+// trình duyệt sẽ chặn nếu gọi thẳng từ JS phía client. Chỉ cần chạy trên server
+// (ở đây là Netlify Edge Function) mới tránh được giới hạn đó.
+//
+// LƯU Ý: file này CHỈ chạy khi repo được deploy trên Netlify. Nếu bạn deploy
+// bằng GitHub Pages (host tĩnh, không chạy được server code) thì endpoint này
+// sẽ không tồn tại và app sẽ báo lỗi 404/405 khi gọi GLM Chatbot.
 
 export default async (request) => {
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "access-control-allow-origin": "*",
-        "access-control-allow-methods": "POST, OPTIONS",
-        "access-control-allow-headers": "content-type, authorization, x-proxy-target",
-      },
-    });
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders() });
+  }
+  if (request.method !== 'POST') {
+    return json({ error: 'Method not allowed, use POST' }, 405);
   }
 
-  if (request.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
-  }
-
-  const target = request.headers.get("x-proxy-target");
+  const target = request.headers.get('x-proxy-target');
   if (!target) {
-    return new Response(JSON.stringify({ error: "Thiếu header X-Proxy-Target" }), {
-      status: 400,
-      headers: { "content-type": "application/json" },
-    });
+    return json({ error: 'Missing X-Proxy-Target header' }, 400);
   }
 
   let targetUrl;
   try {
     targetUrl = new URL(target);
   } catch {
-    return new Response(JSON.stringify({ error: "X-Proxy-Target không phải URL hợp lệ" }), {
-      status: 400,
-      headers: { "content-type": "application/json" },
-    });
+    return json({ error: 'Invalid X-Proxy-Target URL' }, 400);
   }
 
-  if (targetUrl.protocol !== "https:" || !ALLOWED_HOSTS.has(targetUrl.hostname)) {
-    return new Response(JSON.stringify({ error: "Đích proxy không được phép: " + targetUrl.hostname }), {
-      status: 403,
-      headers: { "content-type": "application/json" },
-    });
+  // Chỉ cho phép proxy sang các host LLM đã biết, để tránh bị lợi dụng làm proxy mở.
+  const ALLOWED_HOSTS = [
+    'www.tokenrouter.com',
+    'tokenrouter.com',
+    'api.deepseek.com',
+    'generativelanguage.googleapis.com',
+    'api.anthropic.com',
+  ];
+  if (!ALLOWED_HOSTS.includes(targetUrl.hostname)) {
+    return json({ error: 'Target host not allowed: ' + targetUrl.hostname }, 403);
   }
 
-  // Forward gần như nguyên vẹn header của client (Authorization, Content-Type...),
-  // chỉ bỏ các header đặc thù cùng-origin không nên đi tiếp.
-  const forwardHeaders = new Headers(request.headers);
-  forwardHeaders.delete("x-proxy-target");
-  forwardHeaders.delete("host");
-  forwardHeaders.delete("content-length");
+  const authHeader = request.headers.get('authorization') || '';
 
-  let upstream;
+  let upstreamRes;
   try {
-    upstream = await fetch(targetUrl.toString(), {
-      method: "POST",
-      headers: forwardHeaders,
-      body: request.body,
-      // @ts-ignore: cần thiết trên Deno khi forward một stream request body
-      duplex: "half",
+    upstreamRes = await fetch(targetUrl.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
+      body: await request.text(),
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: "Không gọi được đích proxy: " + (e && e.message || String(e)) }), {
-      status: 502,
-      headers: { "content-type": "application/json" },
-    });
+    return json({ error: 'Upstream fetch failed: ' + (e && e.message) }, 502);
   }
 
-  // Trả nguyên response (kể cả stream SSE) về cho trình duyệt, cùng-origin nên không
-  // dính CORS nữa. Thêm access-control-allow-origin cho chắc trong các trường hợp khác.
-  const responseHeaders = new Headers(upstream.headers);
-  responseHeaders.set("access-control-allow-origin", "*");
+  // Chuyển tiếp nguyên trạng response (kể cả streaming SSE) về client, chỉ thêm CORS.
+  const headers = new Headers(upstreamRes.headers);
+  for (const [k, v] of Object.entries(corsHeaders())) headers.set(k, v);
+  headers.delete('content-encoding');
+  headers.delete('content-length');
 
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers: responseHeaders,
+  return new Response(upstreamRes.body, {
+    status: upstreamRes.status,
+    statusText: upstreamRes.statusText,
+    headers,
   });
 };
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Proxy-Target',
+  };
+}
+
+function json(obj, status) {
+  return new Response(JSON.stringify(obj), {
+    status: status || 200,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+  });
+}

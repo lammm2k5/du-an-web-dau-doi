@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Đường lên đỉnh Olympia — TEST Y HỌC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0F1E;
+  --bg2:#101830;
+  --panel:#141D38;
+  --panel-soft:#1B274A;
+  --line:#2A3760;
+  --gold:#F5B841;
+  --gold2:#FFD98A;
+  --torch1:#FF7A45;
+  --torch2:#FFB020;
+  --teal:#2FD9C4;
+  --danger:#FF5D6C;
+  --ink:#F4F6FC;
+  --ink-soft:#9AA6C8;
+  --ink-faint:#5E6A93;
+  --radius:16px;
+  --radius-sm:10px;
+  --shadow:0 18px 40px -20px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1100px 620px at 12% -10%, rgba(245,184,65,.13), transparent 60%),
+    radial-gradient(900px 560px at 105% 10%, rgba(47,217,196,.10), transparent 55%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+  min-height:100vh;
+  color:var(--ink);
+  font-family:'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Be Vietnam Pro', sans-serif; margin:0; letter-spacing:-.01em;}
+a{color:inherit;}
+button{font-family:inherit; cursor:pointer;}
+::selection{background:rgba(245,184,65,.35);}
+
+.wrap{max-width:1180px; margin:0 auto; padding:22px 18px 80px;}
+
+/* ---------- Top bar ---------- */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:14px 4px 22px;
+}
+.brand{display:flex; align-items:center; gap:12px;}
+.brand-torch{
+  width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(155deg, var(--torch1), var(--torch2));
+  box-shadow:0 8px 22px -8px rgba(255,122,69,.55);
+  font-size:22px;
+}
+.brand-text .t1{font-weight:900; font-size:1.12rem; line-height:1.15;}
+.brand-text .t2{font-size:.72rem; color:var(--ink-soft); font-weight:600; letter-spacing:.02em;}
+.userchip{display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:6px 14px 6px 6px;}
+.userchip img{width:30px; height:30px; border-radius:50%; object-fit:cover; background:#333;}
+.userchip .un{font-size:.82rem; font-weight:600; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.btn-signout{background:none; border:none; color:var(--ink-faint); font-size:.72rem; text-decoration:underline; padding:0;}
+
+/* ---------- generic bits ---------- */
+.card{
+  background:linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+  border:1px solid var(--line); border-radius:var(--radius); padding:22px;
+  box-shadow:var(--shadow);
+}
+.card + .card{margin-top:16px;}
+.eyebrow{font-size:.72rem; font-weight:700; color:var(--gold); margin-bottom:6px;}
+.h-title{font-size:1.3rem; font-weight:800; margin-bottom:4px;}
+.h-sub{font-size:.86rem; color:var(--ink-soft); margin-bottom:16px; line-height:1.55;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+@media(max-width:720px){.grid2{grid-template-columns:1fr;}}
+label{display:block; font-size:.78rem; font-weight:600; color:var(--ink-soft); margin:14px 0 6px;}
+label:first-child{margin-top:0;}
+input[type=text],input[type=email],input[type=number],select,textarea{
+  width:100%; background:#0D1530; border:1px solid var(--line); color:var(--ink); border-radius:10px;
+  padding:11px 13px; font-size:.9rem; font-family:inherit; outline:none; transition:border-color .15s;
+}
+input[type=text]:focus,input[type=email]:focus,select:focus,textarea:focus{border-color:var(--gold);}
+textarea{resize:vertical; line-height:1.5;}
+.hint{font-size:.72rem; color:var(--ink-faint); margin-top:6px;}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border:none; border-radius:11px; padding:12px 20px; font-weight:700; font-size:.88rem;
+  transition:transform .12s, box-shadow .12s, opacity .12s;
+}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+.btn-gold{background:linear-gradient(135deg, var(--torch1), var(--gold)); color:#241300; box-shadow:0 10px 24px -10px rgba(245,184,65,.6);}
+.btn-teal{background:linear-gradient(135deg,#22B8A4,var(--teal)); color:#04241f; box-shadow:0 10px 24px -10px rgba(47,217,196,.5);}
+.btn-outline{background:transparent; color:var(--ink); border:1px solid var(--line);}
+.btn-outline:hover{border-color:var(--gold);}
+.btn-danger{background:rgba(255,93,108,.14); color:#FF9AA4; border:1px solid rgba(255,93,108,.35);}
+.btn-ghost{background:none; color:var(--ink-soft); border:none; text-decoration:underline; padding:4px 0;}
+.btn-sm{padding:8px 14px; font-size:.78rem; border-radius:9px;}
+.btn-block{width:100%;}
+.row-btns{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
+
+.badge{display:inline-flex; align-items:center; gap:5px; font-size:.68rem; font-weight:700; padding:4px 10px; border-radius:999px; letter-spacing:.02em;}
+.badge-lobby{background:rgba(154,166,200,.15); color:var(--ink-soft);}
+.badge-playing{background:rgba(245,184,65,.18); color:var(--gold2);}
+.badge-finished{background:rgba(47,217,196,.16); color:var(--teal);}
+
+.tabs{display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;}
+.tab-btn{background:var(--panel); border:1px solid var(--line); color:var(--ink-soft); padding:9px 16px; border-radius:999px; font-size:.82rem; font-weight:700;}
+.tab-btn.active{background:linear-gradient(135deg, var(--torch1), var(--gold)); color:#241300; border-color:transparent;}
+
+.empty{padding:34px 18px; text-align:center; color:var(--ink-faint); font-size:.86rem;}
+.empty .em-ic{font-size:2rem; margin-bottom:8px; opacity:.7;}
+
+.toastwrap{position:fixed; bottom:18px; left:50%; transform:translateX(-50%); z-index:999; display:flex; flex-direction:column; gap:8px; align-items:center;}
+.toast{background:#1B274A; border:1px solid var(--line); color:var(--ink); padding:11px 18px; border-radius:11px; font-size:.84rem; box-shadow:var(--shadow); animation:toastin .18s ease;}
+.toast.err{border-color:rgba(255,93,108,.5); color:#FF9AA4;}
+.toast.ok{border-color:rgba(47,217,196,.5); color:var(--teal);}
+@keyframes toastin{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+.spin{width:34px; height:34px; border-radius:50%; border:3px solid rgba(245,184,65,.2); border-top-color:var(--gold); animation:spin .8s linear infinite; margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.center-loading{padding:80px 0; text-align:center; color:var(--ink-soft); font-size:.85rem;}
+.center-loading .spin{margin-bottom:14px;}
+
+[data-view]{display:none;}
+[data-view].active{display:block;}
+
+/* login */
+.login-hero{max-width:460px; margin:60px auto; text-align:center;}
+.login-hero .brand-torch{width:64px; height:64px; font-size:32px; margin:0 auto 18px;}
+.login-hero h1{font-size:1.5rem; font-weight:900; margin-bottom:8px;}
+.login-hero p{color:var(--ink-soft); font-size:.9rem; line-height:1.6; margin-bottom:26px;}
+.btn-google{
+  display:inline-flex; align-items:center; gap:10px; background:#fff; color:#1F2937;
+  padding:13px 24px; border-radius:11px; font-weight:700; font-size:.92rem; border:none; box-shadow:var(--shadow);
+}
+
+/* invite / game list rows */
+.list{display:flex; flex-direction:column; gap:10px;}
+.grow-row{
+  display:flex; align-items:center; gap:14px; background:#0D1530; border:1px solid var(--line);
+  border-radius:12px; padding:14px 16px; flex-wrap:wrap;
+}
+.grow-row .gr-main{flex:1; min-width:180px;}
+.grow-row .gr-title{font-weight:700; font-size:.92rem;}
+.grow-row .gr-meta{font-size:.74rem; color:var(--ink-faint); margin-top:3px;}
+
+/* players avatars row */
+.avatars{display:flex; align-items:center;}
+.avatars img{width:30px; height:30px; border-radius:50%; border:2px solid var(--bg2); margin-left:-8px; background:#333; object-fit:cover;}
+.avatars img:first-child{margin-left:0;}
+
+/* Scoreboard */
+.scoreboard{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:18px;}
+.sb-card{
+  background:#0D1530; border:1px solid var(--line); border-radius:13px; padding:13px 14px; position:relative; overflow:hidden;
+}
+.sb-card.active-turn{border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset, 0 0 22px -8px rgba(245,184,65,.5);}
+.sb-card .sb-top{display:flex; align-items:center; gap:9px;}
+.sb-card img{width:32px; height:32px; border-radius:50%; object-fit:cover; background:#333;}
+.sb-card .sb-name{font-size:.78rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px;}
+.sb-card .sb-score{font-size:1.5rem; font-weight:900; margin-top:8px; color:var(--gold2); font-variant-numeric:tabular-nums;}
+.sb-card .sb-flag{position:absolute; top:8px; right:10px; font-size:.9rem;}
+
+/* Stepper for 4 rounds */
+.stepper{display:flex; align-items:center; gap:4px; margin-bottom:20px;}
+.step-item{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 4px;
+  border-radius:12px; background:#0D1530; border:1px solid var(--line); font-size:.68rem; font-weight:700; color:var(--ink-faint);
+  text-align:center;
+}
+.step-item .si-ic{font-size:1.15rem;}
+.step-item.done{color:var(--teal); border-color:rgba(47,217,196,.35);}
+.step-item.current{color:var(--gold2); border-color:var(--gold); background:rgba(245,184,65,.08);}
+
+/* Timer bar */
+.timerbar-wrap{background:#0D1530; border-radius:999px; height:9px; overflow:hidden; border:1px solid var(--line); margin:10px 0 4px;}
+.timerbar{height:100%; background:linear-gradient(90deg, var(--teal), var(--gold)); width:100%; transition:width .2s linear;}
+.timerbar.low{background:linear-gradient(90deg, var(--danger), #FF9A5C);}
+.timer-num{font-size:.72rem; color:var(--ink-faint); text-align:right;}
+
+/* Question panel */
+.qpanel{background:#0D1530; border:1px solid var(--line); border-radius:14px; padding:22px; margin-bottom:16px;}
+.qpanel .qp-tag{font-size:.7rem; font-weight:700; color:var(--gold); margin-bottom:8px; text-transform:uppercase; letter-spacing:.03em;}
+.qpanel .qp-text{font-size:1.08rem; font-weight:600; line-height:1.55;}
+.qpanel .qp-points{display:inline-block; margin-top:10px; background:rgba(245,184,65,.14); color:var(--gold2); font-weight:800; font-size:.78rem; padding:4px 12px; border-radius:999px;}
+.answer-row{display:flex; gap:10px; margin-top:14px;}
+.answer-row input{flex:1;}
+
+/* VCNV grid */
+.vcnv-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:16px;}
+@media(max-width:560px){.vcnv-grid{grid-template-columns:1fr;}}
+.vcnv-row{
+  background:#0D1530; border:1px solid var(--line); border-radius:12px; padding:14px 16px; cursor:pointer; transition:border-color .15s, background .15s;
+  min-height:74px; display:flex; flex-direction:column; justify-content:center;
+}
+.vcnv-row.pickable:hover{border-color:var(--gold);}
+.vcnv-row.opened{background:rgba(47,217,196,.08); border-color:rgba(47,217,196,.4); cursor:default;}
+.vcnv-row.attempted-wrong{background:rgba(255,93,108,.06); border-color:rgba(255,93,108,.3); cursor:default;}
+.vcnv-row .vr-num{font-size:.68rem; font-weight:700; color:var(--ink-faint);}
+.vcnv-row .vr-body{font-size:.86rem; font-weight:600; margin-top:4px;}
+.vcnv-row .vr-ans{font-size:.78rem; color:var(--teal); margin-top:4px; font-weight:700;}
+.vcnv-kw-box{
+  text-align:center; padding:16px; background:rgba(245,184,65,.08); border:1px dashed rgba(245,184,65,.4); border-radius:14px; margin-bottom:16px;
+}
+.vcnv-kw-box .kwl{font-size:.72rem; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:.06em;}
+.vcnv-kw-box .kwv{font-size:1.4rem; font-weight:900; margin-top:6px; letter-spacing:.04em;}
+
+/* tang toc simultaneous grid */
+.tt-answers{display:flex; flex-direction:column; gap:8px; margin-top:16px;}
+.tt-prow{display:flex; align-items:center; gap:10px; background:#0D1530; border:1px solid var(--line); border-radius:10px; padding:9px 13px;}
+.tt-prow img{width:26px; height:26px; border-radius:50%; object-fit:cover;}
+.tt-prow .ttn{font-size:.8rem; font-weight:600; flex:1;}
+.tt-prow .ttstate{font-size:.72rem; font-weight:700; color:var(--ink-faint);}
+.tt-prow.correct .ttstate{color:var(--teal);}
+.tt-prow.wrong .ttstate{color:var(--danger);}
+
+/* ve dich packages */
+.vd-packs{display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;}
+.vd-pack{
+  flex:1; min-width:140px; background:#0D1530; border:1px solid var(--line); border-radius:13px; padding:18px; text-align:center; cursor:pointer;
+  transition:border-color .15s;
+}
+.vd-pack:hover{border-color:var(--gold);}
+.vd-pack .vp-v{font-size:1.4rem; font-weight:900; color:var(--gold2);}
+.vd-pack .vp-l{font-size:.72rem; color:var(--ink-faint); margin-top:4px;}
+.vd-pack.disabled{opacity:.35; cursor:not-allowed; pointer-events:none;}
+.star-toggle{
+  display:inline-flex; align-items:center; gap:8px; background:#0D1530; border:1px solid var(--line); border-radius:999px;
+  padding:9px 16px; font-size:.82rem; font-weight:700; color:var(--ink-soft); margin-top:10px;
+}
+.star-toggle.on{border-color:var(--gold); color:var(--gold2); background:rgba(245,184,65,.1);}
+.steal-banner{background:rgba(255,93,108,.1); border:1px solid rgba(255,93,108,.35); border-radius:12px; padding:12px 16px; font-size:.84rem; margin-top:12px; color:#FF9AA4;}
+
+/* result podium */
+.podium{display:flex; align-items:flex-end; justify-content:center; gap:14px; margin:26px 0 10px;}
+.podium .p-col{display:flex; flex-direction:column; align-items:center; width:120px;}
+.podium img{width:52px; height:52px; border-radius:50%; border:3px solid var(--gold); object-fit:cover; margin-bottom:8px; background:#333;}
+.podium .p-name{font-size:.8rem; font-weight:700; text-align:center; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.podium .p-score{font-size:.78rem; color:var(--gold2); font-weight:800; margin-top:2px;}
+.podium .p-bar{width:100%; margin-top:10px; border-radius:10px 10px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:8px; font-weight:900; font-size:1.1rem;}
+.p-bar.gold{height:100px; background:linear-gradient(180deg,var(--gold2),var(--gold));color:#241300;}
+.p-bar.silver{height:70px; background:linear-gradient(180deg,#DCE3F5,#9AA6C8);color:#141D38;}
+.p-bar.bronze{height:52px; background:linear-gradient(180deg,#E8A87C,#C97B4A);color:#241300;}
+
+/* invite email inputs */
+.email-inputs{display:flex; flex-direction:column; gap:8px;}
+.email-inputs .ei-row{display:flex; gap:8px; align-items:center;}
+.email-inputs .ei-row input{flex:1;}
+
+/* small pill list of invited emails */
+.pill{display:inline-flex; align-items:center; gap:6px; background:#0D1530; border:1px solid var(--line); padding:5px 11px; border-radius:999px; font-size:.72rem; margin:3px 4px 3px 0;}
+.pill .pdot{width:7px; height:7px; border-radius:50%; background:var(--ink-faint);}
+.pill .pdot.joined{background:var(--teal);}
+.pill .pdot.ready{background:var(--gold);}
+
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+.copybox{display:flex; gap:8px; align-items:flex-start;}
+.copybox textarea{flex:1;}
+.locked-notice{text-align:center; padding:60px 20px; color:var(--ink-soft);}
+.locked-notice .ln-ic{font-size:2.4rem; margin-bottom:14px;}
+
+@media(max-width:640px){
+  .wrap{padding:14px 12px 70px;}
+  .card{padding:16px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-torch">🏔️</div>
+      <div class="brand-text">
+        <div class="t1">Đường lên đỉnh Olympia</div>
+        <div class="t2">TEST Y HỌC — Đấu trường kiến thức</div>
+      </div>
+    </div>
+    <div id="userChipSlot"></div>
+  </div>
+
+  <div data-view="loading" class="active">
+    <div class="center-loading"><div class="spin"></div>Đang tải…</div>
+  </div>
+
+  <div data-view="login">
+    <div class="login-hero card">
+      <div class="brand-torch">🔥</div>
+      <h1>Chinh phục đỉnh Olympia</h1>
+      <p>Đăng nhập bằng tài khoản Google (cùng tài khoản bạn dùng cho TEST Y HỌC) để xem lời mời thi đấu hoặc mở bảng tạo đề (dành cho Admin).</p>
+      <button class="btn-google" id="btnGoogleLogin">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.5 3 24 3 16.3 3 9.7 7.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.4 0 10.3-1.8 14.1-5l-6.5-5.4C29.5 36.3 26.9 37 24 37c-5.3 0-9.7-3.4-11.3-8.1l-6.5 5C9.6 40.6 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.6l6.5 5.4C41.5 36 45 30.5 45 24c0-1.4-.1-2.7-.4-3.5z"/></svg>
+        Đăng nhập với Google
+      </button>
+    </div>
+  </div>
+
+  <div data-view="home"></div>
+  <div data-view="admin"></div>
+  <div data-view="lobby"></div>
+  <div data-view="game"></div>
+  <div data-view="result"></div>
+  <div data-view="denied">
+    <div class="card locked-notice">
+      <div class="ln-ic">🔒</div>
+      <h3>Bạn chưa có lời mời tham gia ván này</h3>
+      <p style="color:var(--ink-soft); font-size:.85rem; margin-top:8px;">Chỉ những người được Admin mời đích danh (theo email) mới có thể vào phòng thi đấu này. Liên hệ Admin nếu bạn nghĩ đây là nhầm lẫn.</p>
+      <div class="row-btns" style="justify-content:center;"><button class="btn btn-outline" onclick="location.href=location.pathname">← Về trang chủ Olympia</button></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toastwrap" id="toastWrap"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  // ==================== Cấu hình Firebase — PHẢI giống hệt index.html / admin.html ====================
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBCHuHt7JM0NRu-gxunCjkOcabSeWV7OfA",
+    authDomain: "test-y-hoc-tbump.firebaseapp.com",
+    projectId: "test-y-hoc-tbump",
+    storageBucket: "test-y-hoc-tbump.firebasestorage.app",
+    messagingSenderId: "36720895055",
+    appId: "1:36720895055:web:8ddb503c199a6399d5763a",
+  };
+  // ⚠️ Danh sách này PHẢI khớp với ADMIN_EMAILS trong index.html / admin.html.
+  const ADMIN_EMAILS = [
+    'lamproandvip@gmail.com',
+    'lam2k52k7@gmail.com',
+    'lam20052k7@gmail.com',
+    'ngoclam.tbump@gmail.com',
+  ];
+
+  if(!firebase.apps || !firebase.apps.length){ firebase.initializeApp(FIREBASE_CONFIG); }
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const FieldValue = firebase.firestore.FieldValue;
+  const Timestamp = firebase.firestore.Timestamp;
+  const GAMES_COL = 'olympiaGames';
+
+  let currentUser = null;   // {uid,email,displayName,photoURL}
+  let isAdmin = false;
+  let unsubHome = null;     // listeners cho trang chủ (lời mời / ván đã tạo)
+  let unsubGame = null;     // listener cho ván đang mở
+  let currentGameId = null;
+  let currentGame = null;   // dữ liệu doc ván đang mở (cache mới nhất từ onSnapshot)
+  let countdownTimer = null;
+
+  // ==================== Tiện ích ====================
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
+  function toast(msg, type){
+    const wrap = document.getElementById('toastWrap');
+    const el = document.createElement('div');
+    el.className = 'toast' + (type ? ' '+type : '');
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .25s'; setTimeout(()=>el.remove(), 260); }, 3200);
+  }
+  function normalizeVN(s){
+    return String(s==null?'':s).toLowerCase()
+      .replace(/đ/g,'d')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9\s]/g,' ')
+      .replace(/\s+/g,' ').trim();
+  }
+  function answersMatch(userInput, correctAnswer, acceptable){
+    const u = normalizeVN(userInput);
+    if(!u) return false;
+    if(u === normalizeVN(correctAnswer)) return true;
+    if(Array.isArray(acceptable)){
+      for(const alt of acceptable){ if(u === normalizeVN(alt)) return true; }
+    }
+    return false;
+  }
+  function fmtClock(ms){
+    if(ms < 0) ms = 0;
+    return (ms/1000).toFixed(1) + 's';
+  }
+  function showView(name){
+    $all('[data-view]').forEach(v=>v.classList.remove('active'));
+    const v = document.querySelector('[data-view="'+name+'"]');
+    if(v) v.classList.add('active');
+  }
+  function stopCountdown(){ if(countdownTimer){ clearInterval(countdownTimer); countdownTimer=null; } }
+  function genId(prefix){
+    return (prefix||'x') + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
+  }
+  function playerIsMe(p){ return p && currentUser && p.uid === currentUser.uid; }
+  function myPlayer(game){
+    if(!game || !game.players) return null;
+    return game.players.find(p=>p.uid === (currentUser&&currentUser.uid)) || null;
+  }
+  function nowMs(){ return Date.now(); }
+
+  // ==================== Auth ====================
+  document.getElementById('btnGoogleLogin').addEventListener('click', function(){
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(err=>{
+      console.error(err);
+      toast('Đăng nhập thất bại: ' + (err.message||err.code||'lỗi không rõ'), 'err');
+    });
+  });
+
+  function renderUserChip(){
+    const slot = document.getElementById('userChipSlot');
+    if(!currentUser){ slot.innerHTML=''; return; }
+    slot.innerHTML = `
+      <div class="userchip">
+        <img src="${esc(currentUser.photoURL||'')}" onerror="this.style.visibility='hidden'">
+        <div>
+          <div class="un">${esc(currentUser.displayName||currentUser.email)}</div>
+          <button class="btn-signout" id="btnSignOut">Đăng xuất</button>
+        </div>
+      </div>`;
+    document.getElementById('btnSignOut').addEventListener('click', ()=> auth.signOut());
+  }
+
+  auth.onAuthStateChanged(function(user){
+    stopCountdown();
+    if(unsubHome){ unsubHome(); unsubHome=null; }
+    if(unsubGame){ unsubGame(); unsubGame=null; }
+    if(!user){
+      currentUser = null; isAdmin = false;
+      renderUserChip();
+      showView('login');
+      return;
+    }
+    currentUser = { uid:user.uid, email:(user.email||'').toLowerCase(), displayName:user.displayName||user.email, photoURL:user.photoURL||'' };
+    isAdmin = ADMIN_EMAILS.includes(currentUser.email);
+    renderUserChip();
+    route();
+  });
+
+  // ==================== Router ====================
+  function currentGameIdFromUrl(){
+    const p = new URLSearchParams(location.search);
+    return p.get('game') || null;
+  }
+  function goHome(){
+    history.replaceState(null, '', location.pathname);
+    if(unsubGame){ unsubGame(); unsubGame=null; }
+    currentGameId = null; currentGame = null; stopCountdown();
+    route();
+  }
+  function goToGame(gameId){
+    history.replaceState(null, '', location.pathname + '?game=' + encodeURIComponent(gameId));
+    route();
+  }
+  window.addEventListener('popstate', route);
+
+  function route(){
+    if(!currentUser) return;
+    const gid = currentGameIdFromUrl();
+    if(gid){
+      openGameRoute(gid);
+    } else {
+      if(unsubGame){ unsubGame(); unsubGame=null; }
+      renderHome();
+    }
+  }
+
+  // ==================== TRANG CHỦ ====================
+  function renderHome(){
+    showView('home');
+    const root = document.querySelector('[data-view="home"]');
+    root.innerHTML = `
+      ${isAdmin ? `
+      <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+        <div>
+          <div class="eyebrow">DÀNH CHO ADMIN</div>
+          <div class="h-title" style="margin-bottom:0;">🎛️ Bảng tạo đề Olympia</div>
+          <div style="font-size:.82rem; color:var(--ink-soft); margin-top:4px;">Soạn prompt gửi AI, nhập đề, mời tối đa 4 người chơi vào 1 ván.</div>
+        </div>
+        <button class="btn btn-gold" id="btnOpenAdmin">🪄 Mở bảng tạo đề</button>
+      </div>` : ''}
+
+      <div class="card">
+        <div class="eyebrow">LỜI MỜI CỦA BẠN</div>
+        <div class="h-title">📨 Ván bạn được mời</div>
+        <div class="h-sub">Chỉ những ván Admin mời đích danh email của bạn mới hiện ở đây.</div>
+        <div class="list" id="inviteList"><div class="empty"><div class="em-ic">⏳</div>Đang tải…</div></div>
+      </div>
+
+      ${isAdmin ? `
+      <div class="card">
+        <div class="eyebrow">ADMIN</div>
+        <div class="h-title">🗂️ Ván bạn đã tạo</div>
+        <div class="list" id="createdList"><div class="empty"><div class="em-ic">⏳</div>Đang tải…</div></div>
+      </div>` : ''}
+    `;
+    if(isAdmin){ document.getElementById('btnOpenAdmin').addEventListener('click', renderAdmin); }
+
+    if(unsubHome) unsubHome();
+    const unsubs = [];
+    unsubs.push(
+      db.collection(GAMES_COL).where('invitedEmails','array-contains', currentUser.email)
+        .orderBy('createdAt','desc').limit(30)
+        .onSnapshot(snap=>{
+          const rows = [];
+          snap.forEach(d=> rows.push({id:d.id, ...d.data()}));
+          renderInviteList(rows);
+        }, err=>{ console.error(err); document.getElementById('inviteList').innerHTML = emptyBlock('⚠️','Không tải được danh sách lời mời. Có thể cần đăng nhập lại hoặc chờ Admin cấp quyền Firestore.'); })
+    );
+    if(isAdmin){
+      unsubs.push(
+        db.collection(GAMES_COL).where('createdByEmail','==', currentUser.email)
+          .orderBy('createdAt','desc').limit(30)
+          .onSnapshot(snap=>{
+            const rows = [];
+            snap.forEach(d=> rows.push({id:d.id, ...d.data()}));
+            renderCreatedList(rows);
+          }, err=>{ console.error(err); const el=document.getElementById('createdList'); if(el) el.innerHTML = emptyBlock('⚠️','Không tải được danh sách.'); })
+      );
+    }
+    unsubHome = ()=> unsubs.forEach(u=>u());
+  }
+
+  function emptyBlock(icon, text){
+    return `<div class="empty"><div class="em-ic">${icon}</div>${esc(text)}</div>`;
+  }
+  function statusBadge(status){
+    if(status==='playing') return '<span class="badge badge-playing">● Đang thi đấu</span>';
+    if(status==='finished') return '<span class="badge badge-finished">✓ Đã kết thúc</span>';
+    return '<span class="badge badge-lobby">Phòng chờ</span>';
+  }
+
+  function renderInviteList(rows){
+    const el = document.getElementById('inviteList'); if(!el) return;
+    if(!rows.length){ el.innerHTML = emptyBlock('📭','Bạn chưa có lời mời thi đấu nào. Khi Admin mời bạn vào 1 ván, ván đó sẽ tự xuất hiện ở đây.'); return; }
+    el.innerHTML = rows.map(g=>{
+      const joined = (g.players||[]).some(p=>p.uid===currentUser.uid);
+      return `<div class="grow-row">
+        <div class="gr-main">
+          <div class="gr-title">${esc(g.title||'Ván Olympia')}</div>
+          <div class="gr-meta">${esc(g.subject||'')} · ${g.maxPlayers||4} người chơi · ${(g.players||[]).length} đã tham gia ${statusBadge(g.status)}</div>
+        </div>
+        <button class="btn btn-sm ${joined?'btn-outline':'btn-gold'}" data-open="${esc(g.id)}">${joined? (g.status==='playing'?'▶ Vào thi đấu':'↪ Vào phòng chờ') : '🎟️ Xem lời mời'}</button>
+      </div>`;
+    }).join('');
+    $all('[data-open]', el).forEach(b=> b.addEventListener('click', ()=> goToGame(b.getAttribute('data-open'))));
+  }
+
+  function renderCreatedList(rows){
+    const el = document.getElementById('createdList'); if(!el) return;
+    if(!rows.length){ el.innerHTML = emptyBlock('🗂️','Bạn chưa tạo ván nào. Bấm "Mở bảng tạo đề" ở trên để bắt đầu.'); return; }
+    el.innerHTML = rows.map(g=>`
+      <div class="grow-row">
+        <div class="gr-main">
+          <div class="gr-title">${esc(g.title||'Ván Olympia')}</div>
+          <div class="gr-meta">${(g.invitedEmails||[]).length} lời mời · ${(g.players||[]).length} đã vào phòng ${statusBadge(g.status)}</div>
+        </div>
+        <button class="btn btn-sm btn-outline" data-open="${esc(g.id)}">Mở</button>
+        <button class="btn btn-sm btn-danger" data-del="${esc(g.id)}">Xoá</button>
+      </div>`).join('');
+    $all('[data-open]', el).forEach(b=> b.addEventListener('click', ()=> goToGame(b.getAttribute('data-open'))));
+    $all('[data-del]', el).forEach(b=> b.addEventListener('click', async ()=>{
+      if(!confirm('Xoá hẳn ván này? Không thể hoàn tác.')) return;
+      try{ await db.collection(GAMES_COL).doc(b.getAttribute('data-del')).delete(); toast('Đã xoá ván.','ok'); }
+      catch(e){ toast('Xoá thất bại: '+e.message,'err'); }
+    }));
+  }
+
+  // ==================== ADMIN: PROMPT GỬI AI + NHẬP ĐỀ + TẠO VÁN ====================
+
+  // Cấu hình đề đang soạn dở trong phiên làm việc của admin (không lưu Firestore
+  // cho tới khi bấm "Tạo ván đấu").
+  let draftCfg = null;     // {title, subject, playerCount, difficulty, notes}
+  let draftExam = null;    // JSON đề đã dán & kiểm tra hợp lệ
+
+  function buildOlympiaPrompt(cfg){
+    const n = cfg.playerCount;
+    const indivCount = n * 6;
+    const vdPerTier = n * 3;
+    return `# Vai trò: Người ra đề chương trình "Đường lên đỉnh Olympia"
+Bạn là biên tập viên ra câu hỏi cho gameshow kiến thức truyền hình "Đường lên đỉnh Olympia" (Việt Nam), soạn đề cho ${n} thí sinh thi đấu trực tiếp trên 1 web quiz mô phỏng đúng luật chơi gốc.
+
+## Chủ đề / phạm vi kiến thức
+- Tiêu đề ván đấu: "${cfg.title || 'Không đặt tên'}"
+- Chủ đề / nội dung ôn tập: ${cfg.subject || '(kiến thức phổ thông tổng hợp, đa lĩnh vực như đề Olympia thật: Khoa học tự nhiên, Khoa học xã hội, Văn hoá - Thể thao - Nghệ thuật, Danh nhân - Sự kiện, Địa lý - Lịch sử...)'}
+- Mức độ khó: ${cfg.difficulty || 'Trung bình, phù hợp học sinh giỏi cấp THPT'}
+${cfg.notes ? '- Ghi chú thêm từ người ra đề: ' + cfg.notes : ''}
+
+## Cấu trúc đề PHẢI đúng 4 phần thi sau (không thêm/bớt phần nào)
+
+### 1) Khởi động (khoiDong)
+- "individual": đúng ${indivCount} câu hỏi kiến thức ngắn, độc lập, trả lời trong vài giây (mỗi thí sinh sẽ được giao riêng 6 câu liên tiếp trong mảng này — câu 1-6 cho thí sinh 1, câu 7-12 cho thí sinh 2, v.v. theo đúng thứ tự mảng).
+- "common": đúng 12 câu hỏi kiến thức ngắn dùng cho lượt thi chung (bấm chuông giành quyền trả lời), độ khó tăng dần nhẹ.
+- Mỗi câu Khởi động là dạng hỏi-đáp ngắn, câu trả lời gọn (1 từ/cụm từ/1 con số), không phải trắc nghiệm.
+
+### 2) Vượt chướng ngại vật (vuotChuongNgaiVat)
+- Một từ khoá trung tâm (keyword) liên quan chủ đề, VIẾT HOA, 1-3 từ, không quá dài (tối đa khoảng 15 ký tự kể cả khoảng trắng).
+- Đúng 4 "rows" (4 từ hàng ngang), mỗi row có 1 câu hỏi gợi ý (clue) và 1 đáp án (answer) là 1 từ/cụm từ ngắn liên quan tới từ khoá trung tâm (gợi ý dẫn dắt tới từ khoá, không được chứa nguyên văn từ khoá).
+- "keywordDescription": 1 câu mô tả/gợi ý thêm về từ khoá (dùng làm gợi ý cuối cùng nếu cần).
+
+### 3) Tăng tốc (tangToc)
+- Đúng 4 câu hỏi, độ khó tăng dần, mỗi câu trả lời ngắn gọn, có thể kèm chút dữ kiện/tình huống cần suy luận nhanh (không phải trắc nghiệm).
+
+### 4) Về đích (veDich)
+- Ba nhóm câu hỏi theo 3 mức điểm, mỗi nhóm đúng ${vdPerTier} câu (đủ dùng cho ${n} thí sinh dù tất cả cùng chọn 1 mức điểm):
+  - "pool10": ${vdPerTier} câu mức 10 điểm (dễ, trả lời nhanh).
+  - "pool20": ${vdPerTier} câu mức 20 điểm (trung bình).
+  - "pool30": ${vdPerTier} câu mức 30 điểm (khó hơn, cần suy luận).
+
+## Nguyên tắc bắt buộc
+1. Mọi câu hỏi đều là dạng TRẢ LỜI NGẮN (điền đáp án), KHÔNG dùng trắc nghiệm A/B/C/D.
+2. Câu hỏi rõ ràng, chỉ có 1 đáp án đúng hợp lý, không mơ hồ, không gây tranh cãi.
+3. Đáp án ("answer"/"a") phải NGẮN GỌN (tối đa khoảng 4-5 từ) vì hệ thống chấm điểm tự động so khớp văn bản (không phân biệt hoa/thường, không dấu).
+4. Nếu 1 câu có thể có nhiều cách diễn đạt đáp án đúng, thêm mảng "acceptableAnswers" liệt kê các cách viết khác được chấp nhận.
+5. Không lặp lại nội dung câu hỏi giữa các phần, không hỏi trùng ý.
+6. Không chèn ký tự markdown, không đánh số thứ tự trong nội dung câu hỏi.
+7. Toàn bộ nội dung bằng tiếng Việt.
+8. Sau khi soạn xong, tự rà soát lại: đủ số lượng câu ở từng mục, đáp án không rỗng, từ khoá VCNV không xuất hiện nguyên văn trong bất kỳ đáp án hàng ngang nào.
+
+## ĐỊNH DẠNG ĐẦU RA (BẮT BUỘC)
+Chỉ trả về DUY NHẤT một JSON object hợp lệ, không thêm lời dẫn/giải thích ngoài JSON, không dùng markdown code fence (không bọc \`\`\`), đúng schema sau:
+
+{
+  "title": "${esc(cfg.title||'Ván Olympia')}",
+  "subject": "${esc(cfg.subject||'')}",
+  "khoiDong": {
+    "individual": [{"q":"nội dung câu hỏi","a":"đáp án ngắn"}],
+    "common": [{"q":"...","a":"..."}]
+  },
+  "vuotChuongNgaiVat": {
+    "keyword": "TỪ KHOÁ",
+    "keywordDescription": "gợi ý mô tả thêm về từ khoá",
+    "rows": [{"clue":"câu hỏi gợi ý hàng ngang 1","answer":"đáp án hàng ngang 1"}]
+  },
+  "tangToc": [{"q":"...","a":"..."}],
+  "veDich": {
+    "pool10": [{"q":"...","a":"...","acceptableAnswers":["..."]}],
+    "pool20": [{"q":"...","a":"..."}],
+    "pool30": [{"q":"...","a":"..."}]
+  }
+}
+
+Lưu ý xác thực trước khi trả lời:
+- "khoiDong.individual" có đúng ${indivCount} phần tử, "khoiDong.common" có đúng 12 phần tử.
+- "vuotChuongNgaiVat.rows" có đúng 4 phần tử.
+- "tangToc" có đúng 4 phần tử.
+- "veDich.pool10", "veDich.pool20", "veDich.pool30" mỗi mảng có đúng ${vdPerTier} phần tử.
+- Không phần tử nào rỗng "q" hoặc "a".`;
+  }
+
+  function renderAdmin(){
+    if(!isAdmin){ toast('Chỉ Admin mới truy cập được mục này.','err'); return; }
+    showView('admin');
+    if(!draftCfg) draftCfg = { title:'', subject:'', playerCount:4, difficulty:'Trung bình', notes:'' };
+    const root = document.querySelector('[data-view="admin"]');
+    root.innerHTML = `
+      <button class="btn-ghost" id="btnAdminBack">← Về trang chủ</button>
+      <div class="tabs" style="margin-top:10px;">
+        <button class="tab-btn" data-tab="1">① Tạo prompt</button>
+        <button class="tab-btn" data-tab="2">② Nhập đề &amp; Tạo ván</button>
+      </div>
+      <div id="adminTab1"></div>
+      <div id="adminTab2" style="display:none;"></div>
+    `;
+    document.getElementById('btnAdminBack').addEventListener('click', goHome);
+    renderAdminTab1();
+    renderAdminTab2();
+    setAdminTab('1');
+    $all('.tab-btn', root).forEach(b=> b.addEventListener('click', ()=> setAdminTab(b.getAttribute('data-tab'))));
+  }
+  function setAdminTab(n){
+    $all('.tab-btn').forEach(b=> b.classList.toggle('active', b.getAttribute('data-tab')===n));
+    document.getElementById('adminTab1').style.display = n==='1' ? '' : 'none';
+    document.getElementById('adminTab2').style.display = n==='2' ? '' : 'none';
+  }
+
+  function renderAdminTab1(){
+    const el = document.getElementById('adminTab1');
+    el.innerHTML = `
+      <div class="card">
+        <div class="eyebrow">BƯỚC 1</div>
+        <div class="h-title">🪄 Soạn prompt gửi cho AI</div>
+        <div class="h-sub">Điền thông tin bên dưới, hệ thống sẽ ghép thành 1 prompt chuẩn — copy prompt này rồi dán vào khung chat của Claude/ChatGPT/Gemini... AI sẽ trả về đúng 1 khối JSON để bạn dán ngược lại ở Bước 2.</div>
+        <label>Tiêu đề ván đấu</label>
+        <input type="text" id="cfgTitle" placeholder="VD: Olympia Tim mạch — Vòng loại lớp Y4A" value="${esc(draftCfg.title)}">
+        <label>Chủ đề / nội dung ôn tập</label>
+        <textarea id="cfgSubject" rows="3" placeholder="VD: Kiến thức tổng hợp về hệ tim mạch: giải phẫu, sinh lý, bệnh lý thường gặp, thuốc tim mạch cơ bản...">${esc(draftCfg.subject)}</textarea>
+        <div class="grid2">
+          <div>
+            <label>Số người chơi (2-4)</label>
+            <select id="cfgPlayerCount">
+              <option value="2">2 người chơi</option>
+              <option value="3">3 người chơi</option>
+              <option value="4">4 người chơi</option>
+            </select>
+          </div>
+          <div>
+            <label>Mức độ khó</label>
+            <select id="cfgDifficulty">
+              <option>Dễ</option>
+              <option>Trung bình</option>
+              <option>Khó</option>
+              <option>Hỗn hợp (dễ → khó tăng dần)</option>
+            </select>
+          </div>
+        </div>
+        <label>Ghi chú thêm cho AI (không bắt buộc)</label>
+        <textarea id="cfgNotes" rows="2" placeholder="VD: ưu tiên câu hỏi dạng ca lâm sàng ngắn, tránh hỏi về thuốc hiếm gặp...">${esc(draftCfg.notes)}</textarea>
+        <div class="row-btns">
+          <button class="btn btn-gold" id="btnGenPrompt">🪄 Tạo prompt</button>
+        </div>
+      </div>
+      <div class="card" id="promptOutWrap" style="display:none;">
+        <div class="eyebrow">PROMPT ĐÃ TẠO</div>
+        <div class="h-title">📋 Copy &amp; gửi cho AI</div>
+        <div class="h-sub">Mở Claude/ChatGPT/Gemini ở tab khác, dán nguyên văn prompt này, chờ AI trả lời xong (chỉ 1 khối JSON), rồi copy toàn bộ kết quả JSON đó sang Bước 2.</div>
+        <div class="copybox">
+          <textarea id="promptOut" rows="14" readonly class="mono" style="font-size:.76rem;"></textarea>
+        </div>
+        <div class="row-btns">
+          <button class="btn btn-teal" id="btnCopyPrompt">📋 Copy toàn bộ prompt</button>
+          <button class="btn btn-outline" id="btnGoStep2">Sang bước ② nhập đề →</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('cfgPlayerCount').value = String(draftCfg.playerCount);
+    document.getElementById('cfgDifficulty').value = draftCfg.difficulty;
+    document.getElementById('btnGenPrompt').addEventListener('click', ()=>{
+      draftCfg = {
+        title: document.getElementById('cfgTitle').value.trim(),
+        subject: document.getElementById('cfgSubject').value.trim(),
+        playerCount: parseInt(document.getElementById('cfgPlayerCount').value,10),
+        difficulty: document.getElementById('cfgDifficulty').value,
+        notes: document.getElementById('cfgNotes').value.trim(),
+      };
+      const p = buildOlympiaPrompt(draftCfg);
+      document.getElementById('promptOutWrap').style.display = '';
+      document.getElementById('promptOut').value = p;
+      document.getElementById('promptOutWrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+    document.getElementById('btnCopyPrompt').addEventListener('click', ()=>{
+      const ta = document.getElementById('promptOut');
+      ta.select(); ta.setSelectionRange(0, 999999);
+      navigator.clipboard && navigator.clipboard.writeText(ta.value).then(()=> toast('Đã copy prompt — dán vào khung chat AI.','ok'))
+        .catch(()=>{ try{ document.execCommand('copy'); toast('Đã copy prompt.','ok'); }catch(e){ toast('Không copy được — hãy tự bôi đen rồi Ctrl+C.','err'); } });
+    });
+    document.getElementById('btnGoStep2').addEventListener('click', ()=> setAdminTab('2'));
+  }
+
+  function renderAdminTab2(){
+    const el = document.getElementById('adminTab2');
+    el.innerHTML = `
+      <div class="card">
+        <div class="eyebrow">BƯỚC 2</div>
+        <div class="h-title">📥 Dán kết quả JSON từ AI</div>
+        <div class="h-sub">Dán nguyên văn khối JSON mà AI trả về (không cần xoá gì thêm — hệ thống tự bỏ qua phần thừa nếu có).</div>
+        <textarea id="examJsonIn" rows="12" class="mono" style="font-size:.78rem;" placeholder='{"title":"...", "khoiDong": {...}, ...}'></textarea>
+        <div class="row-btns">
+          <button class="btn btn-gold" id="btnValidate">✅ Kiểm tra &amp; xem trước</button>
+        </div>
+        <div id="validateResult" style="margin-top:16px;"></div>
+      </div>
+      <div class="card" id="inviteWrap" style="display:none;">
+        <div class="eyebrow">BƯỚC 3</div>
+        <div class="h-title">🎟️ Mời người chơi &amp; tạo ván</div>
+        <div class="h-sub">Nhập email Google của từng người chơi (đúng số lượng đã chọn ở Bước 1). Chỉ những email này mới vào được ván đấu.</div>
+        <div class="email-inputs" id="inviteEmails"></div>
+        <div class="row-btns">
+          <button class="btn btn-teal" id="btnCreateGame">🚀 Tạo ván đấu &amp; gửi lời mời</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnValidate').addEventListener('click', onValidateExam);
+  }
+
+  // Kiểm tra cấu trúc JSON đề đúng theo số người chơi đã chọn ở Bước 1.
+  function validateExam(obj, playerCount){
+    const errors = [];
+    function need(cond, msg){ if(!cond) errors.push(msg); }
+    need(obj && typeof obj === 'object', 'Dữ liệu không phải JSON object hợp lệ.');
+    if(!obj || typeof obj !== 'object') return {ok:false, errors};
+
+    const kd = obj.khoiDong || {};
+    const indiv = Array.isArray(kd.individual) ? kd.individual : [];
+    const common = Array.isArray(kd.common) ? kd.common : [];
+    need(indiv.length >= playerCount*6, `Khởi động — "individual" cần tối thiểu ${playerCount*6} câu (hiện có ${indiv.length}).`);
+    need(common.length >= 12, `Khởi động — "common" cần tối thiểu 12 câu (hiện có ${common.length}).`);
+
+    const vcnv = obj.vuotChuongNgaiVat || {};
+    need(typeof vcnv.keyword === 'string' && vcnv.keyword.trim().length>0, 'Vượt chướng ngại vật — thiếu "keyword".');
+    const rows = Array.isArray(vcnv.rows) ? vcnv.rows : [];
+    need(rows.length === 4, `Vượt chướng ngại vật — "rows" cần đúng 4 phần tử (hiện có ${rows.length}).`);
+
+    const tt = Array.isArray(obj.tangToc) ? obj.tangToc : [];
+    need(tt.length === 4, `Tăng tốc cần đúng 4 câu (hiện có ${tt.length}).`);
+
+    const vd = obj.veDich || {};
+    ['pool10','pool20','pool30'].forEach(k=>{
+      const arr = Array.isArray(vd[k]) ? vd[k] : [];
+      need(arr.length >= playerCount*3, `Về đích — "${k}" cần tối thiểu ${playerCount*3} câu (hiện có ${arr.length}).`);
+    });
+
+    // kiểm tra rỗng nội dung
+    function checkQA(arr, label){
+      (arr||[]).forEach((it,idx)=>{
+        if(!it || !String(it.q||'').trim() || !String(it.a||'').trim()){
+          errors.push(`${label} — câu #${idx+1} thiếu nội dung câu hỏi hoặc đáp án.`);
+        }
+      });
+    }
+    checkQA(indiv, 'Khởi động (riêng)');
+    checkQA(common, 'Khởi động (chung)');
+    checkQA(tt, 'Tăng tốc');
+    checkQA(vd.pool10, 'Về đích 10đ'); checkQA(vd.pool20, 'Về đích 20đ'); checkQA(vd.pool30, 'Về đích 30đ');
+    rows.forEach((r,idx)=>{ if(!r || !String(r.clue||'').trim() || !String(r.answer||'').trim()) errors.push(`VCNV — hàng ngang #${idx+1} thiếu clue hoặc answer.`); });
+
+    return {ok: errors.length===0, errors};
+  }
+
+  function tryParseAiJson(raw){
+    let s = String(raw||'').trim();
+    s = s.replace(/^```(json)?/i,'').replace(/```$/,'').trim();
+    // Lấy đúng khối { ... } lớn nhất nếu AI lỡ kèm thêm chữ thừa trước/sau
+    const firstBrace = s.indexOf('{'); const lastBrace = s.lastIndexOf('}');
+    if(firstBrace >= 0 && lastBrace > firstBrace) s = s.slice(firstBrace, lastBrace+1);
+    return JSON.parse(s);
+  }
+
+  function onValidateExam(){
+    const raw = document.getElementById('examJsonIn').value;
+    const box = document.getElementById('validateResult');
+    let obj;
+    try{ obj = tryParseAiJson(raw); }
+    catch(e){
+      box.innerHTML = `<div class="steal-banner">❌ Không đọc được JSON: ${esc(e.message)}. Kiểm tra lại xem AI có trả về đúng 1 khối JSON, không kèm chữ thừa hay không.</div>`;
+      document.getElementById('inviteWrap').style.display = 'none';
+      return;
+    }
+    const { ok, errors } = validateExam(obj, draftCfg.playerCount);
+    if(!ok){
+      box.innerHTML = `<div class="steal-banner">❌ Đề chưa hợp lệ, cần sửa (dán lại prompt kèm mô tả lỗi cho AI sửa, hoặc chỉnh JSON tay):<br><br>` +
+        errors.map(e=>'• '+esc(e)).join('<br>') + `</div>`;
+      document.getElementById('inviteWrap').style.display = 'none';
+      return;
+    }
+    draftExam = obj;
+    const kd = obj.khoiDong, vd = obj.veDich;
+    box.innerHTML = `<div class="steal-banner" style="background:rgba(47,217,196,.1); border-color:rgba(47,217,196,.35); color:var(--teal);">
+      ✅ Đề hợp lệ, sẵn sàng tạo ván!<br>
+      Khởi động: ${kd.individual.length} câu riêng · ${kd.common.length} câu chung &nbsp;|&nbsp;
+      VCNV: từ khoá "${esc(obj.vuotChuongNgaiVat.keyword)}" · 4 hàng ngang &nbsp;|&nbsp;
+      Tăng tốc: ${obj.tangToc.length} câu &nbsp;|&nbsp;
+      Về đích: ${vd.pool10.length}/${vd.pool20.length}/${vd.pool30.length} câu (10đ/20đ/30đ)
+    </div>`;
+    renderInviteForm();
+  }
+
+  function renderInviteForm(){
+    const wrap = document.getElementById('inviteWrap');
+    wrap.style.display = '';
+    const n = draftCfg.playerCount;
+    const box = document.getElementById('inviteEmails');
+    box.innerHTML = '';
+    for(let i=0;i<n;i++){
+      const row = document.createElement('div');
+      row.className = 'ei-row';
+      row.innerHTML = `<span style="width:22px; color:var(--ink-faint); font-size:.78rem;">${i+1}.</span><input type="email" placeholder="email-nguoi-choi-${i+1}@gmail.com" class="invite-email-input">`;
+      box.appendChild(row);
+    }
+    wrap.scrollIntoView({behavior:'smooth', block:'nearest'});
+    document.getElementById('btnCreateGame').onclick = onCreateGame;
+  }
+
+  async function onCreateGame(){
+    const inputs = $all('.invite-email-input');
+    const emails = inputs.map(i=> i.value.trim().toLowerCase()).filter(Boolean);
+    if(emails.length !== draftCfg.playerCount){
+      toast(`Cần nhập đủ ${draftCfg.playerCount} email người chơi.`, 'err'); return;
+    }
+    const uniq = new Set(emails);
+    if(uniq.size !== emails.length){ toast('Có email bị trùng lặp.', 'err'); return; }
+    for(const e of emails){ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){ toast('Email không hợp lệ: '+e, 'err'); return; } }
+
+    const btn = document.getElementById('btnCreateGame');
+    btn.disabled = true; btn.textContent = 'Đang tạo ván…';
+    try{
+      const gameDoc = {
+        title: draftCfg.title || 'Ván Olympia',
+        subject: draftCfg.subject || '',
+        difficulty: draftCfg.difficulty || '',
+        maxPlayers: draftCfg.playerCount,
+        status: 'lobby',
+        createdBy: currentUser.uid,
+        createdByEmail: currentUser.email,
+        createdByName: currentUser.displayName,
+        createdAt: FieldValue.serverTimestamp(),
+        invitedEmails: emails,
+        players: [],
+        exam: draftExam,
+        state: null,
+      };
+      const ref = await db.collection(GAMES_COL).add(gameDoc);
+      toast('Đã tạo ván đấu & gửi lời mời!', 'ok');
+      // reset soạn thảo cho lần sau
+      draftExam = null;
+      goToGame(ref.id);
+    }catch(e){
+      console.error(e);
+      toast('Tạo ván thất bại: ' + e.message, 'err');
+    }finally{
+      btn.disabled = false; btn.textContent = '🚀 Tạo ván đấu & gửi lời mời';
+    }
+  }
+
+  // ==================== MỞ 1 VÁN (theo ?game=ID) — kiểm tra quyền, lắng nghe realtime ====================
+  function openGameRoute(gameId){
+    if(unsubGame){ unsubGame(); unsubGame=null; }
+    currentGameId = gameId;
+    showView('loading');
+    unsubGame = db.collection(GAMES_COL).doc(gameId).onSnapshot(snap=>{
+      if(!snap.exists){
+        showView('denied');
+        document.querySelector('[data-view="denied"] h3').textContent = 'Ván đấu không tồn tại';
+        document.querySelector('[data-view="denied"] p').textContent = 'Ván này có thể đã bị Admin xoá.';
+        return;
+      }
+      const game = { id: snap.id, ...snap.data() };
+      const allowed = isAdmin || game.createdByEmail === currentUser.email ||
+        (game.invitedEmails||[]).includes(currentUser.email);
+      if(!allowed){ showView('denied'); return; }
+      currentGame = game;
+      dispatchGameRender(game);
+    }, err=>{
+      console.error(err);
+      showView('denied');
+    });
+  }
+
+  function dispatchGameRender(game){
+    if(game.status === 'finished'){ renderResult(game); return; }
+    if(game.status === 'playing' && game.state){ renderGamePlay(game); return; }
+    renderLobby(game);
+  }
+
+  // ==================== TRANSACTION HELPER ====================
+  async function txnGame(mutator){
+    if(!currentGameId) return;
+    const ref = db.collection(GAMES_COL).doc(currentGameId);
+    try{
+      await db.runTransaction(async (t)=>{
+        const snap = await t.get(ref);
+        if(!snap.exists) throw new Error('Ván không tồn tại.');
+        const data = snap.data();
+        const clone = JSON.parse(JSON.stringify(data));
+        const patch = mutator(clone, data);
+        if(patch === false || patch == null) return;
+        t.update(ref, patch);
+      });
+    }catch(e){
+      console.error(e);
+      toast('Lỗi: ' + (e.message||e), 'err');
+    }
+  }
+
+  // ==================== PHÒNG CHỜ (LOBBY) ====================
+  function renderLobby(game){
+    showView('lobby');
+    const root = document.querySelector('[data-view="lobby"]');
+    const players = game.players || [];
+    const me = myPlayer(game);
+    const isCreator = game.createdByEmail === currentUser.email;
+    const allReady = players.length>=2 && players.every(p=>p.ready);
+    root.innerHTML = `
+      <button class="btn-ghost" id="btnLobbyBack">← Về trang chủ</button>
+      <div class="card" style="margin-top:10px;">
+        <div class="eyebrow">PHÒNG CHỜ ${statusBadge(game.status)}</div>
+        <div class="h-title">${esc(game.title||'Ván Olympia')}</div>
+        <div class="h-sub">${esc(game.subject||'')} ${game.subject?'·':''} Tối đa ${game.maxPlayers} người chơi · Do ${esc(game.createdByName||game.createdByEmail)} tạo</div>
+
+        <label>Người được mời (${(game.invitedEmails||[]).length})</label>
+        <div>${(game.invitedEmails||[]).map(em=>{
+          const p = players.find(pp=>pp.email===em);
+          return `<span class="pill"><span class="pdot ${p?'joined':''} ${p&&p.ready?'ready':''}"></span>${esc(em)}${p?(p.ready?' · sẵn sàng':' · đã vào'):' · chưa vào'}</span>`;
+        }).join('')}</div>
+
+        <label>Người chơi đã tham gia (${players.length}/${game.maxPlayers})</label>
+        <div class="list">
+          ${players.length ? players.map(p=>`
+            <div class="grow-row">
+              <img src="${esc(p.photoURL||'')}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#333;" onerror="this.style.visibility='hidden'">
+              <div class="gr-main">
+                <div class="gr-title">${esc(p.displayName||p.email)} ${playerIsMe(p)?'<span style="color:var(--gold2); font-weight:600; font-size:.72rem;">(bạn)</span>':''}</div>
+                <div class="gr-meta">${esc(p.email)}</div>
+              </div>
+              <span class="badge ${p.ready?'badge-finished':'badge-lobby'}">${p.ready?'✓ Sẵn sàng':'Chưa sẵn sàng'}</span>
+            </div>`).join('') : emptyBlock('👋','Chưa ai vào phòng.')}
+        </div>
+
+        <div class="row-btns">
+          ${!me ? `<button class="btn btn-gold" id="btnJoin">🎮 Tham gia phòng chờ</button>` : `
+            <button class="btn ${me.ready?'btn-outline':'btn-teal'}" id="btnToggleReady">${me.ready?'Bỏ sẵn sàng':'✓ Tôi đã sẵn sàng'}</button>
+          `}
+          ${(me && allReady) ? `<button class="btn btn-gold" id="btnStart">🚀 Bắt đầu thi đấu</button>` : ''}
+          <button class="btn btn-outline" id="btnCopyInvite">🔗 Copy link mời</button>
+          ${isCreator ? `<button class="btn btn-danger" id="btnDeleteGame">Xoá ván</button>` : ''}
+        </div>
+        <div class="hint">Ván sẽ tự bắt đầu chuyển màn hình cho mọi người ngay khi bấm "Bắt đầu thi đấu" — cần tối thiểu 2 người chơi, tất cả đều bấm sẵn sàng.</div>
+      </div>
+    `;
+    document.getElementById('btnLobbyBack').addEventListener('click', goHome);
+    const jb = document.getElementById('btnJoin');
+    if(jb) jb.addEventListener('click', ()=> txnGame(data=>{
+      if(data.status!=='lobby') return false;
+      const pls = data.players||[];
+      if(pls.some(p=>p.uid===currentUser.uid)) return false;
+      if(pls.length >= data.maxPlayers){ throw new Error('Phòng đã đủ người chơi.'); }
+      const allowed = (data.invitedEmails||[]).includes(currentUser.email) || data.createdByEmail===currentUser.email;
+      if(!allowed) throw new Error('Bạn không có trong danh sách được mời.');
+      pls.push({uid:currentUser.uid, email:currentUser.email, displayName:currentUser.displayName||currentUser.email, photoURL:currentUser.photoURL||'', score:0, ready:false, order:pls.length, starUsed:false});
+      return {players:pls};
+    }));
+    const rb = document.getElementById('btnToggleReady');
+    if(rb) rb.addEventListener('click', ()=> txnGame(data=>{
+      const pls = data.players||[]; const idx = pls.findIndex(p=>p.uid===currentUser.uid);
+      if(idx<0) return false;
+      pls[idx].ready = !pls[idx].ready;
+      return {players:pls};
+    }));
+    const sb = document.getElementById('btnStart');
+    if(sb) sb.addEventListener('click', ()=> txnGame(data=>{
+      if(data.status!=='lobby') return false;
+      const pls = (data.players||[]).slice();
+      if(pls.length<2) throw new Error('Cần tối thiểu 2 người chơi.');
+      if(!pls.every(p=>p.ready)) return false;
+      const turnOrder = pls.slice().sort((a,b)=>a.order-b.order).map(p=>p.uid);
+      const state = { phase:'khoidong_individual', turnOrder, kdi:{ playerIdx:0, qIdx:0, deadlineMs: Date.now()+5000 } };
+      return { status:'playing', startedAt: Date.now(), state };
+    }));
+    document.getElementById('btnCopyInvite').addEventListener('click', ()=>{
+      const url = location.origin + location.pathname + '?game=' + game.id;
+      navigator.clipboard && navigator.clipboard.writeText(url).then(()=> toast('Đã copy link mời.','ok')).catch(()=> toast('Không copy được, hãy tự copy URL trên thanh địa chỉ.','err'));
+    });
+    const db2 = document.getElementById('btnDeleteGame');
+    if(db2) db2.addEventListener('click', async ()=>{
+      if(!confirm('Xoá hẳn ván này?')) return;
+      try{ await db.collection(GAMES_COL).doc(game.id).delete(); goHome(); }catch(e){ toast('Xoá thất bại: '+e.message,'err'); }
+    });
+  }
+
+  // ==================== ĐANG THI ĐẤU — bộ đếm giờ dùng chung ====================
+  let activeTimers = [];
+  function clearActiveTimers(){ activeTimers = []; stopCountdown(); }
+  function watchDeadline(deadlineMs, totalMs, barElId, numElId, onExpire){
+    activeTimers.push({deadlineMs, totalMs, barElId, numElId, onExpire, fired:false});
+  }
+  function startTicker(){
+    stopCountdown();
+    countdownTimer = setInterval(()=>{
+      const now = Date.now();
+      activeTimers.forEach(t=>{
+        const remain = t.deadlineMs - now;
+        const bar = t.barElId && document.getElementById(t.barElId);
+        const numEl = t.numElId && document.getElementById(t.numElId);
+        if(bar){
+          const pct = Math.max(0, Math.min(100, (remain/t.totalMs)*100));
+          bar.style.width = pct + '%';
+          bar.classList.toggle('low', pct < 30);
+        }
+        if(numEl) numEl.textContent = fmtClock(Math.max(0, remain));
+        if(!t.fired && remain <= 0){ t.fired = true; try{ t.onExpire(); }catch(e){ console.error(e); } }
+      });
+    }, 200);
+  }
+
+  // ---------- helpers chung ----------
+  function playersSortedByOrder(game){ return (game.players||[]).slice().sort((a,b)=>a.order-b.order); }
+  function playerByUid(game, uid){ return uid ? (game.players||[]).find(p=>p.uid===uid) : null; }
+
+  const STEP_DEFS = [
+    { ic:'🔥', label:'Khởi động', matches:['khoidong_individual','khoidong_common'] },
+    { ic:'🧩', label:'Vượt CNV', matches:['vcnv'] },
+    { ic:'⚡', label:'Tăng tốc', matches:['tangtoc'] },
+    { ic:'🏁', label:'Về đích', matches:['vedich'] },
+  ];
+  function renderStepperHtml(phase){
+    const curIdx = STEP_DEFS.findIndex(s=> s.matches.includes(phase));
+    return '<div class="stepper">' + STEP_DEFS.map((s,i)=>{
+      const cls = i<curIdx ? 'done' : (i===curIdx ? 'current' : '');
+      return `<div class="step-item ${cls}"><span class="si-ic">${s.ic}</span>${s.label}</div>`;
+    }).join('') + '</div>';
+  }
+  function getActiveUid(game, st){
+    if(st.phase==='khoidong_individual') return st.turnOrder[st.kdi.playerIdx];
+    if(st.phase==='khoidong_common') return st.kdc.buzzedBy || null;
+    if(st.phase==='vcnv'){
+      if(st.vcnv.buzzedForKeyword) return st.vcnv.buzzedForKeyword;
+      if(st.vcnv.rowAnsweringUid) return st.vcnv.rowAnsweringUid;
+      return st.vcnv.turnIdx < st.turnOrder.length ? st.turnOrder[st.vcnv.turnIdx] : null;
+    }
+    if(st.phase==='vedich') return (st.vd.stealBuzzedBy) || st.vd.currentUid;
+    return null;
+  }
+  function renderScoreboardHtml(game, st){
+    const players = playersSortedByOrder(game);
+    const activeUid = getActiveUid(game, st);
+    return '<div class="scoreboard">' + players.map(p=>`
+      <div class="sb-card ${p.uid===activeUid?'active-turn':''}">
+        ${p.uid===activeUid?'<div class="sb-flag">🎯</div>':''}
+        <div class="sb-top"><img src="${esc(p.photoURL||'')}" onerror="this.style.visibility='hidden'"><div class="sb-name">${esc(p.displayName||p.email)}</div></div>
+        <div class="sb-score">${p.score||0}</div>
+      </div>`).join('') + '</div>';
+  }
+
+  function renderGamePlay(game){
+    showView('game');
+    clearActiveTimers();
+    const root = document.querySelector('[data-view="game"]');
+    const st = game.state;
+    root.innerHTML = `
+      <button class="btn-ghost" id="btnGameBack" style="margin-bottom:8px;">← Về trang chủ</button>
+      <div class="card">
+        <div class="h-title" style="margin-bottom:14px;">${esc(game.title||'')}</div>
+        ${renderStepperHtml(st.phase)}
+        ${renderScoreboardHtml(game, st)}
+        <div id="phaseBody"></div>
+      </div>
+    `;
+    document.getElementById('btnGameBack').addEventListener('click', ()=>{
+      if(confirm('Rời màn hình thi đấu? Ván vẫn tiếp tục chạy — bạn có thể quay lại bằng link mời bất cứ lúc nào.')) goHome();
+    });
+    const body = document.getElementById('phaseBody');
+    switch(st.phase){
+      case 'khoidong_individual': renderKdi(game, body); break;
+      case 'khoidong_common': renderKdc(game, body); break;
+      case 'vcnv': renderVcnv(game, body); break;
+      case 'tangtoc': renderTt(game, body); break;
+      case 'vedich': renderVd(game, body); break;
+      default: body.innerHTML = emptyBlock('⏳','Đang chuyển màn…');
+    }
+    startTicker();
+  }
+
+  // ==================== PHẦN 1: KHỞI ĐỘNG — LƯỢT RIÊNG ====================
+  function renderKdi(game, body){
+    const st = game.state; const kdi = st.kdi;
+    const activeUid = st.turnOrder[kdi.playerIdx];
+    const activePlayer = playerByUid(game, activeUid);
+    const qGlobalIdx = kdi.playerIdx*6 + kdi.qIdx;
+    const q = game.exam.khoiDong.individual[qGlobalIdx];
+    const isMe = activeUid === currentUser.uid;
+    body.innerHTML = `
+      <div class="qpanel">
+        <div class="qp-tag">Khởi động · Lượt riêng của ${esc(activePlayer?activePlayer.displayName:'?')} · Câu ${kdi.qIdx+1}/6</div>
+        <div class="qp-text">${nl2br(q ? q.q : '…')}</div>
+        <div class="timerbar-wrap"><div class="timerbar" id="tbar1"></div></div>
+        <div class="timer-num" id="tnum1"></div>
+        ${isMe ? `
+        <div class="answer-row">
+          <input type="text" id="kdiInput" placeholder="Nhập câu trả lời…" autocomplete="off">
+          <button class="btn btn-gold" id="kdiSubmit">Trả lời</button>
+        </div>` : `<div class="hint" style="margin-top:12px;">Đang chờ ${esc(activePlayer?activePlayer.displayName:'thí sinh')} trả lời…</div>`}
+      </div>
+    `;
+    watchDeadline(kdi.deadlineMs, 5000, 'tbar1', 'tnum1', ()=> timeoutKdi(kdi.playerIdx, kdi.qIdx));
+    if(isMe){
+      const inp = document.getElementById('kdiInput');
+      const submitBtn = document.getElementById('kdiSubmit');
+      const submit = ()=>{ submitKdi(inp.value, kdi.playerIdx, kdi.qIdx); inp.disabled=true; submitBtn.disabled=true; };
+      submitBtn.addEventListener('click', submit);
+      inp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
+      inp.focus();
+    }
+  }
+  function applyKdiResult(data, text, expPlayerIdx, expQIdx){
+    const st = data.state; const kdi = st.kdi;
+    if(!kdi || kdi.playerIdx!==expPlayerIdx || kdi.qIdx!==expQIdx) return false;
+    const players = data.players;
+    const activeUid = st.turnOrder[kdi.playerIdx];
+    const qGlobalIdx = kdi.playerIdx*6 + kdi.qIdx;
+    const q = data.exam.khoiDong.individual[qGlobalIdx];
+    if(text!=null && q && answersMatch(text, q.a, q.acceptableAnswers)){
+      const pi = players.findIndex(p=>p.uid===activeUid);
+      if(pi>=0) players[pi].score = (players[pi].score||0) + 10;
+    }
+    let playerIdx = kdi.playerIdx, qIdx = kdi.qIdx+1;
+    if(qIdx>=6){ qIdx=0; playerIdx += 1; }
+    if(playerIdx >= st.turnOrder.length){
+      st.phase='khoidong_common';
+      st.kdc = { qIdx:0, buzzedBy:null, buzzDeadlineMs:null, wrongUids:[], phaseDeadlineMs: Date.now()+12000 };
+      delete st.kdi;
+    } else {
+      st.kdi = { playerIdx, qIdx, deadlineMs: Date.now()+5000 };
+    }
+    return { players, state: st };
+  }
+  function submitKdi(text, pIdx, qIdx){ txnGame(data=> applyKdiResult(data, text, pIdx, qIdx)); }
+  function timeoutKdi(pIdx, qIdx){ txnGame(data=> applyKdiResult(data, null, pIdx, qIdx)); }
+
+  // ==================== PHẦN 1: KHỞI ĐỘNG — LƯỢT CHUNG (bấm chuông) ====================
+  function renderKdc(game, body){
+    const st = game.state; const kdc = st.kdc;
+    const q = game.exam.khoiDong.common[kdc.qIdx];
+    const buzzedPlayer = kdc.buzzedBy ? playerByUid(game, kdc.buzzedBy) : null;
+    const iBuzzed = kdc.buzzedBy === currentUser.uid;
+    const iAlreadyWrong = (kdc.wrongUids||[]).includes(currentUser.uid);
+    body.innerHTML = `
+      <div class="qpanel">
+        <div class="qp-tag">Khởi động · Lượt thi chung · Câu ${kdc.qIdx+1}/12</div>
+        <div class="qp-text">${nl2br(q?q.q:'…')}</div>
+        <div class="timerbar-wrap"><div class="timerbar" id="tbar1"></div></div>
+        <div class="timer-num" id="tnum1"></div>
+        ${buzzedPlayer ? `
+          <div class="hint" style="margin-top:10px;">🔔 <b>${esc(buzzedPlayer.displayName)}</b> đã giành quyền trả lời!</div>
+          ${iBuzzed ? `<div class="answer-row"><input type="text" id="kdcInput" placeholder="Nhập câu trả lời…" autocomplete="off"><button class="btn btn-gold" id="kdcSubmit">Trả lời</button></div>` : ''}
+        ` : `
+          <div class="row-btns">
+            <button class="btn btn-gold" id="kdcBuzz" ${iAlreadyWrong?'disabled':''}>${iAlreadyWrong?'Bạn đã trả lời sai câu này':'🔔 Bấm chuông giành quyền trả lời'}</button>
+          </div>
+        `}
+      </div>
+    `;
+    const totalMs = kdc.buzzedBy ? 5000 : 12000;
+    const deadline = kdc.buzzedBy ? kdc.buzzDeadlineMs : kdc.phaseDeadlineMs;
+    watchDeadline(deadline, totalMs, 'tbar1', 'tnum1', ()=>{
+      if(kdc.buzzedBy) timeoutKdcAnswer(kdc.qIdx, kdc.buzzedBy);
+      else timeoutKdcBuzzWindow(kdc.qIdx);
+    });
+    const bb = document.getElementById('kdcBuzz');
+    if(bb) bb.addEventListener('click', ()=> buzzKdc(kdc.qIdx));
+    const sb = document.getElementById('kdcSubmit');
+    if(sb){
+      const inp = document.getElementById('kdcInput');
+      const submit = ()=>{ submitKdcAnswer(inp.value, kdc.qIdx, kdc.buzzedBy); inp.disabled=true; sb.disabled=true; };
+      sb.addEventListener('click', submit);
+      inp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
+      inp.focus();
+    }
+  }
+  function buzzKdc(expQIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='khoidong_common') return false;
+      const kdc = st.kdc; if(kdc.qIdx!==expQIdx || kdc.buzzedBy) return false;
+      if((kdc.wrongUids||[]).includes(currentUser.uid)) return false;
+      kdc.buzzedBy = currentUser.uid; kdc.buzzDeadlineMs = Date.now()+5000;
+      return { state: st };
+    });
+  }
+  function advanceKdc(data, st, players, qIdx){
+    let nq = qIdx+1;
+    if(nq>=12){
+      st.phase='vcnv';
+      st.vcnv = initVcnvState();
+      delete st.kdc;
+    } else {
+      st.kdc = { qIdx:nq, buzzedBy:null, buzzDeadlineMs:null, wrongUids:[], phaseDeadlineMs: Date.now()+12000 };
+    }
+    return { players, state: st };
+  }
+  function submitKdcAnswer(text, expQIdx, expBuzzedBy){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='khoidong_common') return false;
+      const kdc = st.kdc; if(kdc.qIdx!==expQIdx || kdc.buzzedBy!==expBuzzedBy || kdc.buzzedBy!==currentUser.uid) return false;
+      const players = data.players;
+      const q = data.exam.khoiDong.common[kdc.qIdx];
+      if(answersMatch(text, q.a, q.acceptableAnswers)){
+        const pi = players.findIndex(p=>p.uid===currentUser.uid);
+        if(pi>=0) players[pi].score=(players[pi].score||0)+10;
+        return advanceKdc(data, st, players, kdc.qIdx);
+      } else {
+        kdc.wrongUids = (kdc.wrongUids||[]).concat([currentUser.uid]);
+        kdc.buzzedBy=null; kdc.buzzDeadlineMs=null;
+        if(kdc.wrongUids.length >= st.turnOrder.length) return advanceKdc(data, st, players, kdc.qIdx);
+        kdc.phaseDeadlineMs = Date.now()+8000;
+        return { state: st };
+      }
+    });
+  }
+  function timeoutKdcAnswer(expQIdx, expBuzzedBy){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='khoidong_common') return false;
+      const kdc = st.kdc; if(kdc.qIdx!==expQIdx || kdc.buzzedBy!==expBuzzedBy) return false;
+      const players = data.players;
+      kdc.wrongUids = (kdc.wrongUids||[]).concat([kdc.buzzedBy]);
+      kdc.buzzedBy=null; kdc.buzzDeadlineMs=null;
+      if(kdc.wrongUids.length >= st.turnOrder.length) return advanceKdc(data, st, players, kdc.qIdx);
+      kdc.phaseDeadlineMs = Date.now()+8000;
+      return { state: st };
+    });
+  }
+  function timeoutKdcBuzzWindow(expQIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='khoidong_common') return false;
+      const kdc = st.kdc; if(kdc.qIdx!==expQIdx || kdc.buzzedBy) return false;
+      return advanceKdc(data, st, data.players, kdc.qIdx);
+    });
+  }
+
+  // ==================== PHẦN 2: VƯỢT CHƯỚNG NGẠI VẬT ====================
+  function initVcnvState(){
+    return {
+      opened:[false,false,false,false], attempted:[false,false,false,false], turnIdx:0,
+      pickerDeadlineMs: Date.now()+15000, rowAnsweringUid:null, answeringRow:null, rowAnswerDeadlineMs:null,
+      eliminatedKeyword:[], keywordSolved:false, keywordSolvedBy:null, buzzedForKeyword:null, keywordDeadlineMs:null,
+    };
+  }
+  function tierForAttempted(n){ if(n<=1) return 60; if(n===2) return 50; if(n===3) return 40; return 30; }
+
+  function renderVcnv(game, body){
+    const st = game.state; const v = st.vcnv;
+    const exam = game.exam.vuotChuongNgaiVat;
+    const currentPicker = v.turnIdx < st.turnOrder.length ? playerByUid(game, st.turnOrder[v.turnIdx]) : null;
+    const iAmPicker = currentPicker && currentPicker.uid===currentUser.uid;
+    const answeringPlayer = v.rowAnsweringUid ? playerByUid(game, v.rowAnsweringUid) : null;
+    const buzzedPlayer = v.buzzedForKeyword ? playerByUid(game, v.buzzedForKeyword) : null;
+    const iEliminated = (v.eliminatedKeyword||[]).includes(currentUser.uid);
+    const kwLetters = exam.keyword.replace(/\s/g,'').length;
+
+    let rowsHtml = exam.rows.map((r,i)=>{
+      const opened = v.opened[i]; const attempted = v.attempted[i];
+      const pickable = !attempted && !v.rowAnsweringUid && !v.buzzedForKeyword && iAmPicker;
+      return `<div class="vcnv-row ${opened?'opened':(attempted?'attempted-wrong':'')} ${pickable?'pickable':''}" data-row="${i}">
+        <div class="vr-num">Hàng ngang ${i+1}</div>
+        ${opened ? `<div class="vr-body">${esc(r.clue)}</div><div class="vr-ans">✓ ${esc(r.answer)}</div>` :
+          (attempted ? `<div class="vr-body" style="color:var(--ink-faint);">Đã dùng lượt — chưa ai trả lời đúng</div>` :
+          `<div class="vr-body" style="color:var(--ink-faint);">${pickable?'Bấm để chọn hàng này':'Chưa mở'}</div>`)}
+      </div>`;
+    }).join('');
+
+    let bodyHtml = `
+      <div class="qpanel">
+        <div class="qp-tag">Vượt chướng ngại vật</div>
+        <div class="vcnv-kw-box">
+          <div class="kwl">Từ khoá bí ẩn (${kwLetters} chữ cái)</div>
+          <div class="kwv">${v.keywordSolved ? esc(exam.keyword) : '❓ '.repeat(Math.min(kwLetters,10)).trim()}</div>
+        </div>
+        <div class="vcnv-grid">${rowsHtml}</div>
+        <div class="timerbar-wrap"><div class="timerbar" id="tbar1"></div></div>
+        <div class="timer-num" id="tnum1"></div>
+    `;
+    if(v.buzzedForKeyword){
+      bodyHtml += `<div class="hint" style="margin-top:6px;">🔔 <b>${esc(buzzedPlayer?buzzedPlayer.displayName:'')}</b> đang đoán từ khoá!</div>`;
+      if(buzzedPlayer && buzzedPlayer.uid===currentUser.uid){
+        bodyHtml += `<div class="answer-row"><input type="text" id="kwInput" placeholder="Nhập từ khoá…" autocomplete="off"><button class="btn btn-gold" id="kwSubmit">Trả lời</button></div>`;
+      }
+    } else if(v.rowAnsweringUid){
+      bodyHtml += `<div class="hint" style="margin-top:6px;">${esc(answeringPlayer?answeringPlayer.displayName:'')} đang trả lời hàng ngang ${v.answeringRow+1}: <b>${esc(exam.rows[v.answeringRow].clue)}</b></div>`;
+      if(answeringPlayer && answeringPlayer.uid===currentUser.uid){
+        bodyHtml += `<div class="answer-row"><input type="text" id="rowInput" placeholder="Nhập đáp án…" autocomplete="off"><button class="btn btn-gold" id="rowSubmit">Trả lời</button></div>`;
+      }
+    } else {
+      bodyHtml += `<div class="hint" style="margin-top:6px;">${iAmPicker ? 'Đến lượt bạn chọn 1 hàng ngang.' : (currentPicker ? 'Đang chờ '+esc(currentPicker.displayName)+' chọn hàng ngang…' : 'Đã hết lượt chọn — mọi hàng còn lại đã được mở.')}</div>`;
+    }
+    bodyHtml += `<div class="row-btns">
+      <button class="btn btn-outline" id="kwBuzz" ${(v.buzzedForKeyword||v.rowAnsweringUid||iEliminated||v.keywordSolved)?'disabled':''}>🔔 Đoán từ khoá ngay</button>
+    </div>`;
+    if(exam.keywordDescription){ bodyHtml += `<div class="hint">💡 Gợi ý thêm: ${esc(exam.keywordDescription)}</div>`; }
+    bodyHtml += `</div>`;
+    body.innerHTML = bodyHtml;
+
+    let deadline, total, onExpire;
+    if(v.buzzedForKeyword){ deadline=v.keywordDeadlineMs; total=10000; onExpire=()=> timeoutKeywordAnswer(v.buzzedForKeyword); }
+    else if(v.rowAnsweringUid){ deadline=v.rowAnswerDeadlineMs; total=15000; onExpire=()=> timeoutRowAnswer(v.answeringRow, v.rowAnsweringUid); }
+    else { deadline=v.pickerDeadlineMs; total = v.turnIdx>=st.turnOrder.length ? 20000 : 15000; onExpire=()=> timeoutPickerTurn(v.turnIdx); }
+    watchDeadline(deadline, total, 'tbar1', 'tnum1', onExpire);
+
+    $all('[data-row]', body).forEach(el=> el.addEventListener('click', ()=>{
+      if(!el.classList.contains('pickable')) return;
+      pickRow(parseInt(el.getAttribute('data-row'),10), v.turnIdx);
+    }));
+    const kb = document.getElementById('kwBuzz'); if(kb) kb.addEventListener('click', buzzKeyword);
+    const ks = document.getElementById('kwSubmit');
+    if(ks){
+      const inp = document.getElementById('kwInput');
+      const submit = ()=>{ submitKeywordAnswer(inp.value, v.buzzedForKeyword); inp.disabled=true; ks.disabled=true; };
+      ks.addEventListener('click', submit); inp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); }); inp.focus();
+    }
+    const rs = document.getElementById('rowSubmit');
+    if(rs){
+      const inp = document.getElementById('rowInput');
+      const submit = ()=>{ submitRowAnswer(inp.value, v.answeringRow, v.rowAnsweringUid); inp.disabled=true; rs.disabled=true; };
+      rs.addEventListener('click', submit); inp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); }); inp.focus();
+    }
+  }
+
+  function pickRow(rowIdx, expTurnIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='vcnv') return false;
+      const v = st.vcnv; if(v.turnIdx!==expTurnIdx) return false;
+      if(v.rowAnsweringUid || v.buzzedForKeyword) return false;
+      if(v.attempted[rowIdx]) return false;
+      const pickerUid = st.turnOrder[v.turnIdx];
+      if(pickerUid !== currentUser.uid) return false;
+      v.rowAnsweringUid = currentUser.uid; v.answeringRow = rowIdx; v.rowAnswerDeadlineMs = Date.now()+15000;
+      return { state: st };
+    });
+  }
+  function finishVcnvTurnAdvance(data, st, players, v){
+    const allAttempted = v.attempted.every(Boolean);
+    if(v.turnIdx >= st.turnOrder.length || allAttempted){
+      v.attempted = v.attempted.map(()=>true);
+      v.opened = v.opened.map(()=>true);
+      v.turnIdx = st.turnOrder.length;
+      v.pickerDeadlineMs = Date.now()+20000;
+    } else {
+      v.pickerDeadlineMs = Date.now()+15000;
+    }
+    return { players, state: st };
+  }
+  function resolveRowAnswer(data, text, expRow, expUid){
+    const st = data.state; const v = st.vcnv;
+    if(v.answeringRow!==expRow || v.rowAnsweringUid!==expUid) return false;
+    const players = data.players;
+    const row = data.exam.vuotChuongNgaiVat.rows[expRow];
+    const correct = text!=null && answersMatch(text, row.answer, row.acceptableAnswers);
+    if(correct){
+      const pi = players.findIndex(p=>p.uid===expUid);
+      if(pi>=0) players[pi].score = (players[pi].score||0)+10;
+      v.opened[expRow]=true;
+    }
+    v.attempted[expRow]=true;
+    v.rowAnsweringUid=null; v.answeringRow=null; v.rowAnswerDeadlineMs=null;
+    v.turnIdx += 1;
+    return finishVcnvTurnAdvance(data, st, players, v);
+  }
+  function submitRowAnswer(text, expRow, expUid){ txnGame(data=> resolveRowAnswer(data, text, expRow, expUid)); }
+  function timeoutRowAnswer(expRow, expUid){ txnGame(data=> resolveRowAnswer(data, null, expRow, expUid)); }
+
+  function buzzKeyword(){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='vcnv') return false;
+      const v = st.vcnv;
+      if(v.keywordSolved || v.buzzedForKeyword || v.rowAnsweringUid) return false;
+      if((v.eliminatedKeyword||[]).includes(currentUser.uid)) return false;
+      v.buzzedForKeyword = currentUser.uid; v.keywordDeadlineMs = Date.now()+10000;
+      return { state: st };
+    });
+  }
+  function resolveKeywordAnswer(data, text, expUid){
+    const st = data.state; const v = st.vcnv;
+    if(v.buzzedForKeyword!==expUid) return false;
+    const players = data.players;
+    const exam = data.exam.vuotChuongNgaiVat;
+    const correct = text!=null && answersMatch(text, exam.keyword, exam.acceptableAnswers);
+    if(correct){
+      const attemptedCount = v.attempted.filter(Boolean).length;
+      const pts = tierForAttempted(attemptedCount);
+      const pi = players.findIndex(p=>p.uid===expUid);
+      if(pi>=0) players[pi].score=(players[pi].score||0)+pts;
+      v.keywordSolved=true; v.keywordSolvedBy=expUid;
+      st.phase='tangtoc'; st.tt = initTtState(0, null);
+      delete st.vcnv;
+      return { players, state: st };
+    } else {
+      v.eliminatedKeyword = (v.eliminatedKeyword||[]).concat([expUid]);
+      v.buzzedForKeyword=null; v.keywordDeadlineMs=null;
+      const allEliminated = st.turnOrder.every(uid=> (v.eliminatedKeyword||[]).includes(uid));
+      const allAttempted = v.attempted.every(Boolean);
+      if(allEliminated && allAttempted){
+        v.opened = v.opened.map(()=>true);
+        st.phase='tangtoc'; st.tt = initTtState(0, exam.keyword);
+        delete st.vcnv;
+        return { players, state: st };
+      }
+      return { players, state: st };
+    }
+  }
+  function submitKeywordAnswer(text, expUid){ txnGame(data=> resolveKeywordAnswer(data, text, expUid)); }
+  function timeoutKeywordAnswer(expUid){ txnGame(data=> resolveKeywordAnswer(data, null, expUid)); }
+  function timeoutPickerTurn(expTurnIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='vcnv') return false;
+      const v = st.vcnv; if(v.turnIdx!==expTurnIdx || v.rowAnsweringUid || v.buzzedForKeyword) return false;
+      if(v.turnIdx >= st.turnOrder.length){
+        v.opened = v.opened.map(()=>true);
+        const kw = data.exam.vuotChuongNgaiVat.keyword;
+        st.phase='tangtoc'; st.tt = initTtState(0, kw);
+        const players = data.players; delete st.vcnv;
+        return { players, state: st };
+      }
+      v.turnIdx += 1;
+      return finishVcnvTurnAdvance(data, st, data.players, v);
+    });
+  }
+
+  // ==================== PHẦN 3: TĂNG TỐC ====================
+  const TT_DURATIONS = [10,20,30,40];
+  function initTtState(qIdx, revealedKeyword){
+    return { qIdx, startMs: Date.now(), deadlineMs: Date.now()+TT_DURATIONS[qIdx]*1000, submissions:{}, closed:false, revealedKeyword: revealedKeyword||null };
+  }
+  function renderTt(game, body){
+    const st = game.state; const tt = st.tt;
+    const q = game.exam.tangToc[tt.qIdx];
+    const players = playersSortedByOrder(game);
+    const mySubmitted = !!tt.submissions[currentUser.uid];
+    let rowsHtml = players.map(p=>{
+      const sub = tt.submissions[p.uid];
+      const cls = sub ? (sub.correct?'correct':'wrong') : '';
+      const stateLabel = sub ? (sub.correct?'✓ Đúng':'✗ Sai / hết giờ') : 'Đang chờ…';
+      return `<div class="tt-prow ${cls}"><img src="${esc(p.photoURL||'')}" onerror="this.style.visibility='hidden'"><div class="ttn">${esc(p.displayName||p.email)}</div><div class="ttstate">${stateLabel}</div></div>`;
+    }).join('');
+    body.innerHTML = `
+      ${tt.revealedKeyword ? `<div class="hint" style="margin-bottom:10px;">💡 Từ khoá Vượt chướng ngại vật vừa rồi là: <b>${esc(tt.revealedKeyword)}</b></div>` : ''}
+      <div class="qpanel">
+        <div class="qp-tag">Tăng tốc · Câu ${tt.qIdx+1}/4</div>
+        <div class="qp-text">${nl2br(q?q.q:'…')}</div>
+        <div class="timerbar-wrap"><div class="timerbar" id="tbar1"></div></div>
+        <div class="timer-num" id="tnum1"></div>
+        ${mySubmitted ? `<div class="hint" style="margin-top:12px;">Đã gửi câu trả lời — chờ những người còn lại…</div>` :
+          `<div class="answer-row"><input type="text" id="ttInput" placeholder="Nhập câu trả lời…" autocomplete="off"><button class="btn btn-gold" id="ttSubmit">Trả lời</button></div>`}
+        <div class="tt-answers">${rowsHtml}</div>
+      </div>
+    `;
+    watchDeadline(tt.deadlineMs, TT_DURATIONS[tt.qIdx]*1000, 'tbar1', 'tnum1', ()=> closeTangTocQuestion(tt.qIdx));
+    const sb = document.getElementById('ttSubmit');
+    if(sb){
+      const inp = document.getElementById('ttInput');
+      const submit = ()=>{ submitTt(inp.value, tt.qIdx); inp.disabled=true; sb.disabled=true; };
+      sb.addEventListener('click', submit); inp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); }); inp.focus();
+    }
+  }
+  function submitTt(text, expQIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='tangtoc') return false;
+      const tt = st.tt; if(tt.qIdx!==expQIdx || tt.closed) return false;
+      if(tt.submissions[currentUser.uid]) return false;
+      const q = data.exam.tangToc[tt.qIdx];
+      const correct = answersMatch(text, q.a, q.acceptableAnswers);
+      tt.submissions[currentUser.uid] = { correct, elapsedMs: Date.now()-tt.startMs };
+      if(Object.keys(tt.submissions).length >= st.turnOrder.length) return closeTtNow(data, st, data.players, tt);
+      return { state: st };
+    });
+  }
+  function closeTangTocQuestion(expQIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='tangtoc') return false;
+      const tt = st.tt; if(tt.qIdx!==expQIdx || tt.closed) return false;
+      return closeTtNow(data, st, data.players, tt);
+    });
+  }
+  function closeTtNow(data, st, players, tt){
+    tt.closed = true;
+    const n = st.turnOrder.length;
+    const pointsTable = [40,30,20,10].slice(0,n);
+    const correctList = st.turnOrder
+      .map(uid=> ({ uid, sub: tt.submissions[uid] }))
+      .filter(x=> x.sub && x.sub.correct)
+      .sort((a,b)=> a.sub.elapsedMs - b.sub.elapsedMs);
+    correctList.forEach((x,rank)=>{
+      const pts = pointsTable[rank] || 0;
+      const pi = players.findIndex(p=>p.uid===x.uid);
+      if(pi>=0) players[pi].score = (players[pi].score||0) + pts;
+    });
+    let nq = tt.qIdx+1;
+    if(nq>=4){
+      st.phase='vedich'; st.vd = initVdState(players);
+      delete st.tt;
+    } else {
+      st.tt = initTtState(nq, null);
+    }
+    return { players, state: st };
+  }
+
+  // ==================== PHẦN 4: VỀ ĐÍCH ====================
+  function pickNextVd(players, doneUids){
+    const remain = players.filter(p=> !(doneUids||[]).includes(p.uid));
+    if(!remain.length) return null;
+    remain.sort((a,b)=> (b.score-a.score) || (a.order-b.order));
+    return remain[0].uid;
+  }
+  function initVdState(players){
+    return {
+      doneUids:[], currentUid: pickNextVd(players, []), phase2:'choosing', tier:null, qList:null, qIdx:0,
+      starActiveThisQ:false, deadlineMs: Date.now()+15000, stealBuzzedBy:null, stealDeadlineMs:null,
+      usedIdx:{ pool10:[], pool20:[], pool30:[] },
+    };
+  }
+  function tierTimeSec(tier){ return tier===10?15:(tier===20?20:25); }
+
+  function renderVd(game, body){
+    const st = game.state; const v = st.vd;
+    const curPlayer = v.currentUid ? playerByUid(game, v.currentUid) : null;
+    const iAmCurrent = curPlayer && curPlayer.uid===currentUser.uid;
+    const exam = game.exam.veDich;
+    let html = `<div class="qpanel"><div class="qp-tag">Về đích · Lượt của ${esc(curPlayer?curPlayer.displayName:'?')}</div>`;
+
+    if(v.phase2==='choosing'){
+      const remain10 = exam.pool10.length - v.usedIdx.pool10.length;
+      const remain20 = exam.pool20.length - v.usedIdx.pool20.length;
+      const remain30 = exam.pool30.length - v.usedIdx.pool30.length;
+      html += `<div class="vd-packs">
+        <div class="vd-pack ${(!iAmCurrent||remain10<3)?'disabled':''}" data-tier="10"><div class="vp-v">10đ</div><div class="vp-l">×3 câu · còn ${remain10}</div></div>
+        <div class="vd-pack ${(!iAmCurrent||remain20<3)?'disabled':''}" data-tier="20"><div class="vp-v">20đ</div><div class="vp-l">×3 câu · còn ${remain20}</div></div>
+        <div class="vd-pack ${(!iAmCurrent||remain30<3)?'disabled':''}" data-tier="30"><div class="vp-v">30đ</div><div class="vp-l">×3 câu · còn ${remain30}</div></div>
+      </div>
+      <div class="timerbar-wrap"><div class="timerbar" id="tbar1"></div></div><div class="timer-num" id="tnum1"></div>
+      ${iAmCurrent ? '<div class="hint">Chọn 1 gói điểm cho lượt của bạn (3 câu hỏi).</div>' : '<div class="hint">Đang chờ chọn gói điểm…</div>'}`;
+      watchDeadline(v.deadlineMs, 15000, 'tbar1', 'tnum1', ()=> timeoutVdChoose(v.currentUid));
+    } else if(v.phase2==='deciding_star'){
+      html += `<div class="hint">Câu ${v.qIdx+1}/3 — gói ${v.tier}đ. ${iAmCurrent? 'Bạn có muốn đặt <b>Ngôi sao hy vọng</b> cho câu này? (chỉ dùng được 1 lần trong cả trận — đúng x2 điểm, sai bị trừ điểm)' : 'Đang chờ chọn có dùng Ngôi sao hy vọng…'}</div>
+      <div class="timerbar-wrap"><div class="timerbar" id="tbar1"></div></div><div class="timer-num" id="tnum1"></div>`;
+      if(iAmCurrent){ html += `<div class="row-btns"><button class="btn btn-gold" id="vdStarYes">⭐ Dùng ngôi sao hy vọng</button><button class="btn btn-outline" id="vdStarNo">Bỏ qua, trả lời bình thường</button></div>`; }
+      watchDeadline(v.deadlineMs, 10000, 'tbar1', 'tnum1', ()=> timeoutVdStarDecision(v.currentUid, v.qIdx));
+    } else if(v.phase2==='answering'){
+      const q = v.qList[v.qIdx];
+      html += `<div class="qp-text">${v.starActiveThisQ?'⭐ ':''}${nl2br(q.q)}</div>
+      <div class="qp-points">${v.starActiveThisQ ? (v.tier*2)+'đ nếu đúng · -'+v.tier+'đ nếu sai (Ngôi sao)' : v.tier+'đ'}</div>
+      <div class="timerbar-wrap"><div class="timerbar" id="tbar1"></div></div><div class="timer-num" id="tnum1"></div>`;
+      if(iAmCurrent){ html += `<div class="answer-row"><input type="text" id="vdInput" placeholder="Nhập câu trả lời…" autocomplete="off"><button class="btn btn-gold" id="vdSubmit">Trả lời</button></div>`; }
+      else { html += `<div class="hint" style="margin-top:12px;">Đang chờ ${esc(curPlayer?curPlayer.displayName:'')} trả lời…</div>`; }
+      watchDeadline(v.deadlineMs, tierTimeSec(v.tier)*1000, 'tbar1', 'tnum1', ()=> timeoutVdAnswer(v.currentUid, v.qIdx));
+    } else if(v.phase2==='steal_open'){
+      const q = v.qList[v.qIdx];
+      html += `<div class="qp-text">${nl2br(q.q)}</div><div class="qp-points">${v.tier}đ cho ai giành quyền trả lời đúng</div>
+      <div class="steal-banner">${esc(curPlayer?curPlayer.displayName:'')} chưa trả lời đúng — người chơi khác có thể bấm chuông giành lại điểm!</div>
+      <div class="timerbar-wrap"><div class="timerbar" id="tbar1"></div></div><div class="timer-num" id="tnum1"></div>`;
+      if(v.stealBuzzedBy){
+        const sp = playerByUid(game, v.stealBuzzedBy);
+        html += `<div class="hint">🔔 ${esc(sp?sp.displayName:'')} đang trả lời…</div>`;
+        if(v.stealBuzzedBy===currentUser.uid){ html += `<div class="answer-row"><input type="text" id="stealInput" placeholder="Nhập câu trả lời…" autocomplete="off"><button class="btn btn-gold" id="stealSubmit">Trả lời</button></div>`; }
+        watchDeadline(v.stealDeadlineMs, 8000, 'tbar1', 'tnum1', ()=> timeoutStealAnswer(v.stealBuzzedBy, v.qIdx));
+      } else {
+        if(currentUser.uid !== v.currentUid){ html += `<div class="row-btns"><button class="btn btn-gold" id="stealBuzzBtn">🔔 Giành quyền trả lời</button></div>`; }
+        watchDeadline(v.stealDeadlineMs, 10000, 'tbar1', 'tnum1', ()=> timeoutStealWindow(v.qIdx));
+      }
+    }
+    html += `</div>`;
+    body.innerHTML = html;
+
+    $all('[data-tier]', body).forEach(el=> el.addEventListener('click', ()=>{
+      if(el.classList.contains('disabled')) return;
+      pickVdPackage(parseInt(el.getAttribute('data-tier'),10), v.currentUid);
+    }));
+    const y = document.getElementById('vdStarYes'); if(y) y.addEventListener('click', ()=> decideVdStar(true, v.currentUid, v.qIdx));
+    const nBtn = document.getElementById('vdStarNo'); if(nBtn) nBtn.addEventListener('click', ()=> decideVdStar(false, v.currentUid, v.qIdx));
+    const vs = document.getElementById('vdSubmit');
+    if(vs){ const inp=document.getElementById('vdInput'); const submit=()=>{ submitVdAnswer(inp.value, v.currentUid, v.qIdx); inp.disabled=true; vs.disabled=true; }; vs.addEventListener('click', submit); inp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); }); inp.focus(); }
+    const sBuzz = document.getElementById('stealBuzzBtn'); if(sBuzz) sBuzz.addEventListener('click', ()=> stealBuzz(v.qIdx));
+    const ss = document.getElementById('stealSubmit');
+    if(ss){ const inp=document.getElementById('stealInput'); const submit=()=>{ submitStealAnswer(inp.value, v.qIdx, v.stealBuzzedBy); inp.disabled=true; ss.disabled=true; }; ss.addEventListener('click', submit); inp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); }); inp.focus(); }
+  }
+
+  function pickVdPackage(tier, expUid){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='vedich') return false;
+      const v = st.vd; if(v.phase2!=='choosing' || v.currentUid!==expUid || v.currentUid!==currentUser.uid) return false;
+      const key='pool'+tier;
+      const pool = data.exam.veDich[key];
+      const used = v.usedIdx[key]||[];
+      const availIdxs = pool.map((_,i)=>i).filter(i=> !used.includes(i));
+      if(availIdxs.length<3) throw new Error('Không đủ câu hỏi ở mức điểm này.');
+      const chosen = availIdxs.slice(0,3);
+      v.usedIdx[key] = used.concat(chosen);
+      v.qList = chosen.map(i=> pool[i]);
+      v.tier = tier; v.qIdx = 0;
+      const players = data.players;
+      const p = players.find(pp=>pp.uid===currentUser.uid);
+      const starAvail = p && !p.starUsed;
+      if(starAvail){ v.phase2='deciding_star'; v.deadlineMs = Date.now()+10000; }
+      else { v.phase2='answering'; v.starActiveThisQ=false; v.deadlineMs = Date.now()+tierTimeSec(tier)*1000; }
+      return { state: st };
+    });
+  }
+  function decideVdStar(useStar, expUid, expQIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='vedich') return false;
+      const v = st.vd; if(v.phase2!=='deciding_star' || v.currentUid!==expUid || v.qIdx!==expQIdx || v.currentUid!==currentUser.uid) return false;
+      const players = data.players;
+      if(useStar){
+        const pi = players.findIndex(p=>p.uid===currentUser.uid);
+        if(pi>=0 && players[pi].starUsed) return false;
+        if(pi>=0) players[pi].starUsed = true;
+        v.starActiveThisQ = true;
+      } else { v.starActiveThisQ = false; }
+      v.phase2='answering'; v.deadlineMs = Date.now()+tierTimeSec(v.tier)*1000;
+      return { players, state: st };
+    });
+  }
+  function timeoutVdChoose(expUid){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='vedich') return false;
+      const v = st.vd; if(v.phase2!=='choosing' || v.currentUid!==expUid) return false;
+      const players = data.players;
+      for(const tier of [10,20,30]){
+        const key='pool'+tier; const pool = data.exam.veDich[key]; const used=v.usedIdx[key]||[];
+        const availIdxs = pool.map((_,i)=>i).filter(i=>!used.includes(i));
+        if(availIdxs.length>=3){
+          const chosen = availIdxs.slice(0,3);
+          v.usedIdx[key]=used.concat(chosen);
+          v.qList = chosen.map(i=>pool[i]); v.tier=tier; v.qIdx=0;
+          const p = players.find(pp=>pp.uid===expUid);
+          const starAvail = p && !p.starUsed;
+          if(starAvail){ v.phase2='deciding_star'; v.deadlineMs=Date.now()+10000; }
+          else { v.phase2='answering'; v.starActiveThisQ=false; v.deadlineMs=Date.now()+tierTimeSec(tier)*1000; }
+          return { state: st };
+        }
+      }
+      v.doneUids = (v.doneUids||[]).concat([expUid]);
+      return advanceVdTurn(data, st, players);
+    });
+  }
+  function timeoutVdStarDecision(expUid, expQIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='vedich') return false;
+      const v = st.vd; if(v.phase2!=='deciding_star' || v.currentUid!==expUid || v.qIdx!==expQIdx) return false;
+      v.starActiveThisQ=false; v.phase2='answering'; v.deadlineMs=Date.now()+tierTimeSec(v.tier)*1000;
+      return { state: st };
+    });
+  }
+  function resolveVdAnswer(data, text, expUid, expQIdx){
+    const st = data.state; const v = st.vd;
+    if(v.phase2!=='answering' || v.currentUid!==expUid || v.qIdx!==expQIdx) return false;
+    const players = data.players;
+    const q = v.qList[v.qIdx];
+    const correct = text!=null && answersMatch(text, q.a, q.acceptableAnswers);
+    const pi = players.findIndex(p=>p.uid===expUid);
+    if(v.starActiveThisQ){
+      if(pi>=0) players[pi].score = (players[pi].score||0) + (correct? v.tier*2 : -v.tier);
+      return advanceVdQuestion(data, st, players);
+    } else {
+      if(correct){
+        if(pi>=0) players[pi].score = (players[pi].score||0) + v.tier;
+        return advanceVdQuestion(data, st, players);
+      } else {
+        v.phase2='steal_open'; v.stealBuzzedBy=null; v.stealDeadlineMs=Date.now()+10000;
+        return { players, state: st };
+      }
+    }
+  }
+  function submitVdAnswer(text, expUid, expQIdx){ txnGame(data=> resolveVdAnswer(data, text, expUid, expQIdx)); }
+  function timeoutVdAnswer(expUid, expQIdx){ txnGame(data=> resolveVdAnswer(data, null, expUid, expQIdx)); }
+
+  function stealBuzz(expQIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='vedich') return false;
+      const v = st.vd; if(v.phase2!=='steal_open' || v.qIdx!==expQIdx || v.stealBuzzedBy) return false;
+      if(currentUser.uid === v.currentUid) return false;
+      v.stealBuzzedBy = currentUser.uid; v.stealDeadlineMs = Date.now()+8000;
+      return { state: st };
+    });
+  }
+  function resolveSteal(data, text, expUid, expQIdx){
+    const st = data.state; const v = st.vd;
+    if(v.phase2!=='steal_open' || v.stealBuzzedBy!==expUid || v.qIdx!==expQIdx) return false;
+    const players = data.players;
+    const q = v.qList[v.qIdx];
+    const correct = text!=null && answersMatch(text, q.a, q.acceptableAnswers);
+    const pi = players.findIndex(p=>p.uid===expUid);
+    if(pi>=0) players[pi].score = (players[pi].score||0) + (correct? v.tier : -v.tier);
+    return advanceVdQuestion(data, st, players);
+  }
+  function submitStealAnswer(text, expQIdx, expUid){ txnGame(data=> resolveSteal(data, text, expUid, expQIdx)); }
+  function timeoutStealAnswer(expUid, expQIdx){ txnGame(data=> resolveSteal(data, null, expUid, expQIdx)); }
+  function timeoutStealWindow(expQIdx){
+    txnGame(data=>{
+      const st=data.state; if(st.phase!=='vedich') return false;
+      const v = st.vd; if(v.phase2!=='steal_open' || v.qIdx!==expQIdx || v.stealBuzzedBy) return false;
+      return advanceVdQuestion(data, st, data.players);
+    });
+  }
+  function advanceVdQuestion(data, st, players){
+    const v = st.vd;
+    v.stealBuzzedBy=null; v.stealDeadlineMs=null;
+    let nq = v.qIdx+1;
+    if(nq>=3){
+      v.doneUids = (v.doneUids||[]).concat([v.currentUid]);
+      return advanceVdTurn(data, st, players);
+    } else {
+      v.qIdx = nq;
+      const p = players.find(pp=>pp.uid===v.currentUid);
+      const starAvail = p && !p.starUsed;
+      if(starAvail){ v.phase2='deciding_star'; v.deadlineMs=Date.now()+10000; }
+      else { v.phase2='answering'; v.starActiveThisQ=false; v.deadlineMs=Date.now()+tierTimeSec(v.tier)*1000; }
+      return { players, state: st };
+    }
+  }
+  function advanceVdTurn(data, st, players){
+    const v = st.vd;
+    const nextUid = pickNextVd(players, v.doneUids||[]);
+    if(!nextUid){
+      st.phase='finished';
+      return { players, state: st, status:'finished', finishedAt: Date.now() };
+    }
+    v.currentUid = nextUid; v.phase2='choosing'; v.tier=null; v.qList=null; v.qIdx=0; v.deadlineMs=Date.now()+15000;
+    return { players, state: st };
+  }
+
+  // ==================== KẾT QUẢ CHUNG CUỘC ====================
+  function renderResult(game){
+    showView('result');
+    clearActiveTimers();
+    const root = document.querySelector('[data-view="result"]');
+    const players = (game.players||[]).slice().sort((a,b)=> (b.score||0)-(a.score||0));
+    const top3 = players.slice(0,3);
+    function col(p, rankClass){
+      if(!p) return '<div class="p-col"></div>';
+      const ic = rankClass==='gold'?'🏆':(rankClass==='silver'?'🥈':'🥉');
+      return `<div class="p-col"><img src="${esc(p.photoURL||'')}" onerror="this.style.visibility='hidden'"><div class="p-name">${esc(p.displayName||p.email)}</div><div class="p-score">${p.score||0} điểm</div><div class="p-bar ${rankClass}">${ic}</div></div>`;
+    }
+    root.innerHTML = `
+      <button class="btn-ghost" id="btnResultBack">← Về trang chủ</button>
+      <div class="card" style="text-align:center; margin-top:10px;">
+        <div class="eyebrow">KẾT QUẢ CHUNG CUỘC</div>
+        <div class="h-title">${esc(game.title||'Ván Olympia')}</div>
+        <div class="podium">
+          ${col(top3[1],'silver')}
+          ${col(top3[0],'gold')}
+          ${col(top3[2],'bronze')}
+        </div>
+        <div class="list" style="text-align:left; margin-top:20px;">
+          ${players.map((p,i)=>`<div class="grow-row"><div style="width:26px; font-weight:800; color:var(--gold2);">#${i+1}</div><img src="${esc(p.photoURL||'')}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;background:#333;" onerror="this.style.visibility='hidden'"><div class="gr-main"><div class="gr-title">${esc(p.displayName||p.email)}</div></div><div style="font-weight:800; color:var(--gold2);">${p.score||0} điểm</div></div>`).join('')}
+        </div>
+      </div>
+    `;
+    document.getElementById('btnResultBack').addEventListener('click', goHome);
+  }
+
+})();
+</script>
+</body>
+</html>

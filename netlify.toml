@@ -1,6 +1,0 @@
-[build]
-  publish = "."
-
-[[edge_functions]]
-  path = "/api/llm-proxy"
-  function = "llm-proxy"
